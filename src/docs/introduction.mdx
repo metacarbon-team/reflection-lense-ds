@@ -1,0 +1,19 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Reflection Lense
+
+Design system built with React and [CVA](https://cva.style).
+
+## Status
+
+- **Tokens** — not defined yet. Next step.
+- **Styling approach** — not chosen yet. CVA is styling-agnostic: variants map to any class strings.
+- **Components** — none yet.
+
+## Structure
+
+- `src/components/` — components, one folder each (`button/button.tsx`, `button.stories.tsx`, `index.ts`)
+- `src/lib/cn.ts` — class name joiner used by every component
+- `src/index.ts` — public API, everything consumers import
