@@ -1,0 +1,2 @@
+# LF everywhere, regardless of each machine's core.autocrlf.
+* text=auto eol=lf
