@@ -68,4 +68,4 @@ Semantic versioning per package:
 
 - Native stacks (SwiftUI / Compose / others) and their artifact formats.
 - Where the generator runs for native until ports exist (backend endpoint vs bundled payloads).
-- Typography, shadows/elevation and motion tokens are not covered yet.
+- Shadows/elevation and motion tokens are not covered yet. (Typography: [0006](0006-typography.md).)

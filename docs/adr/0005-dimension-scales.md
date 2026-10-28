@@ -30,4 +30,4 @@ Spacing, sizes and radii must be shared by web and native products. Tailwind's s
 
 ## Open questions
 
-- Typography scale, shadows / elevation and breakpoints.
+- Shadows / elevation and breakpoints. (Typography: [0006](0006-typography.md).)

@@ -18,13 +18,13 @@ scope / role / [prominence] / [context] / [state]
 
 One shared prominence scale for every scope and role. Only meaningful combinations are instantiated.
 
-| Segment    | Values                                                                                                                                                                                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| scope      | `surface` — whole-window canvas · `bg` — backgrounds · `fg` — text and icons · `stroke` — boundaries and dividers · `focus` — keyboard focus indicator · `blanket` — modal backdrop · `ghost` — translucent fills of transparent controls (working name) |
-| role       | `neutral` · `accent` · `success` · `warning` · `danger` · `info`                                                                                                                                                                                         |
-| prominence | `subtle` · normal (omitted) · `emphasized`                                                                                                                                                                                                               |
-| context    | `on-emphasized` — foreground paired with the same role's emphasized background                                                                                                                                                                           |
-| state      | default (omitted) · `hover` · `pressed` · `disabled` (one universal neutral set)                                                                                                                                                                         |
+| Segment    | Values                                                                                                                                                                                                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| scope      | `surface` — whole-window canvas · `bg` — backgrounds · `fg` — text and icons · `stroke` — boundaries and dividers · `focus` — keyboard focus indicator, always the accent color · `blanket` — modal backdrop · `ghost` — translucent fills of transparent controls (working name) |
+| role       | `neutral` · `accent` · `success` · `warning` · `danger` · `info`                                                                                                                                                                                                                  |
+| prominence | `subtle` · normal (omitted) · `emphasized`                                                                                                                                                                                                                                        |
+| context    | `on-emphasized` — foreground paired with the same role's emphasized background                                                                                                                                                                                                    |
+| state      | default (omitted) · `hover` · `pressed` · `disabled` (one universal neutral set)                                                                                                                                                                                                  |
 
 The value sets are disjoint: no value appears in two segments. Validators rely on this.
 
@@ -60,7 +60,7 @@ Moving a token between classes is a major change ([0001](0001-token-architecture
 
 ### Inverse regions
 
-There are no inverse tokens. A region that must look inverted (tooltip, toast, dark navigation in a light theme) switches its container to the opposite mode — or a forced mode — and every token inside re-resolves:
+There are no inverse tokens. A region that must look inverted (tooltip, toast, dark navigation in a light theme) switches its container to **forced dark mode** — in light and dark themes alike — and every token inside re-resolves:
 
 - web: `data-mode` on the container;
 - native: the platform's environment / theme provider mechanism.
@@ -108,6 +108,7 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 - **Layer context for transparent controls** (controls pick opaque colors from the layer they sit on) — rejected in favour of a single translucent fill, as in Atlassian and GitHub Primer.
 - **`bg/neutral/emphasized` as a third nesting level** — rejected: it gave `emphasized` a different meaning in the neutral role.
 - **Inverse tokens** (Material `inverseSurface`) — rejected: a mode switch on the container needs no new tokens.
+- **Opposite mode for inverse regions** (light tooltip in a dark theme) — rejected in favour of forced dark.
 
 ## Consequences
 
@@ -119,5 +120,8 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 
 - Final name of the `ghost` scope.
 - Whether `bg/neutral/subtle` and `bg/neutral` need `hover` / `pressed` (only if clickable containers with their own fill exist).
-- Opacity class of `focus` (opaque assumed, not discussed explicitly).
 - Naming of shadows / elevation.
+
+## Revisions
+
+- 2026-10-28 — resolved open questions: `focus` is opaque and uses the accent color; inverse regions use forced dark mode rather than the opposite mode.

@@ -38,7 +38,7 @@ The generator measures the contrast of `bg/accent/emphasized` against `surface` 
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Text                  | Every `fg` token (all roles and prominences, except `disabled`) ≥ 4.5:1 against every background it can appear on — all levels of the neutral stack (worst case) and its role's tinted backgrounds |
 | On emphasized         | `fg/<role>/on-emphasized` ≥ 4.5:1 on `bg/<role>/emphasized` in default, `hover` and `pressed`                                                                                                      |
-| Non-text              | `focus` and boundary-carrying `stroke` tokens ≥ 3:1 against the backgrounds they sit on                                                                                                            |
+| Non-text              | `focus` ≥ 3:1 against the backgrounds it sits on. Only control boundaries must meet 3:1, and they use the highest-emphasis stroke `stroke/<role>/emphasized`; decorative dividers are exempt       |
 | Disabled              | Exempt                                                                                                                                                                                             |
 | Layer separation      | `surface → bg/neutral/subtle → bg/neutral` is monotonic in lightness with a minimum ΔL between neighbours                                                                                          |
 | Prominence separation | Within each role, `bg` subtle / normal / emphasized and `fg` subtle / normal / emphasized keep a minimum ΔL between neighbours                                                                     |
@@ -82,4 +82,7 @@ The generator always returns a valid theme together with a report of what was sh
 - Numeric thresholds: minimum ΔL for layers, prominences and states; the `emphasized` weight floor; the hue-conflict threshold. To be calibrated on a prototype (a Foundations page in Storybook).
 - Status hue values.
 - The dark-mode target table.
-- Which `stroke` tokens must meet 3:1 (boundaries of controls only, or decorative dividers too).
+
+## Revisions
+
+- 2026-10-28 — resolved open question: only control boundaries must meet 3:1, using `stroke/<role>/emphasized`; decorative dividers are exempt.

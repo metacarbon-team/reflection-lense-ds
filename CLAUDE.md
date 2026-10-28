@@ -5,7 +5,7 @@ React 19 + CVA component library. Storybook (react-vite) for docs, Vite library 
 ## Open decisions — do not pre-empt
 
 - **Styling approach** is not chosen (no Tailwind, no CSS-in-JS yet). Do not add a styling library or tailwind-merge without asking.
-- **Token architecture** is decided in [docs/adr](docs/adr/README.md) (0001–0005): source of truth, naming grammar, opacity classes, palette generation, Figma sync, scales. Follow them; do not invent tokens outside the grammar or hand-pick colors. Changing a decision means a new ADR, not an edit.
+- **Token architecture** is decided in [docs/adr](docs/adr/README.md) (0001–0006): source of truth, naming grammar, opacity classes, palette generation, Figma sync, scales, typography. Follow them; do not invent tokens outside the grammar or hand-pick colors. Changing a decision means a new ADR, not an edit.
 - **shadcn/ui** is planned as a golden reference (read-only examples to reimplement from scratch), not as a dependency. Not set up yet.
 - **Radix primitives** are allowed for complex behaviour (dialog, popover, focus trap, keyboard nav); styling and API are ours.
 

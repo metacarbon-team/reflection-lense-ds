@@ -9,6 +9,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0003](0003-palette-generation.md)    | Palette generation and accessibility rules | Accepted |
 | [0004](0004-figma-sync.md)            | Figma ↔ source of truth sync               | Accepted |
 | [0005](0005-dimension-scales.md)      | Dimension scales                           | Accepted |
+| [0006](0006-typography.md)            | Typography                                 | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 
