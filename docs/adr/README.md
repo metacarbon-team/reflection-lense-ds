@@ -11,6 +11,9 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0005](0005-dimension-scales.md)      | Dimension scales                           | Accepted |
 | [0006](0006-typography.md)            | Typography                                 | Accepted |
 | [0007](0007-raised-background.md)     | Raised background                          | Accepted |
+| [0008](0008-disabled-role.md)         | Disabled as a role                         | Accepted |
+| [0009](0009-neutral-strength.md)      | Neutral text ladder and emphasized weight  | Accepted |
+| [0010](0010-shadow-tokens.md)         | Shadow tokens                              | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

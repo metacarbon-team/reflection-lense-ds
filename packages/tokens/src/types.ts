@@ -12,10 +12,16 @@ export type Scope = (typeof SCOPES)[number]
 /** Opacity is fixed by scope (ADR 0002). */
 export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke', 'blanket']
 
-/** Translucent scopes plus `bg/neutral/raised` and its states (ADR 0007): opacity reads from the name. */
+/** The disabled role: one set for every disabled control, `bg/`, `fg/` and `stroke/disabled` (ADR 0008). */
+export const DISABLED = 'disabled'
+
+/**
+ * Translucent scopes, `bg/neutral/raised` and its states (ADR 0007) and the disabled role (ADR 0008):
+ * opacity reads from the name.
+ */
 export const isTranslucent = (name: string) => {
-  const [scope, ...rest] = name.split('/')
-  return TRANSLUCENT_SCOPES.includes(scope as Scope) || (scope === 'bg' && rest.includes('raised'))
+  const [scope, role, ...rest] = name.split('/')
+  return TRANSLUCENT_SCOPES.includes(scope as Scope) || role === DISABLED || (scope === 'bg' && rest.includes('raised'))
 }
 
 export type Mode = 'light' | 'dark'
@@ -51,8 +57,12 @@ export interface GeneratorParams {
   nonTextContrast: number
   /** Lower bound of the `emphasized` weight (contrast of emphasized fills against surface). */
   weightFloor: number
-  /** Contrast of disabled text against surface (disabled is exempt from AA). */
+  /** Lower bound of the `bg/neutral/emphasized` weight, so the neutral solid fill stays strong (ADR 0009). */
+  neutralWeightFloor: number
+  /** Minimum contrast of disabled text on every layer (disabled is exempt from AA). */
   disabledContrast: number
+  /** Minimum ΔL by which `bg/disabled` moves every neutral layer (ADR 0008). */
+  disabledStep: number
   /** OKLCH chroma of tinted role backgrounds. */
   tintChroma: number
   /** OKLCH chroma of status colors. */
@@ -74,7 +84,9 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   textContrast: 4.5,
   nonTextContrast: 3,
   weightFloor: 3,
+  neutralWeightFloor: 12,
   disabledContrast: 2,
+  disabledStep: 0.02,
   tintChroma: 0.03,
   statusChroma: 0.14,
   // Success and danger match the concept's diff colors (#248a3d, #d70015); warning and info are

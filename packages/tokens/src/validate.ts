@@ -2,7 +2,16 @@
 // the generator: it only reads token names and hex values, so it can validate any theme payload.
 
 import { composite, contrast, hexToRgba, lightness, type Rgb, type Rgba } from './color'
-import { DEFAULT_PARAMS, ROLES, SCOPES, isTranslucent, type GeneratorParams, type ModeTheme, type Scope } from './types'
+import {
+  DEFAULT_PARAMS,
+  DISABLED,
+  ROLES,
+  SCOPES,
+  isTranslucent,
+  type GeneratorParams,
+  type ModeTheme,
+  type Scope,
+} from './types'
 
 export interface Issue {
   rule: string
@@ -20,7 +29,6 @@ const MODIFIERS: Record<string, number> = {
   'on-emphasized': 1,
   hover: 2,
   pressed: 2,
-  disabled: 2,
 }
 
 const TOLERANCE = 1e-3
@@ -38,7 +46,10 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
   for (const [name, c] of color) {
     const [scope, role, ...rest] = name.split('/')
     const okScope = SCOPES.includes(scope as Scope)
-    const okRole = (ROLES as readonly string[]).includes(role ?? '')
+    // The disabled role has exactly one token per scope: bg/, fg/ and stroke/disabled (ADR 0008).
+    const okRole =
+      (ROLES as readonly string[]).includes(role ?? '') ||
+      (role === DISABLED && ['bg', 'fg', 'stroke'].includes(scope!) && rest.length === 0)
     const order = rest.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
     const okRaised = !rest.includes('raised') || (scope === 'bg' && role === 'neutral')
@@ -91,6 +102,25 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
   ]
   const ghostBases: [string, Rgb][] = [...stack.map((n): [string, Rgb] => [n, get(n)!]), ...raised]
   const ghostNames = [...color.keys()].filter((n) => n.startsWith('ghost/'))
+
+  // Disabled (ADR 0008): the fill is barely visible on every neutral layer; the text reaches its
+  // (non-AA) contrast on every layer, raised and the disabled fill, and never reads as enabled.
+  const disabledBg = get(`bg/${DISABLED}`)
+  const disabledFg = get(`fg/${DISABLED}`)
+  const disabledOver: [string, Rgb][] = disabledBg
+    ? stack.map((b) => [`bg/${DISABLED} over ${b}`, composite(disabledBg, get(b)!)])
+    : []
+  disabledOver.forEach(([, c], i) => {
+    const d = Math.abs(L(c) - L(get(stack[i]!)))
+    if (d < p.disabledStep - TOLERANCE) fail('disabled visibility', `bg/${DISABLED}`, d, p.disabledStep, stack[i])
+  })
+  if (disabledFg) {
+    for (const [b, under] of [...ghostBases, ...disabledOver]) {
+      const r = contrast(composite(disabledFg, under), under)
+      if (r < p.disabledContrast) fail('disabled text contrast', `fg/${DISABLED}`, r, p.disabledContrast, b)
+      if (r >= p.textContrast) fail('disabled text reads as enabled', `fg/${DISABLED}`, r, p.textContrast, b)
+    }
+  }
 
   // Text: every fg except disabled and on-emphasized, on neutral layers, its role's tinted
   // backgrounds and every ghost fill over the neutral layers.

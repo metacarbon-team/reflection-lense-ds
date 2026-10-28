@@ -1,9 +1,12 @@
 import {
   cssVarName,
   DEFAULT_PARAMS,
+  DEFAULT_SHADOWS,
   DEFAULT_TYPE_SCALE,
+  generateModeShadows,
   generateTheme,
   generateTypeScale,
+  SHADOW_LEVELS,
   DEFAULT_SEEDS,
   ROLES,
   STATUS_ROLES,
@@ -13,6 +16,7 @@ import {
   type Mode,
   type ModeTheme,
   type Role,
+  type ShadowParams,
   type Theme,
   type ThemeSeeds,
   type TypeScaleParams,
@@ -27,6 +31,7 @@ const SEED_KEYS = ['bg', 'fg', 'accent'] as const
 const TABS = [
   { id: 'ui', label: 'UI preview' },
   { id: 'palette', label: 'Palette swatches' },
+  { id: 'shadows', label: 'Shadows' },
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
@@ -61,6 +66,7 @@ export function App() {
   const [seeds, setSeeds] = useState<ThemeSeeds>(structuredClone(DEFAULT_SEEDS) as ThemeSeeds)
   const [params, setParams] = useState<GeneratorParams>(structuredClone(DEFAULT_PARAMS))
   const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
+  const [shadows, setShadows] = useState<ShadowParams>(structuredClone(DEFAULT_SHADOWS))
   const [tab, setTab] = useState<Tab>('ui')
 
   const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
@@ -73,6 +79,7 @@ export function App() {
     setSeeds(structuredClone(DEFAULT_SEEDS) as ThemeSeeds)
     setParams(structuredClone(DEFAULT_PARAMS))
     setTypeScale(structuredClone(DEFAULT_TYPE_SCALE))
+    setShadows(structuredClone(DEFAULT_SHADOWS))
   }
 
   return (
@@ -84,6 +91,8 @@ export function App() {
             Reset
           </button>
         </header>
+
+        {tab === 'shadows' && <ShadowControls params={shadows} onChange={setShadows} />}
 
         <Section title="Seeds">
           {MODES.map((mode) => (
@@ -127,6 +136,14 @@ export function App() {
             onChange={(x) => setParams({ ...params, raisedStep: x })}
           />
           <Slider
+            label="Disabled step"
+            min={0.005}
+            max={0.06}
+            step={0.0025}
+            value={params.disabledStep}
+            onChange={(x) => setParams({ ...params, disabledStep: x })}
+          />
+          <Slider
             label="Text step"
             min={0.03}
             max={0.16}
@@ -144,6 +161,14 @@ export function App() {
             step={0.1}
             value={params.weightFloor}
             onChange={(x) => setParams({ ...params, weightFloor: x })}
+          />
+          <Slider
+            label="Neutral weight floor"
+            min={3}
+            max={18}
+            step={0.5}
+            value={params.neutralWeightFloor}
+            onChange={(x) => setParams({ ...params, neutralWeightFloor: x })}
           />
           <Slider
             label="Disabled text"
@@ -252,7 +277,7 @@ export function App() {
             className="lab-export"
             readOnly
             rows={8}
-            value={JSON.stringify({ seeds, params, typeScale }, null, 2)}
+            value={JSON.stringify({ seeds, params, typeScale, shadows }, null, 2)}
           />
         </Section>
       </aside>
@@ -282,6 +307,8 @@ export function App() {
 
         {tab === 'ui' ? (
           <UiPreview theme={theme} />
+        ) : tab === 'shadows' ? (
+          <ShadowsPreview theme={theme} params={shadows} />
         ) : (
           <>
             <div className="lab-modes">
@@ -295,6 +322,227 @@ export function App() {
         )}
       </main>
     </div>
+  )
+}
+
+/** Tailwind v4 defaults, for side-by-side reference. */
+const TAILWIND_SHADOWS: Record<string, string> = {
+  '2xs': '0 1px rgb(0 0 0 / 0.05)',
+  xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+}
+
+const OUTLINES = ['none', 'stroke/neutral/subtle', 'stroke/neutral', 'stroke/neutral/emphasized'] as const
+
+function ShadowControls({ params: p, onChange }: { params: ShadowParams; onChange: (p: ShadowParams) => void }) {
+  return (
+    <Section title="Shadows">
+      <div className="lab-label">Ambient layer</div>
+      <Slider
+        label="Offset min (px)"
+        min={0.5}
+        max={4}
+        step={0.5}
+        value={p.y.min}
+        onChange={(x) => onChange({ ...p, y: { ...p.y, min: x } })}
+      />
+      <Slider
+        label="Offset max (px)"
+        min={8}
+        max={64}
+        step={1}
+        value={p.y.max}
+        onChange={(x) => onChange({ ...p, y: { ...p.y, max: x } })}
+      />
+      <Slider
+        label="Blur ratio"
+        min={1}
+        max={5}
+        step={0.1}
+        value={p.blurRatio}
+        onChange={(x) => onChange({ ...p, blurRatio: x })}
+      />
+      <Slider
+        label="Blur base (px)"
+        min={0}
+        max={8}
+        step={0.5}
+        value={p.blurBase}
+        onChange={(x) => onChange({ ...p, blurBase: x })}
+      />
+      <Slider
+        label="Spread ratio"
+        min={-1}
+        max={0.5}
+        step={0.05}
+        value={p.spreadRatio}
+        onChange={(x) => onChange({ ...p, spreadRatio: x })}
+      />
+      <Slider
+        label="Opacity min"
+        min={0}
+        max={0.4}
+        step={0.01}
+        value={p.alpha.min}
+        onChange={(x) => onChange({ ...p, alpha: { ...p.alpha, min: x } })}
+      />
+      <Slider
+        label="Opacity max"
+        min={0}
+        max={0.8}
+        step={0.01}
+        value={p.alpha.max}
+        onChange={(x) => onChange({ ...p, alpha: { ...p.alpha, max: x } })}
+      />
+      <Slider
+        label="Opacity curve"
+        min={0.5}
+        max={4}
+        step={0.1}
+        value={p.alphaCurve}
+        onChange={(x) => onChange({ ...p, alphaCurve: x })}
+      />
+      <div className="lab-label">Contact layer</div>
+      <Slider
+        label="Offset ratio"
+        min={0}
+        max={0.6}
+        step={0.05}
+        value={p.contact.yRatio}
+        onChange={(x) => onChange({ ...p, contact: { ...p.contact, yRatio: x } })}
+      />
+      <Slider
+        label="Blur ratio"
+        min={1}
+        max={4}
+        step={0.1}
+        value={p.contact.blurRatio}
+        onChange={(x) => onChange({ ...p, contact: { ...p.contact, blurRatio: x } })}
+      />
+      <Slider
+        label="Opacity min"
+        min={0}
+        max={0.3}
+        step={0.01}
+        value={p.contact.alpha.min}
+        onChange={(x) => onChange({ ...p, contact: { ...p.contact, alpha: { ...p.contact.alpha, min: x } } })}
+      />
+      <Slider
+        label="Opacity max"
+        min={0}
+        max={0.3}
+        step={0.01}
+        value={p.contact.alpha.max}
+        onChange={(x) => onChange({ ...p, contact: { ...p.contact, alpha: { ...p.contact.alpha, max: x } } })}
+      />
+      <div className="lab-label">Hairline (2xs)</div>
+      <Slider
+        label="Opacity"
+        min={0}
+        max={0.3}
+        step={0.01}
+        value={p.hairline}
+        onChange={(x) => onChange({ ...p, hairline: x })}
+      />
+      <div className="lab-label">Color</div>
+      <Slider label="Tint" min={0} max={1} step={0.05} value={p.tint} onChange={(x) => onChange({ ...p, tint: x })} />
+      <Slider
+        label="Dark opacity ×"
+        min={1}
+        max={4}
+        step={0.1}
+        value={p.darkAlphaScale}
+        onChange={(x) => onChange({ ...p, darkAlphaScale: x })}
+      />
+    </Section>
+  )
+}
+
+/** The elevation ramp on generated surfaces, one mode at a time, with Tailwind's ramp for reference. */
+function ShadowsPreview({ theme, params }: { theme: Theme; params: ShadowParams }) {
+  const [mode, setMode] = useState<Mode>('light')
+  const [reference, setReference] = useState(false)
+  const [outline, setOutline] = useState<(typeof OUTLINES)[number]>('stroke/neutral')
+  const [outlineWidth, setOutlineWidth] = useState(0.5)
+  const shadows = generateModeShadows(theme[mode], params)
+  const style = { ...toCssVars(theme[mode]), color: v('fg/neutral') } as CSSProperties
+  // Edges come from stroke tokens, separately from the shadow.
+  const card = (boxShadow: string): CSSProperties => ({
+    background: v('bg/neutral/raised'),
+    boxShadow,
+    border: outline === 'none' ? 'none' : `${outlineWidth}px solid ${v(outline)}`,
+  })
+  return (
+    <section className="lab-ui-preview">
+      <div className="lab-row">
+        <div className="lab-segmented" role="radiogroup" aria-label="Mode">
+          {MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={mode === m}
+              className={mode === m ? 'lab-segment lab-segment-active' : 'lab-segment'}
+              onClick={() => setMode(m)}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+        <label className="lab-muted">
+          <input type="checkbox" checked={reference} onChange={(e) => setReference(e.target.checked)} /> Tailwind
+          reference
+        </label>
+        <label className="lab-muted">
+          Outline{' '}
+          <select value={outline} onChange={(e) => setOutline(e.target.value as (typeof OUTLINES)[number])}>
+            {OUTLINES.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>{' '}
+          <select value={outlineWidth} onChange={(e) => setOutlineWidth(Number(e.target.value))}>
+            {[0.5, 1].map((w) => (
+              <option key={w} value={w}>
+                {w}px
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="lab-shadow-stage" style={style}>
+        {(['surface/neutral', 'bg/neutral/subtle'] as const).map((under) => (
+          <div key={under} className="lab-shadow-layer" style={{ background: v(under) }}>
+            <code style={{ color: v('fg/neutral/subtle') }}>on {under}</code>
+            <div className="lab-shadow-grid">
+              {SHADOW_LEVELS.map((level) => {
+                const css = shadows.composite[`shadow/${level}`]!
+                return (
+                  <div key={level} className="lab-shadow-cell">
+                    <div className="lab-shadow-card" style={card(css)}>
+                      <strong>{level}</strong>
+                    </div>
+                    {reference && (
+                      <div className="lab-shadow-card" style={card(TAILWIND_SHADOWS[level]!)}>
+                        <span style={{ color: v('fg/neutral/subtle') }}>tw {level}</span>
+                      </div>
+                    )}
+                    {under === 'surface/neutral' && (
+                      <code className="lab-shadow-css" style={{ color: v('fg/neutral/subtle') }}>
+                        {css.replaceAll(', 0', ',\n0')}
+                      </code>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -337,9 +585,9 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
           disabled
           className="lab-btn"
           style={{
-            background: v('bg/neutral/disabled'),
-            color: v('fg/neutral/disabled'),
-            border: `1px solid ${v('stroke/neutral/disabled')}`,
+            background: v('bg/disabled'),
+            color: v('fg/disabled'),
+            border: `1px solid ${v('stroke/disabled')}`,
           }}
         >
           Disabled

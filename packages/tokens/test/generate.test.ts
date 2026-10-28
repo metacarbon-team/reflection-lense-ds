@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
 import { generateMode, generateTheme } from '../src/generate'
 import { DEFAULT_SEEDS } from '../src/index'
+import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { generateTypeScale } from '../src/typescale'
 import { validateMode } from '../src/validate'
 
@@ -25,7 +26,7 @@ describe('color math', () => {
 })
 
 describe('generator', () => {
-  it('produces a valid theme from the placeholder seeds', () => {
+  it('produces a valid theme from the default seeds', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     expect(validateMode(theme.light)).toEqual([])
     expect(validateMode(theme.dark)).toEqual([])
@@ -90,6 +91,32 @@ describe('type scale', () => {
     expect(desktop.find((s) => s.name === 'lg')!.size).toBe(20)
     expect(mobile.find((s) => s.name === 'xl')!.size).toBeLessThan(desktop.find((s) => s.name === 'xl')!.size)
     for (const s of desktop) expect(s.lineHeight % 4).toBe(0)
+  })
+})
+
+describe('shadows', () => {
+  it('draws 2xs as a 1px line and grows every other level in offset and opacity, two layers each', () => {
+    const levels = generateShadows()
+    expect(levels.map((l) => l.name)).toEqual(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'])
+    for (let i = 2; i < levels.length; i++) {
+      expect(levels[i]!.ambient!.y).toBeGreaterThan(levels[i - 1]!.ambient!.y)
+      expect(levels[i]!.ambient!.alpha).toBeGreaterThanOrEqual(levels[i - 1]!.ambient!.alpha)
+    }
+    expect(shadowCss(levels[0]!, { r: 0, g: 0, b: 0 })).toBe('0 1px 0px #0000000d')
+    expect(shadowCss(levels[3]!, { r: 0, g: 0, b: 0 }).split(', ')).toHaveLength(2)
+  })
+
+  it('emits translucent layer colors and composites per mode (ADR 0010)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    const light = generateModeShadows(theme.light)
+    const dark = generateModeShadows(theme.dark)
+    expect(Object.keys(light.colors)).toHaveLength(13)
+    expect(Object.keys(light.composite)).toEqual(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'].map((l) => `shadow/${l}`))
+    for (const t of Object.values(light.colors)) expect(hexToRgba(t.value).a).toBeLessThan(1)
+    // Same geometry, heavier color in dark mode.
+    expect(hexToRgba(dark.colors['shadow/md/ambient']!.value).a).toBeGreaterThan(
+      hexToRgba(light.colors['shadow/md/ambient']!.value).a,
+    )
   })
 })
 

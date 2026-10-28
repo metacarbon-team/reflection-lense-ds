@@ -126,3 +126,5 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 - 2026-10-28 — resolved open questions: `focus` is opaque and uses the accent color; inverse regions use forced dark mode rather than the opposite mode.
 - 2026-10-28 — resolved open question: `bg/neutral/subtle` and `bg/neutral` have `hover` and `pressed` (clickable containers).
 - 2026-10-28 — the opacity-by-scope rule has one exception, `bg/neutral/raised` and its states: see [0007](0007-raised-background.md).
+- 2026-10-28 — `disabled` is a role, not a state: `bg/disabled`, `fg/disabled`, `stroke/disabled`, all translucent. See [0008](0008-disabled-role.md).
+- 2026-10-28 — resolved open question: shadows are a scale, `shadow/2xs` … `shadow/2xl`. See [0010](0010-shadow-tokens.md).

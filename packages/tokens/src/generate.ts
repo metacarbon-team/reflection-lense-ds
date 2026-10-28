@@ -264,8 +264,8 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
       ghostComposites.push(composite({ ...base, a: hoverA }, L), composite({ ...base, a: pressedA }, L))
   }
 
-  // 4. Text: subtle reaches 4.5:1 on the worst background, normal and emphasized follow by fgStep.
-  //    Contrast depends on luminance only, so the worst background is the one nearest the text.
+  // 4. Text: subtle is the 4.5:1 floor on the worst background. Contrast depends on luminance only,
+  //    so the worst background is the one nearest the text.
   const textBackgrounds = [...layers, ...tinted, ...ghostComposites]
   const worst = textBackgrounds.reduce((a, b) => (dir * (luminance(b) - luminance(a)) > 0 ? b : a))
   const fgEmphasized: Partial<Record<Role, Rgb>> = {}
@@ -273,26 +273,31 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     const { c, h } = tint[r]
     const sub = lightnessForContrast({ c, h }, lightness(worst), dir, worst, text)
     if (contrast(rgb(sub, c, h), worst) < text) feasible = false
+    // Normal is at least one step beyond the floor, emphasized one more.
     let ln = nextStep(sub, c, h, p.fgStep, dir)
-    // Neutral text keeps its seed when the seed has more contrast and emphasized still fits after it.
-    if (r === 'neutral' && t(fg.l) > t(ln) && fits(nextStep(fg.l, c, h, p.fgStep, dir))) ln = fg.l
+    let le = nextStep(ln, c, h, p.fgStep, dir)
+    // Neutral (ADR 0009): the seed is the top of the ladder and normal one step below it, when the
+    // seed leaves room for both above the floor.
+    if (r === 'neutral') {
+      const below = nextStep(fg.l, c, h, p.fgStep, -dir as 1 | -1)
+      if (t(below) >= t(ln) && Math.abs(shippedL(below, c, h) - shippedL(sub, c, h)) >= p.fgStep) {
+        ln = below
+        le = fg.l
+      } else
+        adjust(
+          'fg/neutral/emphasized',
+          'text seed moved so normal and subtle fit below it at 4.5:1',
+          rgb(fg.l, c, h),
+          rgb(le, c, h),
+        )
+    }
     // Emphasized falling off the lightness range makes the build infeasible; drift then frees room.
-    const le = stepped(ln, c, h, p.fgStep, dir)
-    // Subtle is the contrast floor itself; normal is at least one step beyond it.
-    const ls = sub
-    put(`fg/${r}/subtle`, rgb(ls, c, h))
+    if (!fits(le)) feasible = false
+    put(`fg/${r}/subtle`, rgb(sub, c, h))
     put(`fg/${r}`, rgb(ln, c, h))
     const emph = quantize(rgb(Math.min(1, Math.max(0, le)), c, h))
     put(`fg/${r}/emphasized`, emph)
     fgEmphasized[r] = emph
-    if (r === 'neutral' && Math.abs(ln - fg.l) > 0.005) {
-      adjust(
-        'fg/neutral',
-        'text color moved to keep 4.5:1 and its steps on every background',
-        rgb(fg.l, c, h),
-        rgb(ln, c, h),
-      )
-    }
   }
 
   // 5. Emphasized fills. On-emphasized is the better of a light and a dark text color; states move
@@ -320,13 +325,15 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   }
 
   // Accent stays as close to its seed as possible; its contrast against surface is the weight every
-  // other emphasized fill aligns to, never below the floor.
+  // other emphasized fill aligns to, never below the floor. Neutral has a higher floor of its own
+  // (ADR 0009), so the neutral solid fill stays strong.
   const accentFill = emphasized('accent', accent.l, accent.c, accent.h)
   const weight = Math.max(contrast(accentFill, surface), p.weightFloor)
   for (const r of ROLES) {
     if (r === 'accent') continue
     const { c, h } = tint[r]
-    emphasized(r, lightnessForContrast({ c, h }, l0, dir, surface, weight), c, h)
+    const w = r === 'neutral' ? Math.max(weight, p.neutralWeightFloor) : weight
+    emphasized(r, lightnessForContrast({ c, h }, l0, dir, surface, w), c, h)
   }
 
   // 6. Focus: always the accent color, 3:1 against every layer.
@@ -351,13 +358,24 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     put(`stroke/${r}/emphasized`, base, a ?? MAX_ALPHA)
   }
 
-  // 8. Disabled (exempt from AA) and blanket.
-  put('bg/neutral/disabled', rgb(subtleL, bg.c, bg.h))
-  put(
-    'fg/neutral/disabled',
-    rgb(lightnessForContrast({ c: fg.c, h: fg.h }, l0, dir, surface, p.disabledContrast), fg.c, fg.h),
+  // 8. Disabled role (ADR 0008): the neutral text color with alpha. The fill is barely visible on
+  //    every neutral layer; the text reaches its (non-AA) contrast on every layer, raised and the
+  //    disabled fill, and stays below the text target.
+  const ink = fgEmphasized.neutral!
+  const disabledA = raisedAlpha(ink, neutralBases, p.disabledStep)
+  if (disabledA === null) feasible = false
+  put('bg/disabled', ink, disabledA ?? MAX_ALPHA)
+  const disabledUnder = [
+    ...neutralBases,
+    ...raisedOver,
+    ...neutralBases.map((B) => composite({ ...ink, a: disabledA ?? MAX_ALPHA }, B)),
+  ]
+  const disabledText = solveAlpha((a) =>
+    disabledUnder.every((B) => contrast(composite({ ...ink, a }, B), B) >= p.disabledContrast + CONTRAST_MARGIN),
   )
-  put('stroke/neutral/disabled', fgEmphasized.neutral!, p.strokeAlpha.subtle)
+  if (disabledText === null) feasible = false
+  put('fg/disabled', ink, disabledText ?? MAX_ALPHA)
+  put('stroke/disabled', ink, p.strokeAlpha.subtle)
   put('blanket/neutral', { r: 0, g: 0, b: 0 }, p.blanketAlpha)
 
   // The validator has the last word: a build only counts when the shipped colors pass every rule.

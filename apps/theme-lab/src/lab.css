@@ -188,6 +188,45 @@ code {
   color: var(--lab-text);
 }
 
+/* Shadows tab: the ramp on generated surfaces, with room for the largest blur. */
+.lab-shadow-stage {
+  justify-self: stretch;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lab-shadow-layer {
+  display: grid;
+  gap: 24px;
+  padding: 24px 32px 48px;
+}
+
+.lab-shadow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 48px 32px;
+}
+
+.lab-shadow-cell {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+.lab-shadow-card {
+  display: flex;
+  align-items: flex-end;
+  height: 88px;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.lab-shadow-css {
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* Dark backdrop around the window, as on the concept canvas. */
 .lab-stage {
   justify-self: stretch;
