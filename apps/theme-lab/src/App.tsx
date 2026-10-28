@@ -1,0 +1,554 @@
+import {
+  cssVarName,
+  DEFAULT_PARAMS,
+  DEFAULT_TYPE_SCALE,
+  generateTheme,
+  generateTypeScale,
+  PLACEHOLDER_SEEDS,
+  ROLES,
+  STATUS_ROLES,
+  toCssVars,
+  validateMode,
+  type GeneratorParams,
+  type Mode,
+  type ModeTheme,
+  type Role,
+  type ThemeSeeds,
+  type TypeScaleParams,
+} from '@reflection/tokens'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+
+/** `var(--…)` for a canonical token name. */
+const v = (name: string) => `var(${cssVarName(name)})`
+const MODES: Mode[] = ['light', 'dark']
+const SEED_KEYS = ['bg', 'fg', 'accent'] as const
+
+export function App() {
+  const [seeds, setSeeds] = useState<ThemeSeeds>(structuredClone(PLACEHOLDER_SEEDS) as ThemeSeeds)
+  const [params, setParams] = useState<GeneratorParams>(structuredClone(DEFAULT_PARAMS))
+  const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
+
+  const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
+  const issues = useMemo(
+    () => ({ light: validateMode(theme.light, params), dark: validateMode(theme.dark, params) }),
+    [theme, params],
+  )
+
+  const reset = () => {
+    setSeeds(structuredClone(PLACEHOLDER_SEEDS) as ThemeSeeds)
+    setParams(structuredClone(DEFAULT_PARAMS))
+    setTypeScale(structuredClone(DEFAULT_TYPE_SCALE))
+  }
+
+  return (
+    <div className="lab">
+      <aside className="lab-controls">
+        <header className="lab-title">
+          <h1>Theme Lab</h1>
+          <button type="button" onClick={reset}>
+            Reset
+          </button>
+        </header>
+
+        <Section title="Seeds">
+          {MODES.map((mode) => (
+            <div key={mode} className="lab-seed-group">
+              <div className="lab-label">{mode}</div>
+              {SEED_KEYS.map((key) => (
+                <ColorField
+                  key={key}
+                  label={key}
+                  value={seeds[mode][key]}
+                  onChange={(value) => setSeeds((s) => ({ ...s, [mode]: { ...s[mode], [key]: value } }))}
+                />
+              ))}
+            </div>
+          ))}
+        </Section>
+
+        <Section title="Steps (OKLCH ΔL)">
+          <Slider
+            label="Layer step"
+            min={0.01}
+            max={0.08}
+            step={0.005}
+            value={params.layerStep}
+            onChange={(x) => setParams({ ...params, layerStep: x })}
+          />
+          <Slider
+            label="State step"
+            min={0.01}
+            max={0.08}
+            step={0.005}
+            value={params.stateStep}
+            onChange={(x) => setParams({ ...params, stateStep: x })}
+          />
+          <Slider
+            label="Text step"
+            min={0.03}
+            max={0.16}
+            step={0.005}
+            value={params.fgStep}
+            onChange={(x) => setParams({ ...params, fgStep: x })}
+          />
+        </Section>
+
+        <Section title="Contrast">
+          <Slider
+            label="Emphasized weight floor"
+            min={1.5}
+            max={7}
+            step={0.1}
+            value={params.weightFloor}
+            onChange={(x) => setParams({ ...params, weightFloor: x })}
+          />
+          <Slider
+            label="Disabled text"
+            min={1.2}
+            max={3}
+            step={0.1}
+            value={params.disabledContrast}
+            onChange={(x) => setParams({ ...params, disabledContrast: x })}
+          />
+        </Section>
+
+        <Section title="Color">
+          <Slider
+            label="Tint chroma"
+            min={0}
+            max={0.08}
+            step={0.005}
+            value={params.tintChroma}
+            onChange={(x) => setParams({ ...params, tintChroma: x })}
+          />
+          <Slider
+            label="Status chroma"
+            min={0.04}
+            max={0.24}
+            step={0.01}
+            value={params.statusChroma}
+            onChange={(x) => setParams({ ...params, statusChroma: x })}
+          />
+          <Slider
+            label="Hue conflict (°)"
+            min={0}
+            max={60}
+            step={1}
+            value={params.hueConflict}
+            onChange={(x) => setParams({ ...params, hueConflict: x })}
+          />
+          {STATUS_ROLES.map((r) => (
+            <Slider
+              key={r}
+              label={`${r} hue (°)`}
+              min={0}
+              max={359}
+              step={1}
+              value={params.statusHues[r]}
+              onChange={(x) => setParams({ ...params, statusHues: { ...params.statusHues, [r]: x } })}
+            />
+          ))}
+        </Section>
+
+        <Section title="Alpha">
+          <Slider
+            label="Stroke subtle"
+            min={0.02}
+            max={0.4}
+            step={0.01}
+            value={params.strokeAlpha.subtle}
+            onChange={(x) => setParams({ ...params, strokeAlpha: { ...params.strokeAlpha, subtle: x } })}
+          />
+          <Slider
+            label="Stroke normal"
+            min={0.02}
+            max={0.5}
+            step={0.01}
+            value={params.strokeAlpha.normal}
+            onChange={(x) => setParams({ ...params, strokeAlpha: { ...params.strokeAlpha, normal: x } })}
+          />
+          <Slider
+            label="Blanket"
+            min={0.1}
+            max={0.9}
+            step={0.01}
+            value={params.blanketAlpha}
+            onChange={(x) => setParams({ ...params, blanketAlpha: x })}
+          />
+        </Section>
+
+        <Section title="Type scale">
+          <Slider
+            label="Base (px)"
+            min={12}
+            max={20}
+            step={1}
+            value={typeScale.base}
+            onChange={(x) => setTypeScale({ ...typeScale, base: x })}
+          />
+          <Slider
+            label="Ratio desktop"
+            min={1.05}
+            max={1.5}
+            step={0.005}
+            value={typeScale.ratio.desktop}
+            onChange={(x) => setTypeScale({ ...typeScale, ratio: { ...typeScale.ratio, desktop: x } })}
+          />
+          <Slider
+            label="Ratio mobile"
+            min={1.05}
+            max={1.5}
+            step={0.005}
+            value={typeScale.ratio.mobile}
+            onChange={(x) => setTypeScale({ ...typeScale, ratio: { ...typeScale.ratio, mobile: x } })}
+          />
+        </Section>
+
+        <Section title="Export">
+          <textarea
+            className="lab-export"
+            readOnly
+            rows={8}
+            value={JSON.stringify({ seeds, params, typeScale }, null, 2)}
+          />
+        </Section>
+      </aside>
+
+      <main className="lab-main">
+        <div className="lab-modes">
+          {MODES.map((mode) => (
+            <ModePreview key={mode} theme={theme[mode]} issues={issues[mode]} />
+          ))}
+        </div>
+        <TypeScalePreview params={typeScale} />
+        <TokenTable light={theme.light} dark={theme.dark} />
+      </main>
+    </div>
+  )
+}
+
+function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<typeof validateMode> }) {
+  const style = { ...toCssVars(theme), background: v('surface/neutral'), color: v('fg/neutral') } as CSSProperties
+  return (
+    <section className="lab-mode" style={style}>
+      <div className="lab-mode-head">
+        <h2>{theme.mode}</h2>
+        <span className={issues.length ? 'lab-status lab-status-fail' : 'lab-status'}>
+          {issues.length ? `${issues.length} rule violations` : 'All rules pass'}
+        </span>
+      </div>
+
+      <h3 style={{ color: v('fg/neutral/subtle') }}>Layers</h3>
+      <Layer name="surface/neutral" depth={0}>
+        <Layer name="bg/neutral/subtle" depth={1}>
+          <Layer name="bg/neutral" depth={2} />
+        </Layer>
+      </Layer>
+
+      <h3 style={{ color: v('fg/neutral/subtle') }}>Roles</h3>
+      <div className="lab-roles">
+        {ROLES.map((r) => (
+          <RoleRow key={r} role={r} />
+        ))}
+      </div>
+
+      <h3 style={{ color: v('fg/neutral/subtle') }}>Focus, disabled, blanket</h3>
+      <div className="lab-row">
+        <button
+          type="button"
+          className="lab-btn"
+          style={{ ...fill('neutral', true), outline: `2px solid ${v('focus/accent')}`, outlineOffset: 2 }}
+        >
+          Focused
+        </button>
+        <button
+          type="button"
+          disabled
+          className="lab-btn"
+          style={{
+            background: v('bg/neutral/disabled'),
+            color: v('fg/neutral/disabled'),
+            border: `1px solid ${v('stroke/neutral/disabled')}`,
+          }}
+        >
+          Disabled
+        </button>
+        <div className="lab-blanket-demo" style={{ background: v('bg/neutral') }}>
+          <span>Content</span>
+          <div style={{ position: 'absolute', inset: 0, background: v('blanket/neutral'), borderRadius: 6 }} />
+        </div>
+      </div>
+
+      {theme.adjustments.length > 0 && (
+        <>
+          <h3 style={{ color: v('fg/neutral/subtle') }}>Adjustments</h3>
+          <ul className="lab-list">
+            {theme.adjustments.map((a, i) => (
+              <li key={i}>
+                <code>{a.token}</code> — {a.reason} <Chip hex={a.from} /> → <Chip hex={a.to} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {issues.length > 0 && (
+        <>
+          <h3 style={{ color: v('fg/danger') }}>Rule violations</h3>
+          <ul className="lab-list">
+            {issues.slice(0, 30).map((x, i) => (
+              <li key={i}>
+                {x.rule}: <code>{x.token}</code>{' '}
+                {x.against && (
+                  <>
+                    vs <code>{x.against}</code>
+                  </>
+                )}{' '}
+                — {x.actual} / {x.required}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  )
+}
+
+/** CSS custom properties driving the interactive classes in lab.css. */
+const fill = (role: Role, emphasized: boolean): CSSProperties => {
+  const base = emphasized ? `bg/${role}/emphasized` : role === 'neutral' ? 'bg/neutral/subtle' : `bg/${role}/subtle`
+  return {
+    '--fill': v(base),
+    '--fill-hover': v(`${base}/hover`),
+    '--fill-pressed': v(`${base}/pressed`),
+    color: emphasized ? v(`fg/${role}/on-emphasized`) : v(`fg/${role}`),
+  } as CSSProperties
+}
+const ghost = (role: Role): CSSProperties =>
+  ({
+    '--ghost-hover': v(`ghost/${role}/hover`),
+    '--ghost-pressed': v(`ghost/${role}/pressed`),
+    color: v(`fg/${role}`),
+  }) as CSSProperties
+
+function Layer({ name, depth, children }: { name: string; depth: number; children?: ReactNode }) {
+  const isSurface = depth === 0
+  return (
+    <div
+      className={isSurface ? 'lab-layer' : 'lab-layer lab-clickable'}
+      style={
+        isSurface
+          ? { border: `1px solid ${v('stroke/neutral/subtle')}` }
+          : ({
+              '--fill': v(name),
+              '--fill-hover': v(`${name}/hover`),
+              '--fill-pressed': v(`${name}/pressed`),
+              border: `1px solid ${v('stroke/neutral/subtle')}`,
+            } as CSSProperties)
+      }
+    >
+      <div className="lab-layer-name">
+        <code>{name}</code>
+        {!isSurface && <span style={{ color: v('fg/neutral/subtle') }}> · click / hover</span>}
+      </div>
+      <div className="lab-row">
+        <span style={{ color: v('fg/neutral/subtle') }}>Subtle text</span>
+        <span>Normal text</span>
+        <span style={{ color: v('fg/neutral/emphasized'), fontWeight: 600 }}>Emphasized text</span>
+      </div>
+      <div className="lab-row">
+        <button type="button" className="lab-btn lab-ghost" style={ghost('neutral')}>
+          Ghost
+        </button>
+        <span className="lab-input" style={{ border: `1px solid ${v('stroke/neutral/emphasized')}` }}>
+          Input boundary
+        </span>
+        <button type="button" className="lab-btn lab-fill" style={fill('neutral', true)}>
+          Neutral solid
+        </button>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function RoleRow({ role }: { role: Role }) {
+  return (
+    <div className="lab-role">
+      <code className="lab-role-name">{role}</code>
+      <button type="button" className="lab-btn lab-fill" style={fill(role, true)}>
+        Solid
+      </button>
+      <button type="button" className="lab-btn lab-fill" style={fill(role, false)}>
+        Tinted
+      </button>
+      <button type="button" className="lab-btn lab-ghost" style={ghost(role)}>
+        Ghost
+      </button>
+      <span className="lab-swatches">
+        {['subtle', 'normal', 'emphasized'].map((p) => (
+          <span
+            key={p}
+            title={`stroke/${role}${p === 'normal' ? '' : `/${p}`}`}
+            className="lab-stroke"
+            style={{ borderColor: v(`stroke/${role}${p === 'normal' ? '' : `/${p}`}`) }}
+          />
+        ))}
+      </span>
+      <span className="lab-row lab-row-tight">
+        <span style={{ color: v(`fg/${role}/subtle`) }}>subtle</span>
+        <span style={{ color: v(`fg/${role}`) }}>normal</span>
+        <span style={{ color: v(`fg/${role}/emphasized`) }}>emphasized</span>
+      </span>
+    </div>
+  )
+}
+
+function TypeScalePreview({ params }: { params: TypeScaleParams }) {
+  const scale = generateTypeScale(params)
+  return (
+    <section className="lab-panel">
+      <h2>Type scale</h2>
+      <p className="lab-muted">Fonts are not bundled yet, so samples use system fallbacks.</p>
+      <table className="lab-table">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Desktop</th>
+            <th>Mobile</th>
+            <th>Sample (desktop)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {scale.desktop.map((d, i) => {
+            const m = scale.mobile[i]!
+            const heading = i >= params.fixed.length + 2
+            return (
+              <tr key={d.name}>
+                <td>
+                  <code>font/size/{d.name}</code>
+                </td>
+                <td>
+                  {d.size}/{d.lineHeight}
+                </td>
+                <td>
+                  {m.size}/{m.lineHeight}
+                </td>
+                <td
+                  style={{
+                    fontSize: d.size,
+                    lineHeight: `${d.lineHeight}px`,
+                    fontFamily: heading ? 'Georgia, serif' : 'system-ui, sans-serif',
+                  }}
+                >
+                  Reflection Lense
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
+function TokenTable({ light, dark }: { light: ModeTheme; dark: ModeTheme }) {
+  const names = Object.keys(light.tokens).sort()
+  return (
+    <details className="lab-panel">
+      <summary>
+        <h2>Tokens ({names.length})</h2>
+      </summary>
+      <table className="lab-table">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Opacity</th>
+            <th>Light</th>
+            <th>Dark</th>
+          </tr>
+        </thead>
+        <tbody>
+          {names.map((n) => (
+            <tr key={n}>
+              <td>
+                <code>{n}</code>
+              </td>
+              <td>{light.tokens[n]!.opacity}</td>
+              <td>
+                <Chip hex={light.tokens[n]!.value} />
+              </td>
+              <td>
+                <Chip hex={dark.tokens[n]?.value ?? ''} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
+  )
+}
+
+function Chip({ hex }: { hex: string }) {
+  return (
+    <span className="lab-chip">
+      <span className="lab-chip-swatch" style={{ background: hex }} />
+      <code>{hex}</code>
+    </span>
+  )
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="lab-section">
+      <h2>{title}</h2>
+      {children}
+    </section>
+  )
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [draft, setDraft] = useState(value)
+  const [last, setLast] = useState(value)
+  if (value !== last) {
+    setLast(value)
+    setDraft(value)
+  }
+  return (
+    <label className="lab-field">
+      <span>{label}</span>
+      <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
+      <input
+        className="lab-hex"
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value)
+          if (/^#[0-9a-f]{6}$/i.test(e.target.value)) onChange(e.target.value.toLowerCase())
+        }}
+      />
+    </label>
+  )
+}
+
+function Slider(props: {
+  label: string
+  min: number
+  max: number
+  step: number
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <label className="lab-field lab-slider">
+      <span>{props.label}</span>
+      <input
+        type="range"
+        min={props.min}
+        max={props.max}
+        step={props.step}
+        value={props.value}
+        onChange={(e) => props.onChange(Number(e.target.value))}
+      />
+      <output>{props.value}</output>
+    </label>
+  )
+}

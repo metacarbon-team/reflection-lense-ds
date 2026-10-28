@@ -121,6 +121,5 @@ Figma variables cannot hold `em` or multipliers, so the generator writes per-sty
 - Values of the leading multipliers and tracking steps.
 - NaN Serf B optical sizes (Micro, Text, Headline, Display): rely on the variable font's `opsz` axis on web (to verify it exists) and pick the cut by size on native?
 - `caption/small` at 12px collides with `caption` (12px): move `caption` up or drop `caption/small`.
-- Cyrillic coverage: the NaN Serf Sans archive is Latin-only.
 - Font licenses for web and app embedding.
 - Ownership of type decisions in the Figma sync — deferred to the pipeline discussion ([0004](0004-figma-sync.md)).

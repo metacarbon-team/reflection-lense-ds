@@ -21,7 +21,7 @@ if ! sha256sum --check --status "$hashes" 2>/dev/null; then
   rm -f "$hashes"
   # CI=true keeps pnpm from waiting on a TTY prompt, which a hook can't answer
   if CI=true pnpm install --frozen-lockfile; then
-    sha256sum scripts/install_pkgs.sh package.json pnpm-lock.yaml > "$hashes" || rm -f "$hashes"
+    sha256sum scripts/install_pkgs.sh package.json pnpm-workspace.yaml pnpm-lock.yaml packages/*/package.json apps/*/package.json > "$hashes" || rm -f "$hashes"
   fi
 fi
 

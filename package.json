@@ -1,25 +1,15 @@
 {
-  "name": "reflection-lense",
+  "name": "reflection-lense-ds",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "dev": "storybook dev -p 6006",
-    "build": "vite build && tsc -p tsconfig.build.json",
-    "build-storybook": "storybook build",
-    "typecheck": "tsc --noEmit",
+    "dev": "pnpm --filter @reflection/react dev",
+    "lab": "pnpm --filter @reflection/theme-lab dev",
+    "build": "pnpm -r build",
+    "build-storybook": "pnpm --filter @reflection/react build-storybook",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -29,34 +19,16 @@
       "esbuild"
     ]
   },
-  "peerDependencies": {
-    "react": ">=19",
-    "react-dom": ">=19"
-  },
-  "dependencies": {
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@storybook/addon-a11y": "^10.6.5",
-    "@storybook/addon-docs": "^10.6.5",
-    "@storybook/react-vite": "^10.6.5",
     "@types/node": "^26.6.5",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-storybook": "^10.6.5",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "storybook": "^10.6.5",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5"
+    "typescript-eslint": "^8.72.1"
   }
 }

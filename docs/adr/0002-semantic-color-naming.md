@@ -119,9 +119,9 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 ## Open questions
 
 - Final name of the `ghost` scope.
-- Whether `bg/neutral/subtle` and `bg/neutral` need `hover` / `pressed` (only if clickable containers with their own fill exist).
 - Naming of shadows / elevation.
 
 ## Revisions
 
 - 2026-10-28 — resolved open questions: `focus` is opaque and uses the accent color; inverse regions use forced dark mode rather than the opposite mode.
+- 2026-10-28 — resolved open question: `bg/neutral/subtle` and `bg/neutral` have `hover` and `pressed` (clickable containers).

@@ -5,7 +5,6 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "types": ["vite/client"],
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -16,6 +15,5 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true
-  },
-  "include": ["src", ".storybook", "vite.config.ts"]
+  }
 }

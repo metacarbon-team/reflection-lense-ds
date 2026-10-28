@@ -79,10 +79,11 @@ The generator always returns a valid theme together with a report of what was sh
 
 ## Open questions
 
-- Numeric thresholds: minimum ΔL for layers, prominences and states; the `emphasized` weight floor; the hue-conflict threshold. To be calibrated on a prototype (a Foundations page in Storybook).
-- Status hue values.
-- The dark-mode target table.
+- Numeric thresholds: minimum ΔL for layers, prominences and states; the `emphasized` weight floor; the hue-conflict threshold. Calibrated in the internal Theme Lab (`apps/theme-lab`).
+- Status hue values: chosen once the seeds of the default themes are provided; placeholders until then.
+- Whether dark mode needs its own target table: the prototype applies one set of parameters to both modes; calibration decides.
 
 ## Revisions
 
 - 2026-10-28 — resolved open question: only control boundaries must meet 3:1, using `stroke/<role>/emphasized`; decorative dividers are exempt.
+- 2026-10-28 — thresholds are defined in an internal Theme Lab for theme generation and preview, not in Storybook. The prototype generator measures every lightness step on 8-bit colors as shipped, because rounding near black moves OKLCH lightness by several hundredths.
