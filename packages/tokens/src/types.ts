@@ -12,6 +12,12 @@ export type Scope = (typeof SCOPES)[number]
 /** Opacity is fixed by scope (ADR 0002). */
 export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke', 'blanket']
 
+/** Translucent scopes plus `bg/neutral/raised` and its states (ADR 0007): opacity reads from the name. */
+export const isTranslucent = (name: string) => {
+  const [scope, ...rest] = name.split('/')
+  return TRANSLUCENT_SCOPES.includes(scope as Scope) || (scope === 'bg' && rest.includes('raised'))
+}
+
 export type Mode = 'light' | 'dark'
 
 /** Seed hex colors for one mode. */
@@ -35,6 +41,8 @@ export interface GeneratorParams {
   layerStep: number
   /** Minimum ΔL between a fill and its hover, and between hover and pressed. */
   stateStep: number
+  /** Minimum ΔL by which `bg/neutral/raised` moves away from every neutral layer (ADR 0007). */
+  raisedStep: number
   /** Minimum ΔL between fg prominences. */
   fgStep: number
   /** WCAG contrast for text. */
@@ -60,6 +68,8 @@ export interface GeneratorParams {
 export const DEFAULT_PARAMS: GeneratorParams = {
   layerStep: 0.03,
   stateStep: 0.03,
+  // The concept's input (#fffefa) sits about 0.018 above its canvas (#faf8f3).
+  raisedStep: 0.015,
   fgStep: 0.08,
   textContrast: 4.5,
   nonTextContrast: 3,
@@ -67,8 +77,9 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   disabledContrast: 2,
   tintChroma: 0.03,
   statusChroma: 0.14,
-  // Placeholders until the default themes' seeds are agreed.
-  statusHues: { success: 150, warning: 75, danger: 27, info: 245 },
+  // Success and danger match the concept's diff colors (#248a3d, #d70015); warning and info are
+  // placeholders until the default themes' inputs cover them.
+  statusHues: { success: 148, warning: 75, danger: 27, info: 245 },
   hueConflict: 25,
   strokeAlpha: { subtle: 0.08, normal: 0.16 },
   blanketAlpha: 0.48,

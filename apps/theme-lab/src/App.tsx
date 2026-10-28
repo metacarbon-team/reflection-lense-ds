@@ -4,7 +4,7 @@ import {
   DEFAULT_TYPE_SCALE,
   generateTheme,
   generateTypeScale,
-  PLACEHOLDER_SEEDS,
+  DEFAULT_SEEDS,
   ROLES,
   STATUS_ROLES,
   toCssVars,
@@ -13,20 +13,55 @@ import {
   type Mode,
   type ModeTheme,
   type Role,
+  type Theme,
   type ThemeSeeds,
   type TypeScaleParams,
 } from '@reflection/tokens'
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { MirrorScreen } from './ui-preview/MirrorScreen'
 
 /** `var(--…)` for a canonical token name. */
 const v = (name: string) => `var(${cssVarName(name)})`
 const MODES: Mode[] = ['light', 'dark']
 const SEED_KEYS = ['bg', 'fg', 'accent'] as const
+const TABS = [
+  { id: 'ui', label: 'UI preview' },
+  { id: 'palette', label: 'Palette swatches' },
+] as const
+type Tab = (typeof TABS)[number]['id']
+
+/** A real screen built from the generated tokens, in one mode at a time. */
+function UiPreview({ theme }: { theme: Theme }) {
+  const [mode, setMode] = useState<Mode>('light')
+  const style = { ...toCssVars(theme[mode]) } as CSSProperties
+  return (
+    <section className="lab-ui-preview">
+      <div className="lab-segmented" role="radiogroup" aria-label="Mode">
+        {MODES.map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={mode === m}
+            className={mode === m ? 'lab-segment lab-segment-active' : 'lab-segment'}
+            onClick={() => setMode(m)}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      <div className="lab-stage" style={style}>
+        <MirrorScreen />
+      </div>
+    </section>
+  )
+}
 
 export function App() {
-  const [seeds, setSeeds] = useState<ThemeSeeds>(structuredClone(PLACEHOLDER_SEEDS) as ThemeSeeds)
+  const [seeds, setSeeds] = useState<ThemeSeeds>(structuredClone(DEFAULT_SEEDS) as ThemeSeeds)
   const [params, setParams] = useState<GeneratorParams>(structuredClone(DEFAULT_PARAMS))
   const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
+  const [tab, setTab] = useState<Tab>('ui')
 
   const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
   const issues = useMemo(
@@ -35,7 +70,7 @@ export function App() {
   )
 
   const reset = () => {
-    setSeeds(structuredClone(PLACEHOLDER_SEEDS) as ThemeSeeds)
+    setSeeds(structuredClone(DEFAULT_SEEDS) as ThemeSeeds)
     setParams(structuredClone(DEFAULT_PARAMS))
     setTypeScale(structuredClone(DEFAULT_TYPE_SCALE))
   }
@@ -82,6 +117,14 @@ export function App() {
             step={0.005}
             value={params.stateStep}
             onChange={(x) => setParams({ ...params, stateStep: x })}
+          />
+          <Slider
+            label="Raised step"
+            min={0.005}
+            max={0.04}
+            step={0.0025}
+            value={params.raisedStep}
+            onChange={(x) => setParams({ ...params, raisedStep: x })}
           />
           <Slider
             label="Text step"
@@ -215,13 +258,41 @@ export function App() {
       </aside>
 
       <main className="lab-main">
-        <div className="lab-modes">
-          {MODES.map((mode) => (
-            <ModePreview key={mode} theme={theme[mode]} issues={issues[mode]} />
+        <div className="lab-tabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              className={tab === t.id ? 'lab-tab lab-tab-active' : 'lab-tab'}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
           ))}
+          <span className="lab-tabs-status">
+            {MODES.map((mode) => (
+              <span key={mode} className={issues[mode].length ? 'lab-status lab-status-fail' : 'lab-status'}>
+                {mode}: {issues[mode].length ? `${issues[mode].length} violations` : 'all rules pass'}
+              </span>
+            ))}
+          </span>
         </div>
-        <TypeScalePreview params={typeScale} />
-        <TokenTable light={theme.light} dark={theme.dark} />
+
+        {tab === 'ui' ? (
+          <UiPreview theme={theme} />
+        ) : (
+          <>
+            <div className="lab-modes">
+              {MODES.map((mode) => (
+                <ModePreview key={mode} theme={theme[mode]} issues={issues[mode]} />
+              ))}
+            </div>
+            <TypeScalePreview params={typeScale} />
+            <TokenTable light={theme.light} dark={theme.dark} />
+          </>
+        )}
       </main>
     </div>
   )
@@ -359,8 +430,18 @@ function Layer({ name, depth, children }: { name: string; depth: number; childre
         <button type="button" className="lab-btn lab-ghost" style={ghost('neutral')}>
           Ghost
         </button>
-        <span className="lab-input" style={{ border: `1px solid ${v('stroke/neutral/emphasized')}` }}>
-          Input boundary
+        <span
+          className="lab-input lab-fill"
+          style={
+            {
+              '--fill': v('bg/neutral/raised'),
+              '--fill-hover': v('bg/neutral/raised/hover'),
+              '--fill-pressed': v('bg/neutral/raised/pressed'),
+              border: `1px solid ${v('stroke/neutral/emphasized')}`,
+            } as CSSProperties
+          }
+        >
+          Raised input
         </span>
         <button type="button" className="lab-btn lab-fill" style={fill('neutral', true)}>
           Neutral solid

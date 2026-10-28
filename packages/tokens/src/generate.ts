@@ -20,14 +20,13 @@ import {
   DEFAULT_PARAMS,
   ROLES,
   STATUS_ROLES,
-  TRANSLUCENT_SCOPES,
+  isTranslucent,
   type Adjustment,
   type GeneratorParams,
   type Mode,
   type ModeSeeds,
   type ModeTheme,
   type Role,
-  type Scope,
   type Theme,
   type ThemeSeeds,
   type Token,
@@ -61,27 +60,57 @@ export function generateMode(mode: Mode, seeds: ModeSeeds, params: GeneratorPara
   const dir: 1 | -1 = Math.abs(fg.l - bg.l) < 1e-3 ? (bg.l >= 0.5 ? -1 : 1) : fg.l > bg.l ? 1 : -1
   const run = (l0: number) => build(mode, l0, dir, bg, fg, accent, params)
 
-  let result = run(bg.l)
-  if (!result.feasible) {
+  // Raised needs room beyond the background, away from the text (ADR 0007). A background without
+  // that room moves towards the text, and drift never takes the room back.
+  const awayPole = quantize(rgb(dir < 0 ? 1 : 0, 0, 0))
+  const raisedFits = (l: number) => raisedAlpha(awayPole, [quantize(rgb(l, bg.c, bg.h))], params.raisedStep) !== null
+  /** Binary search between `ok(0)` and `!ok(max)`: the last passing and the first failing value. */
+  const boundary = (max: number, ok: (x: number) => boolean) => {
+    let lo = 0
+    let hi = max
+    for (let i = 0; i < 16; i++) {
+      const mid = (lo + hi) / 2
+      if (ok(mid)) lo = mid
+      else hi = mid
+    }
+    return [lo, hi] as const
+  }
+  let l0 = bg.l
+  if (!raisedFits(l0)) {
+    const toText = dir > 0 ? 1 - bg.l : bg.l
+    l0 = bg.l + dir * boundary(toText, (s) => !raisedFits(bg.l + dir * s))[1]
+  }
+  const awayRoom = dir > 0 ? l0 : 1 - l0
+  const room = raisedFits(l0 - dir * awayRoom) ? awayRoom : boundary(awayRoom, (m) => raisedFits(l0 - dir * m))[0]
+
+  let result = run(l0)
+  let drifted = false
+  if (!result.feasible && room > 0) {
     // The background drifts away from the text until everything fits: binary search for the
     // smallest drift that works.
-    const room = dir > 0 ? bg.l : 1 - bg.l
+    drifted = true
     let lo = 0
     let hi = room
-    result = run(bg.l - dir * hi)
+    result = run(l0 - dir * hi)
     if (result.feasible) {
       for (let i = 0; i < 12; i++) {
         const mid = (lo + hi) / 2
-        const attempt = run(bg.l - dir * mid)
+        const attempt = run(l0 - dir * mid)
         if (attempt.feasible) {
           hi = mid
           result = attempt
         } else lo = mid
       }
     }
+  }
+  if (drifted || l0 !== bg.l) {
+    const reasons = [
+      l0 !== bg.l && 'background moved towards the text so bg/neutral/raised has room beyond it',
+      drifted && 'background drifted so text keeps 4.5:1 and every step fits',
+    ].filter(Boolean)
     result.adjustments.unshift({
       token: 'surface/neutral',
-      reason: 'background drifted so text keeps 4.5:1 and every step fits',
+      reason: reasons.join('; '),
       from: seeds.bg,
       to: result.tokens['surface/neutral']!.value,
     })
@@ -101,11 +130,10 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   let feasible = true
 
   const put = (name: string, c: Rgb, a = 1) => {
-    const scope = name.split('/')[0] as Scope
     tokens[name] = {
       name,
       value: rgbaToHex({ ...c, a }),
-      opacity: TRANSLUCENT_SCOPES.includes(scope) ? 'translucent' : 'opaque',
+      opacity: isTranslucent(name) ? 'translucent' : 'opaque',
     }
   }
   const adjust = (token: string, reason: string, from: Rgb, to: Rgb) =>
@@ -177,6 +205,31 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   neutralBases.push(withStates('bg/neutral/subtle', subtleL, bg.c, bg.h, layers))
   neutralBases.push(withStates('bg/neutral', normalL, bg.c, bg.h, layers))
 
+  // 1b. Raised (ADR 0007): translucent, away from the text on every neutral layer, so it never costs
+  //     text contrast. Its states move towards the text like every other state.
+  const awayPole = quantize(rgb(dir < 0 ? 1 : 0, 0, 0))
+  const textPole = quantize(rgb(dir < 0 ? 0 : 1, 0, 0))
+  const raisedA = raisedAlpha(awayPole, neutralBases, p.raisedStep)
+  const raisedOver = neutralBases.map((B) => composite({ ...awayPole, a: raisedA ?? MAX_ALPHA }, B))
+  /** Smallest text-pole alpha a state step beyond `from` on every base, and the composites it gives. */
+  const raisedState = (from: Rgb[], min: number) => {
+    const a = solveAlpha(
+      (a) =>
+        a >= min &&
+        neutralBases.every(
+          (B, i) => t(lightness(composite({ ...textPole, a }, B))) - t(lightness(from[i]!)) >= p.stateStep,
+        ),
+    )
+    return { a, over: neutralBases.map((B) => composite({ ...textPole, a: a ?? MAX_ALPHA }, B)) }
+  }
+  const raisedHover = raisedState(raisedOver, 0)
+  const raisedPressed = raisedState(raisedHover.over, raisedHover.a ?? MAX_ALPHA)
+  if (raisedA === null || raisedHover.a === null || raisedPressed.a === null) feasible = false
+  put('bg/neutral/raised', awayPole, raisedA ?? MAX_ALPHA)
+  put('bg/neutral/raised/hover', textPole, raisedHover.a ?? MAX_ALPHA)
+  put('bg/neutral/raised/pressed', textPole, raisedPressed.a ?? MAX_ALPHA)
+  layers.push(...raisedOver, ...raisedHover.over, ...raisedPressed.over)
+
   // 2. Tinted role backgrounds.
   const tinted: Rgb[] = []
   for (const r of ROLES) {
@@ -187,17 +240,19 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     withStates(`bg/${r}`, stepped(ls, p.tintChroma, h, p.layerStep, dir), p.tintChroma, h, tinted)
   }
 
-  // 3. Ghost fills: translucent, the only fill of transparent controls, visible on every neutral layer.
+  // 3. Ghost fills: translucent, the only fill of transparent controls, visible on every neutral layer
+  //    and on raised.
+  const ghostBases = [...neutralBases, ...raisedOver]
   const ghostComposites: Rgb[] = []
   for (const r of ROLES) {
-    const base = quantize(r === 'neutral' ? rgb(dir > 0 ? 1 : 0, 0, 0) : rgb(0.5, tint[r].c, tint[r].h))
+    const base = quantize(r === 'neutral' ? textPole : rgb(0.5, tint[r].c, tint[r].h))
     const over = (a: number, under: Rgb) => lightness(composite({ ...base, a }, under))
-    const hoverA = solveAlpha((a) => neutralBases.every((L) => Math.abs(over(a, L) - lightness(L)) >= p.stateStep))
+    const hoverA = solveAlpha((a) => ghostBases.every((L) => Math.abs(over(a, L) - lightness(L)) >= p.stateStep))
     const pressedA =
       hoverA === null
         ? null
         : solveAlpha(
-            (a) => a >= hoverA && neutralBases.every((L) => Math.abs(over(a, L) - over(hoverA, L)) >= p.stateStep),
+            (a) => a >= hoverA && ghostBases.every((L) => Math.abs(over(a, L) - over(hoverA, L)) >= p.stateStep),
           )
     if (hoverA === null || pressedA === null) {
       feasible = false
@@ -205,7 +260,7 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     }
     put(`ghost/${r}/hover`, base, hoverA)
     put(`ghost/${r}/pressed`, base, pressedA)
-    for (const L of neutralBases)
+    for (const L of ghostBases)
       ghostComposites.push(composite({ ...base, a: hoverA }, L), composite({ ...base, a: pressedA }, L))
   }
 
@@ -223,9 +278,8 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     if (r === 'neutral' && t(fg.l) > t(ln) && fits(nextStep(fg.l, c, h, p.fgStep, dir))) ln = fg.l
     // Emphasized falling off the lightness range makes the build infeasible; drift then frees room.
     const le = stepped(ln, c, h, p.fgStep, dir)
-    // Subtle sits one step before normal, never below the contrast floor.
-    const back = nextStep(ln, c, h, p.fgStep, dir === 1 ? -1 : 1)
-    const ls = t(back) >= t(sub) ? back : sub
+    // Subtle is the contrast floor itself; normal is at least one step beyond it.
+    const ls = sub
     put(`fg/${r}/subtle`, rgb(ls, c, h))
     put(`fg/${r}`, rgb(ln, c, h))
     const emph = quantize(rgb(Math.min(1, Math.max(0, le)), c, h))
@@ -309,6 +363,11 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   // The validator has the last word: a build only counts when the shipped colors pass every rule.
   if (feasible) feasible = validateMode({ mode, tokens, adjustments }, p).length === 0
   return { tokens, adjustments, feasible }
+}
+
+/** Smallest alpha of `pole` that moves every base by at least `step` in lightness, or null. */
+function raisedAlpha(pole: Rgb, bases: Rgb[], step: number): number | null {
+  return solveAlpha((a) => bases.every((B) => Math.abs(lightness(composite({ ...pole, a }, B)) - lightness(B)) >= step))
 }
 
 /** Smallest 8-bit alpha that satisfies `ok`, or null if even the maximum does not. */

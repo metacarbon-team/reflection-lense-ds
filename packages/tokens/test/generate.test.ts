@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
+import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
 import { generateMode, generateTheme } from '../src/generate'
-import { PLACEHOLDER_SEEDS } from '../src/index'
+import { DEFAULT_SEEDS } from '../src/index'
 import { generateTypeScale } from '../src/typescale'
 import { validateMode } from '../src/validate'
 
@@ -26,7 +26,7 @@ describe('color math', () => {
 
 describe('generator', () => {
   it('produces a valid theme from the placeholder seeds', () => {
-    const theme = generateTheme(PLACEHOLDER_SEEDS)
+    const theme = generateTheme(DEFAULT_SEEDS)
     expect(validateMode(theme.light)).toEqual([])
     expect(validateMode(theme.dark)).toEqual([])
   })
@@ -53,6 +53,22 @@ describe('generator', () => {
     }
     expect(failures.slice(0, 10)).toEqual([])
   }, 120_000)
+
+  it('makes raised translucent, lighter in light themes and sunken in dark ones (ADR 0007)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of [theme.light, theme.dark]) {
+      const raised = hexToRgba(mode.tokens['bg/neutral/raised']!.value)
+      const surface = hexToRgba(mode.tokens['surface/neutral']!.value)
+      const over = rgbToOklch(composite(raised, surface)).l - rgbToOklch(surface).l
+      expect(mode.tokens['bg/neutral/raised']!.opacity).toBe('translucent')
+      expect(raised.a).toBeLessThan(1)
+      expect(mode.mode === 'light' ? over : -over).toBeGreaterThan(0)
+    }
+    // A pure white seed leaves no room above it: the surface steps down and says so.
+    const white = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })
+    expect(white.tokens['surface/neutral']!.value).not.toBe('#ffffff')
+    expect(white.adjustments.some((a) => a.token === 'surface/neutral')).toBe(true)
+  })
 
   it('keeps an accessible accent seed exactly', () => {
     const mode = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })

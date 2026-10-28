@@ -5,8 +5,11 @@ export { generateTypeScale, DEFAULT_TYPE_SCALE, type TypeScaleParams, type TypeS
 export { cssVarName, toCssVars } from './css'
 export { contrast, hexToRgba, rgbaToHex, rgbToOklch, oklchToRgb, composite, lightness } from './color'
 
-/** Placeholder seeds until the default themes' inputs are agreed. */
-export const PLACEHOLDER_SEEDS = {
-  light: { bg: '#fbfaf7', fg: '#1d1c19', accent: '#4f6bed' },
+/**
+ * Default theme seeds. Light reproduces the "Mirror · CLI parity" concept (Figma node 2850:3075):
+ * warm paper background, warm near-black text, lime accent. Dark is still a placeholder.
+ */
+export const DEFAULT_SEEDS = {
+  light: { bg: '#faf8f3', fg: '#29241a', accent: '#cee04b' },
   dark: { bg: '#141413', fg: '#ecebe7', accent: '#7b93ff' },
 } as const

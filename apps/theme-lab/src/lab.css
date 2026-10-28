@@ -129,6 +129,73 @@ code {
   min-width: 0;
 }
 
+.lab-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--lab-border);
+}
+
+.lab-tab {
+  font: inherit;
+  font-weight: 500;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--lab-muted);
+  cursor: pointer;
+}
+
+.lab-tab-active {
+  color: var(--lab-text);
+  border-bottom-color: var(--lab-text);
+}
+
+.lab-tabs-status {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.lab-ui-preview {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.lab-segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--lab-border);
+}
+
+.lab-segment {
+  font: inherit;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--lab-muted);
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.lab-segment-active {
+  background: var(--lab-panel);
+  color: var(--lab-text);
+}
+
+/* Dark backdrop around the window, as on the concept canvas. */
+.lab-stage {
+  justify-self: stretch;
+  padding: 48px;
+  border-radius: 12px;
+  background: #2b2b2a;
+}
+
 .lab-modes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));

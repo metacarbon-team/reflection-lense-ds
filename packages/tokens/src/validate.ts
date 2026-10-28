@@ -2,15 +2,7 @@
 // the generator: it only reads token names and hex values, so it can validate any theme payload.
 
 import { composite, contrast, hexToRgba, lightness, type Rgb, type Rgba } from './color'
-import {
-  DEFAULT_PARAMS,
-  ROLES,
-  SCOPES,
-  TRANSLUCENT_SCOPES,
-  type GeneratorParams,
-  type ModeTheme,
-  type Scope,
-} from './types'
+import { DEFAULT_PARAMS, ROLES, SCOPES, isTranslucent, type GeneratorParams, type ModeTheme, type Scope } from './types'
 
 export interface Issue {
   rule: string
@@ -24,6 +16,7 @@ export interface Issue {
 const MODIFIERS: Record<string, number> = {
   subtle: 0,
   emphasized: 0,
+  raised: 0,
   'on-emphasized': 1,
   hover: 2,
   pressed: 2,
@@ -48,8 +41,9 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const okRole = (ROLES as readonly string[]).includes(role ?? '')
     const order = rest.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
-    if (!okScope || !okRole || !okRest) fail('grammar', name, 0, 1)
-    const translucent = TRANSLUCENT_SCOPES.includes(scope as Scope)
+    const okRaised = !rest.includes('raised') || (scope === 'bg' && role === 'neutral')
+    if (!okScope || !okRole || !okRest || !okRaised) fail('grammar', name, 0, 1)
+    const translucent = isTranslucent(name)
     if (translucent ? c.a >= 1 : c.a < 1)
       fail(translucent ? 'opacity: must be translucent' : 'opacity: must be opaque', name, c.a, translucent ? 0 : 1)
   }
@@ -62,11 +56,40 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     if (d < p.layerStep - TOLERANCE) fail('layer separation', stack[i]!, d, p.layerStep, stack[i - 1])
   }
 
-  // Layers controls sit on (bases and states) and neutral bases for ghost composites.
+  // Raised (ADR 0007): away from the text on every neutral layer, its states a state step each
+  // towards the text. Composites over the stack count as layers.
+  const raisedOver = (name: string): [string, Rgb][] =>
+    has(name) ? stack.map((b) => [`${name} over ${b}`, composite(get(name)!, get(b)!)]) : []
+  const raised = raisedOver('bg/neutral/raised')
+  const raisedHover = raisedOver('bg/neutral/raised/hover')
+  const raisedPressed = raisedOver('bg/neutral/raised/pressed')
+  raised.forEach(([, c], i) => {
+    const d = -sign * (L(c) - L(get(stack[i]!)))
+    if (d < p.raisedStep - TOLERANCE) fail('raised separation', 'bg/neutral/raised', d, p.raisedStep, stack[i])
+  })
+  for (const [states, from] of [
+    [raisedHover, raised],
+    [raisedPressed, raisedHover],
+  ] as const) {
+    states.forEach(([name, c], i) => {
+      const prev = from[i]
+      if (!prev) return
+      const d = sign * (L(c) - L(prev[1]))
+      if (d < p.stateStep - TOLERANCE) fail('state separation', name, d, p.stateStep, prev[0])
+    })
+  }
+
+  // Layers controls sit on (bases, states and raised) and bases for ghost composites.
   const layerNames = [...color.keys()].filter((n) =>
     /^(surface\/neutral|bg\/neutral(\/subtle)?(\/hover|\/pressed)?)$/.test(n),
   )
-  const ghostBases = stack
+  const layers: [string, Rgb][] = [
+    ...layerNames.map((n): [string, Rgb] => [n, get(n)!]),
+    ...raised,
+    ...raisedHover,
+    ...raisedPressed,
+  ]
+  const ghostBases: [string, Rgb][] = [...stack.map((n): [string, Rgb] => [n, get(n)!]), ...raised]
   const ghostNames = [...color.keys()].filter((n) => n.startsWith('ghost/'))
 
   // Text: every fg except disabled and on-emphasized, on neutral layers, its role's tinted
@@ -76,9 +99,9 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       role === 'neutral'
         ? []
         : [...color.keys()].filter((n) => new RegExp(`^bg/${role}(/subtle)?(/hover|/pressed)?$`).test(n))
-    const backgrounds: [string, Rgb][] = [...layerNames, ...tinted].map((n) => [n, get(n)!])
+    const backgrounds: [string, Rgb][] = [...layers, ...tinted.map((n): [string, Rgb] => [n, get(n)!])]
     for (const g of ghostNames)
-      for (const b of ghostBases) backgrounds.push([`${g} over ${b}`, composite(get(g)!, get(b)!)])
+      for (const [b, under] of ghostBases) backgrounds.push([`${g} over ${b}`, composite(get(g)!, under)])
     for (const fgName of [`fg/${role}/subtle`, `fg/${role}`, `fg/${role}/emphasized`].filter(has)) {
       for (const [bgName, bg] of backgrounds) {
         const r = contrast(get(fgName)!, bg)
@@ -107,8 +130,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     // Control boundaries.
     const boundary = `stroke/${role}/emphasized`
     if (has(boundary)) {
-      for (const n of layerNames) {
-        const under = get(n)!
+      for (const [n, under] of layers) {
         const r = contrast(composite(get(boundary)!, under), under)
         if (r < p.nonTextContrast) fail('boundary contrast', boundary, r, p.nonTextContrast, n)
       }
@@ -117,15 +139,15 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
 
   // Focus.
   if (has('focus/accent')) {
-    for (const n of layerNames) {
-      const r = contrast(get('focus/accent')!, get(n)!)
+    for (const [n, under] of layers) {
+      const r = contrast(get('focus/accent')!, under)
       if (r < p.nonTextContrast) fail('focus contrast', 'focus/accent', r, p.nonTextContrast, n)
     }
   }
 
-  // State separation of opaque fills.
+  // State separation of opaque fills (raised states are checked on their composites above).
   for (const name of color.keys()) {
-    if (!has(`${name}/hover`) || !has(`${name}/pressed`)) continue
+    if (isTranslucent(name) || !has(`${name}/hover`) || !has(`${name}/pressed`)) continue
     const d1 = Math.abs(L(get(`${name}/hover`)) - L(get(name)))
     const d2 = Math.abs(L(get(`${name}/pressed`)) - L(get(`${name}/hover`)))
     if (d1 < p.stateStep - TOLERANCE) fail('state separation', `${name}/hover`, d1, p.stateStep, name)
@@ -137,8 +159,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const hover = get(`ghost/${role}/hover`)
     const pressed = get(`ghost/${role}/pressed`)
     if (!hover || !pressed) continue
-    for (const b of ghostBases) {
-      const under = get(b)!
+    for (const [b, under] of ghostBases) {
       const h = composite(hover, under)
       const d1 = Math.abs(L(h) - L(under))
       const d2 = Math.abs(L(composite(pressed, under)) - L(h))
