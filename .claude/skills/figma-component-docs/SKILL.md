@@ -123,7 +123,9 @@ links were given.
 | Section | padding-top 64, gap 32, title `Heading/Large`, description `Body/Default` + `fg/neutral/subtle` |
 | Divider | dashed line (4/4), `stroke/neutral/subtle` at 16 % opacity, 64 px top padding |
 | Preview | two equal panels, Light and Dark (`setExplicitVariableModeForCollection` on the `Theme` collection), `bg/neutral/neutral` fill, theme name as a caption in the top-left corner |
+| No eyebrows | no overline/eyebrow captions above titles ("02 / COLOR FOUNDATIONS"-style), and no filler summary under the page title that only restates the section list. The owner hates both. Every line of text must say something the sections don't |
 | Clipping | frames that wrap instances (preview rows, cards, matrix cells) never clip content, because instances cast shadows and focus rings. Only the doc root and the props table clip |
+| Token names | every variable name shown in a doc uses `tokenChip()` from `lib.js` (reference chip: node 2483:13055 on "02. Typography"): mono 12 px, `bg/neutral/neutral` fill, `stroke/neutral/neutral` at 24 %, padding `spacing/1`/`spacing/2`, radius `radius/sm`. Colors get a 12 px square swatch: one frame whose fill is the variable, with no child layers. Translucent values also get the transparency grid as a tiled PNG image fill underneath, never vector cells (call `finishSwatches()` at the end of the script). Other types get a glyph: `#` number, `Aa` string, `◐` boolean. Plain code chips (`Code/Small` on `bg/neutral/subtle`) are for things that aren't variables: prop types, defaults, name segments, CSS |
 | 2-col row | 296 px description · 40 px gap · example panel (`surface/neutral`, radius 8, padding 48) |
 | Borders | `stroke/neutral/subtle` at 16 % paint opacity |
 | Mandatory / slot markers | `bg/info/subtle` + `stroke/info/emphasized`; optional markers `bg/neutral/subtle` |

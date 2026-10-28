@@ -37,6 +37,12 @@ const COLOR_NAMES = {
   dangerFg: 'fg/danger/danger',
 };
 
+// Number variables bound by the token chip (padding, gap, radius), as in the reference chip.
+const NUMBER_NAMES = { space1: 'spacing/1', space2: 'spacing/2', radiusSm: 'radius/sm' };
+
+// Glyph shown before a non-color variable name in a token chip. Color variables get a swatch instead.
+const VAR_ICON = { FLOAT: '#', STRING: 'Aa', BOOLEAN: '◐' };
+
 // Subtle borders in the reference doc are stroke/neutral/subtle at 16 % paint opacity.
 const BORDER_OPACITY = 0.16;
 
@@ -46,6 +52,8 @@ const THEME = { collection: 'Theme', light: 'Light', dark: 'Dark' };
 const T = {}; // resolved text styles
 const C = {}; // resolved color variables
 const MODES = {}; // { light: { collection, modeId }, dark: { ... } }, empty if the file has no such collection
+const N = {}; // resolved number variables
+const VARS = new Map(); // every local variable by name (first one wins), for token chips
 const _warnings = [];
 
 async function loadTokens() {
@@ -63,6 +71,12 @@ async function loadTokens() {
   for (const [k, n] of Object.entries(COLOR_NAMES)) {
     if (vars.has(n)) C[k] = vars.get(n);
     else missing.push('color variable "' + n + '"');
+  }
+  for (const v of await figma.variables.getLocalVariablesAsync()) if (!VARS.has(v.name)) VARS.set(v.name, v);
+  for (const [k, n] of Object.entries(NUMBER_NAMES)) {
+    const v = VARS.get(n);
+    if (v && v.resolvedType === 'FLOAT') N[k] = v;
+    else missing.push('number variable "' + n + '"');
   }
   if (missing.length) throw new Error('Missing tokens in this file: ' + missing.join('; '));
   const theme = (await figma.variables.getLocalVariableCollectionsAsync()).find(c => c.name === THEME.collection);
@@ -243,6 +257,91 @@ async function placeMarkers(dia, inst, items, mode) {
     ids.push(m.id);
   }
   return ids;
+}
+
+// ---- token chips ----
+// Chip for a variable name: swatch (COLOR) or type glyph (FLOAT / STRING / BOOLEAN) + monospace name.
+// `varName` defaults to `label`; pass it when the label isn't the Figma name (e.g. a canonical export name).
+// Names that aren't variables get a plain chip. Call finishSwatches() once the chips sit in their final
+// frames: transparency is resolved there (per mode) and only translucent colors get the transparency grid.
+const SWATCHES = [];
+
+// A swatch is ONE frame: the variable is its fill (no child layers). Translucent ones get the
+// transparency grid as an image fill underneath, in finishSwatches().
+function swatch(v) {
+  const f = plainFrame('Swatch', 12, 12);
+  f.cornerRadius = 2;
+  stroke(f, 'strokeNeutral', { opacity: 0.24 });
+  f.fills = [figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }, 'color', v)];
+  SWATCHES.push({ f, v });
+  return f;
+}
+
+// opts.mode: { collection, modeId } (e.g. MODES.dark) pins only the swatch, so the chip itself keeps the
+// page's theme while the color shows that mode. Never pin a whole row: its text would switch theme too.
+async function tokenChip(label, varName, opts = {}) {
+  const v = VARS.get(varName || label);
+  const c = box('HORIZONTAL', 'Token chip', { fill: 'bgNeutral', cross: 'CENTER' });
+  stroke(c, 'strokeNeutral', { opacity: 0.24 });
+  for (const f of ['paddingLeft', 'paddingRight', 'itemSpacing']) c.setBoundVariable(f, N.space2);
+  for (const f of ['paddingTop', 'paddingBottom']) c.setBoundVariable(f, N.space1);
+  for (const f of ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius']) c.setBoundVariable(f, N.radiusSm);
+  if (v && v.resolvedType === 'COLOR') {
+    const sw = swatch(v);
+    if (opts.mode) sw.setExplicitVariableModeForCollection(opts.mode.collection, opts.mode.modeId);
+    c.appendChild(sw);
+  } else if (v && VAR_ICON[v.resolvedType]) c.appendChild(await txt('code', 'fgSubtle', VAR_ICON[v.resolvedType], 'Type'));
+  c.appendChild(await txt('code', 'fgNeutral', label, 'Name'));
+  return c;
+}
+
+// Transparency grid = a 6×6 px PNG (3 px cells) encoded here and tiled as an image fill, so it adds
+// no layers. Images can't take variables, so its two greys are fixed (the usual transparency-grid look).
+function crc32(buf) {
+  let crc = 0xffffffff;
+  for (let n = 0; n < buf.length; n++) {
+    let c = (crc ^ buf[n]) & 0xff;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crc = (crc >>> 8) ^ c;
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+const u32 = n => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+function pngChunk(type, data) {
+  const body = new Uint8Array([...type].map(ch => ch.charCodeAt(0)).concat(data));
+  return [...u32(data.length), ...body, ...u32(crc32(body))];
+}
+// RGB PNG with a stored (uncompressed) deflate block — fine for a tiny tile.
+function checkerPng(cell, light, dark) {
+  const size = cell * 2, raw = [];
+  for (let y = 0; y < size; y++) {
+    raw.push(0); // filter: none
+    for (let x = 0; x < size; x++) raw.push(...((Math.floor(x / cell) + Math.floor(y / cell)) % 2 ? dark : light));
+  }
+  let a = 1, b = 0;
+  for (const v of raw) { a = (a + v) % 65521; b = (b + a) % 65521; }
+  const len = raw.length;
+  const zlib = [0x78, 0x01, 0x01, len & 255, len >>> 8, ~len & 255, (~len >>> 8) & 255, ...raw, ...u32(((b << 16) | a) >>> 0)];
+  return new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ...pngChunk('IHDR', [...u32(size), ...u32(size), 8, 2, 0, 0, 0]), ...pngChunk('IDAT', zlib), ...pngChunk('IEND', [])]);
+}
+let _checker = null;
+function checkerPaint() {
+  if (!_checker) _checker = { type: 'IMAGE', imageHash: figma.createImage(checkerPng(3, [255, 255, 255], [224, 224, 224])).hash, scaleMode: 'TILE', scalingFactor: 1 };
+  return _checker;
+}
+
+// Puts the grid under translucent swatches only; alpha is resolved in each swatch's own mode context.
+function finishSwatches() {
+  let grids = 0;
+  for (const { f, v } of SWATCHES) {
+    let a = 1;
+    try { const r = v.resolveForConsumer(f); if (r && r.value && r.value.a !== undefined) a = r.value.a; } catch (e) { _warnings.push('Could not resolve ' + v.name + ': ' + e.message); }
+    if (a >= 1) continue;
+    f.fills = [checkerPaint(), ...f.fills];
+    grids++;
+  }
+  return grids;
 }
 
 // Dashed separator between doc sections.
