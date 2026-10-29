@@ -1,12 +1,12 @@
 // Seeds → semantic color tokens for one theme (ADR 0003). Contrast-targeted: hue and chroma come from
-// the seeds, lightness is solved until every rule holds. The generator never rejects a theme; it
-// shifts colors and reports what it shifted.
+// the seeds, lightness is solved until every rule holds. Accent and status fills are their seeds
+// exactly (ADR 0011); the generator never rejects a theme, it shifts derived colors (and, in edge
+// cases, the background and text seeds) and reports what it shifted.
 
 import {
   composite,
   contrast,
   hexToRgba,
-  hueDistance,
   lightness,
   lightnessForContrast,
   luminance,
@@ -27,6 +27,7 @@ import {
   type ModeSeeds,
   type ModeTheme,
   type Role,
+  type StatusRole,
   type Theme,
   type ThemeSeeds,
   type Token,
@@ -37,6 +38,8 @@ import { validateMode } from './validate'
 const CONTRAST_MARGIN = 0.05
 /** Every lightness step is measured on 8-bit colors; this nudges until the step holds. */
 const NUDGE = 0.002
+const WHITE: Rgb = { r: 1, g: 1, b: 1 }
+const BLACK: Rgb = { r: 0, g: 0, b: 0 }
 /** Translucent tokens must stay below 1. */
 const MAX_ALPHA = 254 / 255
 
@@ -159,28 +162,14 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
     return l
   }
 
-  // Hue and chroma of each role.
+  // Hue and chroma of each role; status roles take theirs from their base colors (ADR 0011).
+  const statusSeed = Object.fromEntries(
+    STATUS_ROLES.map((r) => [r, rgbToOklch(hexToRgba(p.statusSeeds[r]))]),
+  ) as Record<StatusRole, Oklch>
   const tint: Record<Role, { c: number; h: number }> = {
     neutral: { c: fg.c, h: fg.h },
     accent: { c: accent.c, h: accent.h },
-    success: { c: p.statusChroma, h: p.statusHues.success },
-    warning: { c: p.statusChroma, h: p.statusHues.warning },
-    danger: { c: p.statusChroma, h: p.statusHues.danger },
-    info: { c: p.statusChroma, h: p.statusHues.info },
-  }
-  for (const r of STATUS_ROLES) {
-    const h = p.statusHues[r]
-    if (accent.c > 0.02 && hueDistance(h, accent.h) < p.hueConflict) {
-      const side = ((h - accent.h + 540) % 360) - 180 >= 0 ? 1 : -1
-      const shifted = (accent.h + side * p.hueConflict + 360) % 360
-      tint[r] = { c: p.statusChroma, h: shifted }
-      adjust(
-        `bg/${r}/emphasized`,
-        `status hue moved away from the accent hue (${Math.round(h)}° → ${Math.round(shifted)}°)`,
-        rgb(0.6, p.statusChroma, h),
-        rgb(0.6, p.statusChroma, shifted),
-      )
-    }
+    ...statusSeed,
   }
 
   // A base fill with hover and pressed, each a state step further towards the text.
@@ -264,77 +253,62 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
       ghostComposites.push(composite({ ...base, a: hoverA }, L), composite({ ...base, a: pressedA }, L))
   }
 
-  // 4. Text: subtle is the 4.5:1 floor on the worst background. Contrast depends on luminance only,
-  //    so the worst background is the one nearest the text.
+  // 4. Text (ADR 0012): subtle is the 4.5:1 floor on the worst background; contrast depends on
+  //    luminance only, so the worst background is the one nearest the text. Neutral primary text is
+  //    the seed, at least fgStep beyond its floor; every other role's primary text is roleTextStep
+  //    beyond its floor, so it keeps its color.
   const textBackgrounds = [...layers, ...tinted, ...ghostComposites]
   const worst = textBackgrounds.reduce((a, b) => (dir * (luminance(b) - luminance(a)) > 0 ? b : a))
-  const fgEmphasized: Partial<Record<Role, Rgb>> = {}
+  const fgPrimary: Partial<Record<Role, Rgb>> = {}
   for (const r of ROLES) {
     const { c, h } = tint[r]
     const sub = lightnessForContrast({ c, h }, lightness(worst), dir, worst, text)
     if (contrast(rgb(sub, c, h), worst) < text) feasible = false
-    // Normal is at least one step beyond the floor, emphasized one more.
-    let ln = nextStep(sub, c, h, p.fgStep, dir)
-    let le = nextStep(ln, c, h, p.fgStep, dir)
-    // Neutral (ADR 0009): the seed is the top of the ladder and normal one step below it, when the
-    // seed leaves room for both above the floor.
-    if (r === 'neutral') {
-      const below = nextStep(fg.l, c, h, p.fgStep, -dir as 1 | -1)
-      if (t(below) >= t(ln) && Math.abs(shippedL(below, c, h) - shippedL(sub, c, h)) >= p.fgStep) {
-        ln = below
-        le = fg.l
-      } else
-        adjust(
-          'fg/neutral/emphasized',
-          'text seed moved so normal and subtle fit below it at 4.5:1',
-          rgb(fg.l, c, h),
-          rgb(le, c, h),
-        )
-    }
-    // Emphasized falling off the lightness range makes the build infeasible; drift then frees room.
-    if (!fits(le)) feasible = false
+    const minimum = nextStep(sub, c, h, p.fgStep, dir)
+    const target = r === 'neutral' ? fg.l : nextStep(sub, c, h, Math.max(p.roleTextStep, p.fgStep), dir)
+    const ln = t(target) >= t(minimum) ? target : minimum
+    if (r === 'neutral' && ln !== fg.l)
+      adjust('fg/neutral', 'text seed moved to stay a step beyond the 4.5:1 floor', rgb(fg.l, c, h), rgb(ln, c, h))
+    // Primary text falling off the lightness range makes the build infeasible; drift then frees room.
+    if (!fits(ln)) feasible = false
+    const primary = quantize(rgb(Math.min(1, Math.max(0, ln)), c, h))
     put(`fg/${r}/subtle`, rgb(sub, c, h))
-    put(`fg/${r}`, rgb(ln, c, h))
-    const emph = quantize(rgb(Math.min(1, Math.max(0, le)), c, h))
-    put(`fg/${r}/emphasized`, emph)
-    fgEmphasized[r] = emph
+    put(`fg/${r}`, primary)
+    fgPrimary[r] = primary
   }
 
-  // 5. Emphasized fills. On-emphasized is the better of a light and a dark text color; states move
-  //    away from it when they fit, so contrast only grows from default to pressed.
+  // 5. Emphasized fills (ADR 0011): the fill never moves. States move away from the on-emphasized
+  //    text when they fit; the text is the better of a light and a dark color, pushed towards white
+  //    or black until it reaches 4.5:1 on the fill and both states (pure white or black always can).
   const onLight = quantize(rgb(0.985, Math.min(fg.c, 0.01), fg.h))
   const onDark = quantize(rgb(0.2, Math.min(fg.c, 0.02), fg.h))
   const emphasized = (r: Role, l: number, c: number, h: number): Rgb => {
-    const start = rgb(l, c, h)
-    const on = contrast(start, onLight) >= contrast(start, onDark) ? onLight : onDark
-    const away: 1 | -1 = on === onLight ? -1 : 1
-    if (contrast(start, on) < text) {
-      l = lightnessForContrast({ c, h }, l, away, on, text)
-      adjust(`bg/${r}/emphasized`, 'lightness shifted so on-emphasized text reaches 4.5:1', start, rgb(l, c, h))
-    }
+    const fill = quantize(rgb(l, c, h))
+    // The side is picked by its pole, which always reaches 4.58:1 on the better side.
+    const light = contrast(fill, WHITE) >= contrast(fill, BLACK)
+    const away: 1 | -1 = light ? -1 : 1
     const s: 1 | -1 = fits(l + away * 2.5 * p.stateStep) ? away : away === 1 ? -1 : 1
     const lh = stepped(l, c, h, p.stateStep, s)
     const lp = stepped(lh, c, h, p.stateStep, s)
-    const fill = quantize(rgb(l, c, h))
-    if (contrast(rgb(lp, c, h), on) < text) feasible = false
+    const states = [fill, quantize(rgb(lh, c, h)), quantize(rgb(lp, c, h))]
+    // The state nearest the text in luminance has the least contrast with it.
+    const nearest = states.reduce((a, b) => ((light ? 1 : -1) * (luminance(b) - luminance(a)) > 0 ? b : a))
+    const base = rgbToOklch(light ? onLight : onDark)
+    const on = quantize(rgb(lightnessForContrast(base, base.l, light ? 1 : -1, nearest, text), base.c, base.h))
+    if (states.some((x) => contrast(x, on) < text)) feasible = false
     put(`bg/${r}/emphasized`, fill)
-    put(`bg/${r}/emphasized/hover`, rgb(lh, c, h))
-    put(`bg/${r}/emphasized/pressed`, rgb(lp, c, h))
+    put(`bg/${r}/emphasized/hover`, states[1]!)
+    put(`bg/${r}/emphasized/pressed`, states[2]!)
     put(`fg/${r}/on-emphasized`, on)
     return fill
   }
 
-  // Accent stays as close to its seed as possible; its contrast against surface is the weight every
-  // other emphasized fill aligns to, never below the floor. Neutral has a higher floor of its own
-  // (ADR 0009), so the neutral solid fill stays strong.
+  // Accent and status fills are their seeds. Neutral has none: it takes the larger of the accent's
+  // contrast against surface and its own floor (ADR 0009), so the neutral solid fill stays strong.
   const accentFill = emphasized('accent', accent.l, accent.c, accent.h)
-  const weight = Math.max(contrast(accentFill, surface), p.weightFloor)
-  for (const r of ROLES) {
-    if (r === 'accent') continue
-    const { c, h } = tint[r]
-    const w = r === 'neutral' ? Math.max(weight, p.neutralWeightFloor) : weight
-    emphasized(r, lightnessForContrast({ c, h }, l0, dir, surface, w), c, h)
-  }
+  for (const r of STATUS_ROLES) emphasized(r, statusSeed[r].l, statusSeed[r].c, statusSeed[r].h)
+  const neutralWeight = Math.max(contrast(accentFill, surface), p.neutralWeightFloor)
+  emphasized('neutral', lightnessForContrast(tint.neutral, l0, dir, surface, neutralWeight), fg.c, fg.h)
 
   // 6. Focus: always the accent color, 3:1 against every layer.
   let focusL = rgbToOklch(accentFill).l
@@ -347,10 +321,10 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   }
   put('focus/accent', rgb(focusL, accent.c, accent.h))
 
-  // 7. Strokes: translucent, on the role's emphasized text color. Emphasized carries control
+  // 7. Strokes: translucent, on the role's primary text color. Emphasized carries control
   //    boundaries and reaches 3:1 on every layer.
   for (const r of ROLES) {
-    const base = fgEmphasized[r]!
+    const base = fgPrimary[r]!
     put(`stroke/${r}/subtle`, base, p.strokeAlpha.subtle)
     put(`stroke/${r}`, base, p.strokeAlpha.normal)
     const a = solveAlpha((a) => layers.every((L) => contrast(composite({ ...base, a }, L), L) >= nonText))
@@ -361,7 +335,7 @@ function build(mode: Mode, l0: number, dir: 1 | -1, bg: Oklch, fg: Oklch, accent
   // 8. Disabled role (ADR 0008): the neutral text color with alpha. The fill is barely visible on
   //    every neutral layer; the text reaches its (non-AA) contrast on every layer, raised and the
   //    disabled fill, and stays below the text target.
-  const ink = fgEmphasized.neutral!
+  const ink = fgPrimary.neutral!
   const disabledA = raisedAlpha(ink, neutralBases, p.disabledStep)
   if (disabledA === null) feasible = false
   put('bg/disabled', ink, disabledA ?? MAX_ALPHA)

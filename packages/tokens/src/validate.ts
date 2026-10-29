@@ -53,7 +53,9 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const order = rest.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
     const okRaised = !rest.includes('raised') || (scope === 'bg' && role === 'neutral')
-    if (!okScope || !okRole || !okRest || !okRaised) fail('grammar', name, 0, 1)
+    // Text has two prominences, normal and subtle (ADR 0012).
+    const okFg = scope !== 'fg' || !rest.includes('emphasized')
+    if (!okScope || !okRole || !okRest || !okRaised || !okFg) fail('grammar', name, 0, 1)
     const translucent = isTranslucent(name)
     if (translucent ? c.a >= 1 : c.a < 1)
       fail(translucent ? 'opacity: must be translucent' : 'opacity: must be opaque', name, c.a, translucent ? 0 : 1)
@@ -132,14 +134,14 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const backgrounds: [string, Rgb][] = [...layers, ...tinted.map((n): [string, Rgb] => [n, get(n)!])]
     for (const g of ghostNames)
       for (const [b, under] of ghostBases) backgrounds.push([`${g} over ${b}`, composite(get(g)!, under)])
-    for (const fgName of [`fg/${role}/subtle`, `fg/${role}`, `fg/${role}/emphasized`].filter(has)) {
+    for (const fgName of [`fg/${role}/subtle`, `fg/${role}`].filter(has)) {
       for (const [bgName, bg] of backgrounds) {
         const r = contrast(get(fgName)!, bg)
         if (r < p.textContrast) fail('text contrast', fgName, r, p.textContrast, bgName)
       }
     }
     // Prominence separation.
-    const fgSteps = [`fg/${role}/subtle`, `fg/${role}`, `fg/${role}/emphasized`].filter(has)
+    const fgSteps = [`fg/${role}/subtle`, `fg/${role}`].filter(has)
     for (let i = 1; i < fgSteps.length; i++) {
       const d = Math.abs(L(get(fgSteps[i]!)) - L(get(fgSteps[i - 1]!)))
       if (d < p.fgStep - TOLERANCE) fail('fg prominence separation', fgSteps[i]!, d, p.fgStep, fgSteps[i - 1])

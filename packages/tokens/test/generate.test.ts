@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
 import { generateMode, generateTheme } from '../src/generate'
-import { DEFAULT_SEEDS } from '../src/index'
+import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { generateTypeScale } from '../src/typescale'
 import { validateMode } from '../src/validate'
@@ -69,6 +69,22 @@ describe('generator', () => {
     const white = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })
     expect(white.tokens['surface/neutral']!.value).not.toBe('#ffffff')
     expect(white.adjustments.some((a) => a.token === 'surface/neutral')).toBe(true)
+  })
+
+  it('keeps accent and status fills exactly, adapting their text instead (ADR 0011)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of ['light', 'dark'] as const) {
+      const tokens = theme[mode].tokens
+      expect(tokens['bg/accent/emphasized']!.value).toBe(DEFAULT_SEEDS[mode].accent)
+      for (const [role, seed] of Object.entries(DEFAULT_PARAMS.statusSeeds)) {
+        expect(tokens[`bg/${role}/emphasized`]!.value).toBe(seed)
+        const on = hexToRgba(tokens[`fg/${role}/on-emphasized`]!.value)
+        expect(contrast(on, hexToRgba(seed))).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+    // A mid grey fill keeps its color too; only its text moves towards black or white.
+    const grey = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#777777' })
+    expect(grey.tokens['bg/accent/emphasized']!.value).toBe('#777777')
   })
 
   it('keeps an accessible accent seed exactly', () => {

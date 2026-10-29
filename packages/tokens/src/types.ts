@@ -51,12 +51,12 @@ export interface GeneratorParams {
   raisedStep: number
   /** Minimum ΔL between fg prominences. */
   fgStep: number
+  /** ΔL from `fg/<role>/subtle` to `fg/<role>` for accent and status roles, which have no text seed (ADR 0012). */
+  roleTextStep: number
   /** WCAG contrast for text. */
   textContrast: number
   /** WCAG contrast for focus and control boundaries. */
   nonTextContrast: number
-  /** Lower bound of the `emphasized` weight (contrast of emphasized fills against surface). */
-  weightFloor: number
   /** Lower bound of the `bg/neutral/emphasized` weight, so the neutral solid fill stays strong (ADR 0009). */
   neutralWeightFloor: number
   /** Minimum contrast of disabled text on every layer (disabled is exempt from AA). */
@@ -65,12 +65,8 @@ export interface GeneratorParams {
   disabledStep: number
   /** OKLCH chroma of tinted role backgrounds. */
   tintChroma: number
-  /** OKLCH chroma of status colors. */
-  statusChroma: number
-  /** Fixed OKLCH hues of status colors. */
-  statusHues: Record<StatusRole, number>
-  /** A status hue closer than this to the accent hue is pushed away, in degrees. */
-  hueConflict: number
+  /** Base colors of the status roles: their hue and chroma are kept, lightness is solved like any role. */
+  statusSeeds: Record<StatusRole, string>
   strokeAlpha: { subtle: number; normal: number }
   blanketAlpha: number
 }
@@ -81,18 +77,16 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   // The concept's input (#fffefa) sits about 0.018 above its canvas (#faf8f3).
   raisedStep: 0.015,
   fgStep: 0.08,
+  roleTextStep: 0.12,
   textContrast: 4.5,
   nonTextContrast: 3,
-  weightFloor: 3,
   neutralWeightFloor: 12,
   disabledContrast: 2,
   disabledStep: 0.02,
   tintChroma: 0.03,
-  statusChroma: 0.14,
-  // Success and danger match the concept's diff colors (#248a3d, #d70015); warning and info are
-  // placeholders until the default themes' inputs cover them.
-  statusHues: { success: 148, warning: 75, danger: 27, info: 245 },
-  hueConflict: 25,
+  // Brand swatches Light Green, Tangerine and Blue. Warning is a placeholder (the previous hue 75°,
+  // chroma 0.14) until a swatch covers it.
+  statusSeeds: { success: '#51c35b', warning: '#eba941', danger: '#f57042', info: '#4880ff' },
   strokeAlpha: { subtle: 0.08, normal: 0.16 },
   blanketAlpha: 0.48,
 }

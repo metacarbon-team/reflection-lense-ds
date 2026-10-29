@@ -39,3 +39,7 @@ The neutral fill uses the larger of the accent's weight and its own floor, `neut
 ## Open questions
 
 - Calibration of `neutralWeightFloor` in the Theme Lab.
+
+## Revisions
+
+- 2026-10-28 — the text ladder has two steps: `fg/neutral` is the seed, `fg/neutral/subtle` the floor. See [0012](0012-two-text-prominences.md).

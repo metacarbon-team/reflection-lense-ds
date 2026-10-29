@@ -151,17 +151,17 @@ export function App() {
             value={params.fgStep}
             onChange={(x) => setParams({ ...params, fgStep: x })}
           />
+          <Slider
+            label="Role text step"
+            min={0.03}
+            max={0.24}
+            step={0.005}
+            value={params.roleTextStep}
+            onChange={(x) => setParams({ ...params, roleTextStep: x })}
+          />
         </Section>
 
         <Section title="Contrast">
-          <Slider
-            label="Emphasized weight floor"
-            min={1.5}
-            max={7}
-            step={0.1}
-            value={params.weightFloor}
-            onChange={(x) => setParams({ ...params, weightFloor: x })}
-          />
           <Slider
             label="Neutral weight floor"
             min={3}
@@ -189,31 +189,13 @@ export function App() {
             value={params.tintChroma}
             onChange={(x) => setParams({ ...params, tintChroma: x })}
           />
-          <Slider
-            label="Status chroma"
-            min={0.04}
-            max={0.24}
-            step={0.01}
-            value={params.statusChroma}
-            onChange={(x) => setParams({ ...params, statusChroma: x })}
-          />
-          <Slider
-            label="Hue conflict (°)"
-            min={0}
-            max={60}
-            step={1}
-            value={params.hueConflict}
-            onChange={(x) => setParams({ ...params, hueConflict: x })}
-          />
+          <div className="lab-label">Status base colors</div>
           {STATUS_ROLES.map((r) => (
-            <Slider
+            <ColorField
               key={r}
-              label={`${r} hue (°)`}
-              min={0}
-              max={359}
-              step={1}
-              value={params.statusHues[r]}
-              onChange={(x) => setParams({ ...params, statusHues: { ...params.statusHues, [r]: x } })}
+              label={r}
+              value={params.statusSeeds[r]}
+              onChange={(x) => setParams({ ...params, statusSeeds: { ...params.statusSeeds, [r]: x } })}
             />
           ))}
         </Section>
@@ -672,7 +654,7 @@ function Layer({ name, depth, children }: { name: string; depth: number; childre
       <div className="lab-row">
         <span style={{ color: v('fg/neutral/subtle') }}>Subtle text</span>
         <span>Normal text</span>
-        <span style={{ color: v('fg/neutral/emphasized'), fontWeight: 600 }}>Emphasized text</span>
+        <span style={{ fontWeight: 600 }}>Bold text</span>
       </div>
       <div className="lab-row">
         <button type="button" className="lab-btn lab-ghost" style={ghost('neutral')}>
@@ -726,7 +708,6 @@ function RoleRow({ role }: { role: Role }) {
       <span className="lab-row lab-row-tight">
         <span style={{ color: v(`fg/${role}/subtle`) }}>subtle</span>
         <span style={{ color: v(`fg/${role}`) }}>normal</span>
-        <span style={{ color: v(`fg/${role}/emphasized`) }}>emphasized</span>
       </span>
     </div>
   )

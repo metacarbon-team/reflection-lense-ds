@@ -264,7 +264,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--fg-neutral-emphasized);
+  color: var(--fg-neutral);
   font-size: 13px;
   font-weight: 600;
   line-height: 16px;
