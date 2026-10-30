@@ -74,8 +74,8 @@ export interface GeneratorParams {
 export const DEFAULT_PARAMS: GeneratorParams = {
   layerStep: 0.03,
   stateStep: 0.03,
-  // The concept's input (#fffefa) sits about 0.018 above its canvas (#faf8f3).
-  raisedStep: 0.015,
+  // Nearly all the room above the default paper (#faf8f3 is 0.021 below white), so raised reads on it.
+  raisedStep: 0.02,
   fgStep: 0.08,
   roleTextStep: 0.12,
   textContrast: 4.5,

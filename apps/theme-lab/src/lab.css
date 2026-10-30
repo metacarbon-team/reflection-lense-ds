@@ -227,6 +227,89 @@ code {
   word-break: break-all;
 }
 
+/* Ramps tab: one row per family, anchors marked with the number of tokens on them. */
+.lab-ramps {
+  display: grid;
+  gap: 16px;
+}
+
+.lab-ramps-mode {
+  display: grid;
+  gap: 14px;
+}
+
+.lab-ramp {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.lab-ramp-name {
+  display: grid;
+  gap: 2px;
+  padding-top: 12px;
+}
+
+.lab-ramp-drift {
+  font-size: 10px;
+  color: var(--lab-muted);
+}
+
+.lab-ramp-steps {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.lab-ramp-step {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  cursor: default;
+}
+
+.lab-ramp-swatch {
+  position: relative;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.lab-ramp-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1c1c1a;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.lab-ramp-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.lab-ramp-hex {
+  font-size: 10px;
+  color: var(--lab-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lab-ramp-endpoint .lab-ramp-label,
+.lab-ramp-fill .lab-ramp-label {
+  color: var(--lab-muted);
+  font-weight: 400;
+}
+
 /* Dark backdrop around the window, as on the concept canvas. */
 .lab-stage {
   justify-self: stretch;

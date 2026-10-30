@@ -16,6 +16,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0010](0010-shadow-tokens.md)           | Shadow tokens                              | Accepted |
 | [0011](0011-exact-emphasized-colors.md) | Emphasized colors are kept exactly         | Accepted |
 | [0012](0012-two-text-prominences.md)    | Two text prominences                       | Accepted |
+| [0013](0013-palette-ramps.md)           | Palette ramps on a fitted grid             | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

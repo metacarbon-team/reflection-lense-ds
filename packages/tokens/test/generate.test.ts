@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
 import { generateMode, generateTheme } from '../src/generate'
 import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
+import { applyPalette, generateFixedPalette, generatePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { generateTypeScale } from '../src/typescale'
 import { validateMode } from '../src/validate'
@@ -107,6 +108,34 @@ describe('type scale', () => {
     expect(desktop.find((s) => s.name === 'lg')!.size).toBe(20)
     expect(mobile.find((s) => s.name === 'xl')!.size).toBeLessThan(desktop.find((s) => s.name === 'xl')!.size)
     for (const s of desktop) expect(s.lineHeight % 4).toBe(0)
+  })
+})
+
+describe('palette', () => {
+  it('puts every token color on a ramp step exactly, ramps ordered light to dark', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of [theme.light, theme.dark]) {
+      const { ramps, bindings } = generatePalette(mode)
+      for (const ramp of ramps) {
+        expect(ramp.steps.length).toBeGreaterThanOrEqual(RAMP_STEPS)
+        const l = ramp.steps.map((s) => rgbToOklch(hexToRgba(s.value)).l)
+        for (let i = 1; i < l.length; i++) expect(l[i]!).toBeLessThanOrEqual(l[i - 1]! + 1e-9)
+      }
+      for (const token of Object.values(mode.tokens)) {
+        const b = bindings[token.name]!
+        const step = ramps.find((r) => r.family === b.family)!.steps.find((s) => s.step === b.step)!
+        const rgba = hexToRgba(token.value)
+        expect(rgbaToHex({ ...rgba, a: 1 })).toBe(step.value)
+        expect(b.opacity).toBeCloseTo(rgba.a, 3)
+      }
+      // Resolving the tokens through their steps gives the theme back unchanged.
+      expect(applyPalette(mode, generatePalette(mode)).tokens).toEqual(mode.tokens)
+      // Fixed steps: the same number of steps in every family on one falling grid, tokens still exact.
+      const fixed = generateFixedPalette(mode)
+      for (const ramp of fixed.ramps) expect(ramp.steps).toHaveLength(RAMP_STEPS)
+      for (let i = 1; i < fixed.grid!.length; i++) expect(fixed.grid![i]!).toBeLessThan(fixed.grid![i - 1]!)
+      expect(applyPalette(mode, fixed).tokens).toEqual(mode.tokens)
+    }
   })
 })
 

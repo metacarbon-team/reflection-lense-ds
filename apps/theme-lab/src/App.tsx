@@ -1,9 +1,12 @@
 import {
+  applyPalette,
   cssVarName,
   DEFAULT_PARAMS,
   DEFAULT_SHADOWS,
   DEFAULT_TYPE_SCALE,
+  generateFixedPalette,
   generateModeShadows,
+  generatePalette,
   generateTheme,
   generateTypeScale,
   SHADOW_LEVELS,
@@ -32,28 +35,57 @@ const TABS = [
   { id: 'ui', label: 'UI preview' },
   { id: 'palette', label: 'Palette swatches' },
   { id: 'shadows', label: 'Shadows' },
+  { id: 'ramps', label: 'Ramps' },
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
-/** A real screen built from the generated tokens, in one mode at a time. */
-function UiPreview({ theme }: { theme: Theme }) {
+/** Both keep every token color exactly; fixed steps also share one fitted lightness grid across families. */
+const RAMP_KINDS = [
+  { id: 'tokens', label: 'Token ramps' },
+  { id: 'fixed', label: 'Fixed steps' },
+] as const
+type RampKind = (typeof RAMP_KINDS)[number]['id']
+const paletteFor = (kind: RampKind, theme: ModeTheme) =>
+  kind === 'fixed' ? generateFixedPalette(theme) : generatePalette(theme)
+
+function Segmented<T extends string>(props: {
+  label: string
+  options: readonly { id: T; label: string }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="lab-segmented" role="radiogroup" aria-label={props.label}>
+      {props.options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={props.value === o.id}
+          className={props.value === o.id ? 'lab-segment lab-segment-active' : 'lab-segment'}
+          onClick={() => props.onChange(o.id)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** A real screen built from the generated tokens, in one mode at a time, resolved through a palette. */
+function UiPreview(props: { theme: Theme; params: GeneratorParams; ramps: RampKind; onRamps: (k: RampKind) => void }) {
   const [mode, setMode] = useState<Mode>('light')
-  const style = { ...toCssVars(theme[mode]) } as CSSProperties
+  const resolved = applyPalette(props.theme[mode], paletteFor(props.ramps, props.theme[mode]))
+  const issues = validateMode(resolved, props.params).length
+  const style = { ...toCssVars(resolved) } as CSSProperties
   return (
     <section className="lab-ui-preview">
-      <div className="lab-segmented" role="radiogroup" aria-label="Mode">
-        {MODES.map((m) => (
-          <button
-            key={m}
-            type="button"
-            role="radio"
-            aria-checked={mode === m}
-            className={mode === m ? 'lab-segment lab-segment-active' : 'lab-segment'}
-            onClick={() => setMode(m)}
-          >
-            {m}
-          </button>
-        ))}
+      <div className="lab-row">
+        <Segmented label="Mode" options={MODES.map((m) => ({ id: m, label: m }))} value={mode} onChange={setMode} />
+        <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
+        <span className={issues ? 'lab-status lab-status-fail' : 'lab-status'}>
+          {issues ? `${issues} rule violations` : 'all rules pass'}
+        </span>
       </div>
       <div className="lab-stage" style={style}>
         <MirrorScreen />
@@ -68,6 +100,7 @@ export function App() {
   const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
   const [shadows, setShadows] = useState<ShadowParams>(structuredClone(DEFAULT_SHADOWS))
   const [tab, setTab] = useState<Tab>('ui')
+  const [ramps, setRamps] = useState<RampKind>('fixed')
 
   const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
   const issues = useMemo(
@@ -288,9 +321,11 @@ export function App() {
         </div>
 
         {tab === 'ui' ? (
-          <UiPreview theme={theme} />
+          <UiPreview theme={theme} params={params} ramps={ramps} onRamps={setRamps} />
         ) : tab === 'shadows' ? (
           <ShadowsPreview theme={theme} params={shadows} />
+        ) : tab === 'ramps' ? (
+          <RampsPreview theme={theme} ramps={ramps} onRamps={setRamps} />
         ) : (
           <>
             <div className="lab-modes">
@@ -319,6 +354,67 @@ const TAILWIND_SHADOWS: Record<string, string> = {
 }
 
 const OUTLINES = ['none', 'stroke/neutral/subtle', 'stroke/neutral', 'stroke/neutral/emphasized'] as const
+
+/** Palette ramps of both modes: anchors are token colors, fills are interpolated steps. */
+function RampsPreview(props: { theme: Theme; ramps: RampKind; onRamps: (k: RampKind) => void }) {
+  const { theme } = props
+  return (
+    <section className="lab-ramps">
+      <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
+      <p className="lab-muted">
+        {props.ramps === 'fixed'
+          ? 'Every family has the same steps on one lightness grid, fitted to the tokens: each family puts its token colors on the nearest steps, exactly, and the grid is the average of the families. Δ is how far a family bends away from the grid.'
+          : "Every token color is an anchor on its family's ramp; the other steps are interpolated."}{' '}
+        A dot marks the steps tokens use (hover for the list). Translucent tokens alias a step plus opacity.
+      </p>
+      {MODES.map((mode) => {
+        const { ramps, grid } = paletteFor(props.ramps, theme[mode])
+        return (
+          <div key={mode} className="lab-panel lab-ramps-mode">
+            <h2>{mode}</h2>
+            {grid && (
+              <div className="lab-ramp">
+                <code className="lab-ramp-name">grid</code>
+                <div className="lab-ramp-steps">
+                  {grid.map((l, i) => (
+                    <div key={i} className="lab-ramp-step lab-ramp-fill">
+                      <span className="lab-ramp-swatch" style={{ background: `oklch(${l} 0 0)` }} />
+                      <span className="lab-ramp-label">{ramps[0]!.steps[i]!.step}</span>
+                      <code className="lab-ramp-hex">L {l.toFixed(3)}</code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {ramps.map((ramp) => (
+              <div key={ramp.family} className="lab-ramp">
+                <code className="lab-ramp-name">
+                  {ramp.family}
+                  {ramp.drift !== undefined && <span className="lab-ramp-drift">Δ {ramp.drift.toFixed(3)}</span>}
+                </code>
+                <div className="lab-ramp-steps">
+                  {ramp.steps.map((s) => (
+                    <div
+                      key={s.step}
+                      className={`lab-ramp-step lab-ramp-${s.kind}`}
+                      title={s.tokens.length ? s.tokens.join('\n') : s.kind}
+                    >
+                      <span className="lab-ramp-swatch" style={{ background: s.value }}>
+                        {s.tokens.length > 0 && <span className="lab-ramp-dot">{s.tokens.length}</span>}
+                      </span>
+                      <span className="lab-ramp-label">{s.step}</span>
+                      <code className="lab-ramp-hex">{s.value}</code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+    </section>
+  )
+}
 
 function ShadowControls({ params: p, onChange }: { params: ShadowParams; onChange: (p: ShadowParams) => void }) {
   return (

@@ -15,6 +15,17 @@ export {
   type ShadowLevel,
   type ShadowParams,
 } from './shadow'
+export {
+  applyPalette,
+  familyOf,
+  generateFixedPalette,
+  generatePalette,
+  RAMP_STEPS,
+  type ModePalette,
+  type PaletteBinding,
+  type Ramp,
+  type RampStep,
+} from './palette'
 export { cssVarName, toCssVars } from './css'
 export { contrast, hexToRgba, rgbaToHex, rgbToOklch, oklchToRgb, composite, lightness } from './color'
 

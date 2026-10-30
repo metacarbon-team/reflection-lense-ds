@@ -90,3 +90,4 @@ The generator always returns a valid theme together with a report of what was sh
 - 2026-10-28 — the `fg/neutral` ladder starts at the seed and the neutral `emphasized` fill has its own weight floor: see [0009](0009-neutral-strength.md). Disabled colors: see [0008](0008-disabled-role.md).
 - 2026-10-28 — resolved open question: status roles have base colors (success `#51c35b`, danger `#f57042`, info `#4880ff`; warning still a placeholder). Their hue and chroma stay fixed, lightness is solved like any role, and the hue still shifts on conflict with the accent.
 - 2026-10-28 — accent and status `emphasized` fills are kept exactly, on-emphasized text adapts instead, status hues no longer shift: see [0011](0011-exact-emphasized-colors.md).
+- 2026-10-30 — the palette has ramps after all, derived from the tokens on one fitted grid per mode; tokens are still solved from relations. See [0013](0013-palette-ramps.md).
