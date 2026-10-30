@@ -31,3 +31,7 @@ Text has **two** prominences:
 
 - Six tokens disappear (`fg/*/emphasized`); in Figma they are rebound to `fg/*` and hidden as deprecated ([0004](0004-figma-sync.md)).
 - Emphasis inside text is expressed by weight, not by a separate color.
+
+## Revisions
+
+- 2026-10-30 — `fgStep` and `roleTextStep` are targets; on mid tones the spacing compresses at the pole. See [0016](0016-compressed-text-spacing.md).

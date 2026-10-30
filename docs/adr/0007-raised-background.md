@@ -62,3 +62,4 @@ Moving away from the text means `raised` never costs text contrast.
 ## Revisions
 
 - 2026-10-30 — `raisedStep` calibrated to 0.02, nearly all the room above the default paper (`#faf8f3` is 0.021 below white). White tinted with the surface's tone was tried and rejected: on the surface the cool white is what makes `raised` visible, and a tinted white is darker, which leaves even less room.
+- 2026-10-30 — raised moves opposite the layers, or on their side when the background leaves no room; the background no longer moves for it. See [0015](0015-layer-direction.md).

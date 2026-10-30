@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } from '../src/color'
 import { generateMode, generateTheme } from '../src/generate'
 import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
-import { applyPalette, generateFixedPalette, generatePalette, RAMP_STEPS } from '../src/palette'
+import { BRAND_SHAPES, curveKeys, DEFAULT_CURVE, familyCurve, generateCurvePalette, toneFor } from '../src/curve'
+import { applyPalette, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { generateTypeScale } from '../src/typescale'
-import { validateMode } from '../src/validate'
+import type { ModeTheme } from '../src/types'
+import { validateMode, type Issue } from '../src/validate'
 
 describe('color math', () => {
   it('computes WCAG contrast', () => {
@@ -33,7 +35,7 @@ describe('generator', () => {
     expect(validateMode(theme.dark)).toEqual([])
   })
 
-  it('never produces an invalid mode, whatever the seeds (ADR 0003: shift, never reject)', () => {
+  it('keeps every background seed and passes every rule it can, whatever the seeds (ADR 0015)', () => {
     const random = mulberry32(20261028)
     const hex = () =>
       '#' +
@@ -46,7 +48,13 @@ describe('generator', () => {
     for (let i = 0; i < 300; i++) {
       const seeds = { bg: hex(), fg: hex(), accent: hex() }
       for (const mode of ['light', 'dark'] as const) {
-        const issues = validateMode(generateMode(mode, seeds))
+        const generated = generateMode(mode, seeds)
+        if (generated.tokens['surface/neutral']!.value !== seeds.bg)
+          failures.push(`${seeds.bg} ${mode}: background moved`)
+        // On mid tones the text spacing is compressed at the pole (ADR 0016) and still passes. On the
+        // most saturated ones the band between the 4.5:1 floor and white or black is narrower than
+        // the smallest compressed step itself: only there may the two prominences fail to separate.
+        const issues = validateMode(generated).filter((i) => !atPoleWithoutRoom(generated, i))
         if (issues.length)
           failures.push(
             `${JSON.stringify(seeds)} ${mode}: ${issues[0]!.rule} ${issues[0]!.token} ${issues[0]!.actual}/${issues[0]!.required} vs ${issues[0]!.against}`,
@@ -66,10 +74,12 @@ describe('generator', () => {
       expect(raised.a).toBeLessThan(1)
       expect(mode.mode === 'light' ? over : -over).toBeGreaterThan(0)
     }
-    // A pure white seed leaves no room above it: the surface steps down and says so.
+    // A pure white seed leaves no room above it: the surface stays and raised goes to the layers' side.
     const white = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })
-    expect(white.tokens['surface/neutral']!.value).not.toBe('#ffffff')
-    expect(white.adjustments.some((a) => a.token === 'surface/neutral')).toBe(true)
+    expect(white.tokens['surface/neutral']!.value).toBe('#ffffff')
+    expect(validateMode(white)).toEqual([])
+    const sunk = composite(hexToRgba(white.tokens['bg/neutral/raised']!.value), hexToRgba('#ffffff'))
+    expect(rgbToOklch(sunk).l).toBeLessThan(1)
   })
 
   it('keeps accent and status fills exactly, adapting their text instead (ADR 0011)', () => {
@@ -93,6 +103,43 @@ describe('generator', () => {
     expect(mode.tokens['bg/accent/emphasized']!.value).toBe('#1d4ed8')
   })
 
+  it('keeps the background and moves the text to the other side when it cannot reach 4.5:1', () => {
+    const mode = generateMode('dark', { bg: '#1a1b1a', fg: '#000000', accent: '#cee04b' })
+    expect(validateMode(mode)).toEqual([])
+    const surface = rgbToOklch(hexToRgba(mode.tokens['surface/neutral']!.value)).l
+    expect(Math.abs(surface - rgbToOklch(hexToRgba('#1a1b1a')).l)).toBeLessThan(0.03)
+    expect(rgbToOklch(hexToRgba(mode.tokens['fg/neutral']!.value)).l).toBeGreaterThan(surface)
+  })
+
+  it('compresses the text spacing on a mid tone and says so (ADR 0016)', () => {
+    const mode = generateMode('light', { bg: '#847033', fg: '#1a1b1a', accent: '#cee04b' })
+    expect(validateMode(mode)).toEqual([])
+    expect(mode.tokens['surface/neutral']!.value).toBe('#847033')
+    expect(mode.tokens['fg/neutral']!.value).toBe('#ffffff')
+    expect(mode.tokens['fg/neutral/subtle']!.value).not.toBe('#ffffff')
+    expect(mode.adjustments.some((a) => a.token === 'fg/neutral' && a.reason.includes('compressed'))).toBe(true)
+  })
+
+  it('keeps a light pink background whichever side the text seed is on', () => {
+    for (const fg of ['#f8f6f0', '#000000'])
+      for (const mode of ['light', 'dark'] as const) {
+        const m = generateMode(mode, { bg: '#d8c0c0', fg, accent: '#cee04b' })
+        expect(validateMode(m)).toEqual([])
+        expect(m.tokens['surface/neutral']!.value).toBe('#d8c0c0')
+      }
+  })
+
+  it('keeps a visible hierarchy on a pure black background (ADR 0014)', () => {
+    const mode = generateMode('dark', { bg: '#000000', fg: '#f8f6f0', accent: '#cee04b' })
+    expect(validateMode(mode)).toEqual([])
+    const surface = hexToRgba(mode.tokens['surface/neutral']!.value)
+    // The background stays pure black. Close to the light theme's 1.09 and 1.20; without flare these
+    // were 1.02 and 1.05.
+    expect(mode.tokens['surface/neutral']!.value).toBe('#000000')
+    expect(contrast(hexToRgba(mode.tokens['bg/neutral/subtle']!.value), surface)).toBeGreaterThan(1.06)
+    expect(contrast(hexToRgba(mode.tokens['bg/neutral']!.value), surface)).toBeGreaterThan(1.15)
+  })
+
   it('reports what it shifted', () => {
     const mode = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#ffe066' })
     expect(mode.adjustments.some((a) => a.token === 'bg/accent/emphasized')).toBe(false)
@@ -112,30 +159,72 @@ describe('type scale', () => {
 })
 
 describe('palette', () => {
-  it('puts every token color on a ramp step exactly, ramps ordered light to dark', () => {
+  it('puts every token color on a ramp step exactly', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
-      const { ramps, bindings } = generatePalette(mode)
-      for (const ramp of ramps) {
-        expect(ramp.steps.length).toBeGreaterThanOrEqual(RAMP_STEPS)
-        const l = ramp.steps.map((s) => rgbToOklch(hexToRgba(s.value)).l)
-        for (let i = 1; i < l.length; i++) expect(l[i]!).toBeLessThanOrEqual(l[i - 1]! + 1e-9)
-      }
-      for (const token of Object.values(mode.tokens)) {
-        const b = bindings[token.name]!
-        const step = ramps.find((r) => r.family === b.family)!.steps.find((s) => s.step === b.step)!
-        const rgba = hexToRgba(token.value)
-        expect(rgbaToHex({ ...rgba, a: 1 })).toBe(step.value)
-        expect(b.opacity).toBeCloseTo(rgba.a, 3)
-      }
-      // Resolving the tokens through their steps gives the theme back unchanged.
-      expect(applyPalette(mode, generatePalette(mode)).tokens).toEqual(mode.tokens)
       // Fixed steps: the same number of steps in every family on one falling grid, tokens still exact.
       const fixed = generateFixedPalette(mode)
       for (const ramp of fixed.ramps) expect(ramp.steps).toHaveLength(RAMP_STEPS)
       for (let i = 1; i < fixed.grid!.length; i++) expect(fixed.grid![i]!).toBeLessThan(fixed.grid![i - 1]!)
       expect(applyPalette(mode, fixed).tokens).toEqual(mode.tokens)
+      // Role steps: tokens still exact, and a role has the same step in every family and both modes.
+      const roles = generateRolePalette(mode)
+      for (const ramp of roles.ramps) expect(ramp.steps).toHaveLength(RAMP_STEPS)
+      expect(applyPalette(mode, roles).tokens).toEqual(mode.tokens)
+      for (const role of ['accent', 'success', 'danger', 'info'])
+        expect(roles.bindings[`bg/${role}/emphasized`]!.step).toBe(roles.bindings['bg/neutral/emphasized']!.step)
+      expect(roles.bindings['bg/accent/subtle']!.step).toBe(roles.bindings['bg/neutral/subtle']!.step)
     }
+  })
+})
+
+describe('curves (prototype)', () => {
+  it('pass through the key color and keep every rule when the generator draws on them', () => {
+    const key = rgbToOklch(hexToRgba('#cee04b'))
+    expect(rgbaToHex(oklchToRgb(familyCurve(key)(key.l)))).toBe('#cee04b')
+    expect(familyCurve(key)(1).c).toBe(0)
+    const params = { ...DEFAULT_PARAMS, curve: DEFAULT_CURVE }
+    const theme = generateTheme(DEFAULT_SEEDS, params)
+    for (const mode of ['light', 'dark'] as const) {
+      expect(validateMode(theme[mode], params)).toEqual([])
+      expect(theme[mode].tokens['bg/accent/emphasized']!.value).toBe(DEFAULT_SEEDS[mode].accent)
+      const keys = curveKeys(DEFAULT_SEEDS[mode], params)
+      expect(applyPalette(theme[mode], generateCurvePalette(theme[mode], keys)).tokens).toEqual(theme[mode].tokens)
+    }
+    const random = mulberry32(20261030)
+    const hex = () =>
+      '#' +
+      Math.floor(random() * 0xffffff)
+        .toString(16)
+        .padStart(6, '0')
+    for (let i = 0; i < 40; i++)
+      for (const mode of ['light', 'dark'] as const)
+        for (const generated of [generateMode(mode, { bg: hex(), fg: hex(), accent: hex() }, params)])
+          expect(validateMode(generated, params).filter((i) => !atPoleWithoutRoom(generated, i))).toEqual([])
+  }, 120_000)
+})
+
+describe('brand curves (prototype)', () => {
+  it('carry the brand shape onto the seed: exact seeds, the seed hue everywhere, every rule kept', () => {
+    const curve = { ...DEFAULT_CURVE, source: 'brand' as const }
+    // On its own core the accent curve keeps the brand's chroma profile.
+    const neon = toneFor('accent', rgbToOklch(hexToRgba('#cee04b')), curve)
+    for (const hex of BRAND_SHAPES.accent!.ramp) {
+      const c = rgbToOklch(hexToRgba(hex))
+      expect(neon(c.l).c).toBeCloseTo(c.c, 3)
+    }
+    const params = { ...DEFAULT_PARAMS, curve }
+    const theme = generateTheme(DEFAULT_SEEDS, params)
+    for (const mode of ['light', 'dark'] as const) {
+      expect(validateMode(theme[mode], params)).toEqual([])
+      expect(theme[mode].tokens['surface/neutral']!.value).toBe(DEFAULT_SEEDS[mode].bg)
+      expect(theme[mode].tokens['bg/accent/emphasized']!.value).toBe(DEFAULT_SEEDS[mode].accent)
+    }
+    // A navy background keeps its hue on every layer: brand colors never leak into other hues.
+    const navy = generateMode('dark', { bg: '#1e2a45', fg: '#f8f6f0', accent: '#cee04b' }, params)
+    const hue = rgbToOklch(hexToRgba('#1e2a45')).h
+    for (const name of ['bg/neutral/subtle', 'bg/neutral', 'bg/neutral/hover', 'bg/neutral/pressed'])
+      expect(Math.abs(rgbToOklch(hexToRgba(navy.tokens[name]!.value)).h - hue)).toBeLessThan(4)
   })
 })
 
@@ -173,4 +262,12 @@ function mulberry32(seed: number) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+}
+
+/** A prominence issue where primary text already sits at white or black: no room left (ADR 0016). */
+function atPoleWithoutRoom(mode: ModeTheme, issue: Issue) {
+  return (
+    issue.rule === 'fg prominence separation' &&
+    ['#ffffff', '#000000'].includes(mode.tokens[issue.token]!.value.slice(0, 7))
+  )
 }

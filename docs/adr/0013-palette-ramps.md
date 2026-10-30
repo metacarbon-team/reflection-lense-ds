@@ -52,5 +52,8 @@ Every semantic token aliases one step of its family. Translucent tokens alias th
 
 ## Open questions
 
-- Whether the Figma Palette collection keeps light and dark as modes or as two collections.
 - Whether 15 steps are enough once more roles exist.
+
+## Revisions
+
+- 2026-10-30 — resolved open question: in Figma the Palette is one collection without modes, with two equal branches, `reflection/light/<family>/<step>` and `reflection/dark/<family>/<step>`. Theme switches the mode and Core routes each mode to its branch, so Palette modes would be redundant.

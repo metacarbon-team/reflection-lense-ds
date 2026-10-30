@@ -126,8 +126,20 @@ export function composite(top: Rgba, bottom: Rgb): Rgb {
   }
 }
 
-/** OKLCH lightness of an sRGB color — the axis every ΔL rule is measured on. */
+/** OKLCH lightness of an sRGB color. */
 export const lightness = (c: Rgb) => rgbToOklch(c).l
+
+/**
+ * Lightness as seen on a real screen — the axis every ΔL rule is measured on. A display never shows
+ * pure black and reflects ambient light, so a little flare (a share of white, in linear light) is added
+ * before taking OKLab lightness: steps near black, which that flare swamps, have to be larger to count
+ * the same. Near white it changes almost nothing. A flare of 0 gives plain OKLCH lightness.
+ */
+export function perceivedLightness(c: Rgb, flare: number): number {
+  if (!flare) return lightness(c)
+  const lin = (v: number) => (toLinear(v) + flare) / (1 + flare)
+  return linearToOklab(lin(c.r), lin(c.g), lin(c.b))[0]
+}
 
 /** Smallest angle between two hues, in degrees. */
 export function hueDistance(a: number, b: number): number {
@@ -142,13 +154,14 @@ export function hueDistance(a: number, b: number): number {
  * background's luminance, which is the only case the generator uses.
  */
 export function lightnessForContrast(
-  base: Pick<Oklch, 'c' | 'h'>,
+  base: Pick<Oklch, 'c' | 'h'> | ((l: number) => Oklch),
   start: number,
   dir: 1 | -1,
   against: Rgb,
   target: number,
 ): number {
-  const at = (l: number) => contrast(oklchToRgb({ l, c: base.c, h: base.h }), against)
+  const at = (l: number) =>
+    contrast(oklchToRgb(typeof base === 'function' ? base(l) : { l, c: base.c, h: base.h }), against)
   if (at(start) >= target) return start
   const end = dir > 0 ? 1 : 0
   if (at(end) < target) return end

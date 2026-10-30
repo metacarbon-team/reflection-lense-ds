@@ -129,3 +129,4 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 - 2026-10-28 — `disabled` is a role, not a state: `bg/disabled`, `fg/disabled`, `stroke/disabled`, all translucent. See [0008](0008-disabled-role.md).
 - 2026-10-28 — resolved open question: shadows are a scale, `shadow/2xs` … `shadow/2xl`. See [0010](0010-shadow-tokens.md).
 - 2026-10-28 — text has two prominences, `fg/<role>` and `fg/<role>/subtle`; `emphasized` remains for `bg` only. See [0012](0012-two-text-prominences.md).
+- 2026-10-30 — the neutral stack moves to whichever side of `surface` keeps the text readable, not always towards the text. See [0015](0015-layer-direction.md).

@@ -1,7 +1,7 @@
 // Checks a generated mode against the rules of ADR 0002 and ADR 0003. Deliberately independent of
 // the generator: it only reads token names and hex values, so it can validate any theme payload.
 
-import { composite, contrast, hexToRgba, lightness, type Rgb, type Rgba } from './color'
+import { composite, contrast, hexToRgba, perceivedLightness, rgbaToHex, type Rgb, type Rgba } from './color'
 import {
   DEFAULT_PARAMS,
   DISABLED,
@@ -32,8 +32,12 @@ const MODIFIERS: Record<string, number> = {
 }
 
 const TOLERANCE = 1e-3
+/** Smallest spacing between text prominences when primary text is at white or black (ADR 0016). */
+const MIN_COMPRESSED_STEP = 0.01
 
 export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARAMS): Issue[] {
+  // Every ΔL rule is measured on screen lightness (ADR 0014).
+  const L = (c: Rgb | undefined) => perceivedLightness(c!, p.flare)
   const issues: Issue[] = []
   const color = new Map<string, Rgba>()
   for (const [name, token] of Object.entries(theme.tokens)) color.set(name, hexToRgba(token.value))
@@ -69,15 +73,16 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     if (d < p.layerStep - TOLERANCE) fail('layer separation', stack[i]!, d, p.layerStep, stack[i - 1])
   }
 
-  // Raised (ADR 0007): away from the text on every neutral layer, its states a state step each
-  // towards the text. Composites over the stack count as layers.
+  // Raised (ADR 0007, 0015): on one side of every neutral layer, the same side for all of them; its
+  // states a state step each along the stack. Composites over the stack count as layers.
   const raisedOver = (name: string): [string, Rgb][] =>
     has(name) ? stack.map((b) => [`${name} over ${b}`, composite(get(name)!, get(b)!)]) : []
   const raised = raisedOver('bg/neutral/raised')
   const raisedHover = raisedOver('bg/neutral/raised/hover')
   const raisedPressed = raisedOver('bg/neutral/raised/pressed')
+  const raisedSide = raised.length ? Math.sign(L(raised[0]![1]) - L(get(stack[0]!))) || -sign : -sign
   raised.forEach(([, c], i) => {
-    const d = -sign * (L(c) - L(get(stack[i]!)))
+    const d = raisedSide * (L(c) - L(get(stack[i]!)))
     if (d < p.raisedStep - TOLERANCE) fail('raised separation', 'bg/neutral/raised', d, p.raisedStep, stack[i])
   })
   for (const [states, from] of [
@@ -140,11 +145,14 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
         if (r < p.textContrast) fail('text contrast', fgName, r, p.textContrast, bgName)
       }
     }
-    // Prominence separation.
+    // Prominence separation. Compressed spacing is allowed only where there is no room for more:
+    // primary text at white or black, still distinct from subtle (ADR 0016).
     const fgSteps = [`fg/${role}/subtle`, `fg/${role}`].filter(has)
     for (let i = 1; i < fgSteps.length; i++) {
       const d = Math.abs(L(get(fgSteps[i]!)) - L(get(fgSteps[i - 1]!)))
-      if (d < p.fgStep - TOLERANCE) fail('fg prominence separation', fgSteps[i]!, d, p.fgStep, fgSteps[i - 1])
+      const atPole = ['#ffffff', '#000000'].includes(rgbaToHex({ ...get(fgSteps[i]!)!, a: 1 }))
+      const required = atPole ? MIN_COMPRESSED_STEP : p.fgStep
+      if (d < required - TOLERANCE) fail('fg prominence separation', fgSteps[i]!, d, required, fgSteps[i - 1])
     }
     const bgSteps = [`bg/${role}/subtle`, `bg/${role}`].filter(has)
     if (bgSteps.length === 2) {
@@ -203,5 +211,4 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
   return issues
 }
 
-const L = (c: Rgb | undefined) => lightness(c!)
 const round = (x: number) => Math.round(x * 1000) / 1000

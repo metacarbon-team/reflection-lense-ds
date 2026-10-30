@@ -42,7 +42,29 @@ export interface ThemeSeeds {
  * Every number the generator and the validator rely on. Defaults are starting points to be
  * calibrated in the Theme Lab; lightness steps are OKLCH ΔL.
  */
+/** Prototype: a Leonardo-style color curve per family (see curve.ts). */
+export interface CurveParams {
+  /** Exponent of the chroma falloff from the key color to white (1 = straight line in OKLCH). */
+  lightPower: number
+  /** Exponent of the chroma falloff from the key color to black. */
+  darkPower: number
+  /** Share of the curve's chroma that tinted role backgrounds take (1 = on the curve). */
+  tint: number
+  /** Hue rotation in degrees from the key color to white; the opposite towards black. */
+  hueShift: number
+  /**
+   * `seed`: one curve through the seed, chroma falling off to white and black. `brand`: a curve
+   * through every color of the family's brand ramp (Branding page) and the seed.
+   */
+  source: 'seed' | 'brand'
+}
+
 export interface GeneratorParams {
+  /**
+   * Flare (a share of white) added before measuring every ΔL rule, so steps are measured as they look
+   * on a real screen, where near-black differences vanish (ADR 0014). 0 = plain OKLCH lightness.
+   */
+  flare: number
   /** Minimum ΔL between neighbouring layers and between bg prominences. */
   layerStep: number
   /** Minimum ΔL between a fill and its hover, and between hover and pressed. */
@@ -69,12 +91,18 @@ export interface GeneratorParams {
   statusSeeds: Record<StatusRole, string>
   strokeAlpha: { subtle: number; normal: number }
   blanketAlpha: number
+  /**
+   * Prototype: when set, every color takes chroma and hue from its family's curve at the lightness
+   * the generator solves, instead of the constant chroma and hue of its role.
+   */
+  curve: CurveParams | null
 }
 
 export const DEFAULT_PARAMS: GeneratorParams = {
+  flare: 0.005,
   layerStep: 0.03,
   stateStep: 0.03,
-  // Nearly all the room above the default paper (#faf8f3 is 0.021 below white), so raised reads on it.
+  // Most of the room above Off White (#f8f6f0 is 0.027 below white), so raised reads on it.
   raisedStep: 0.02,
   fgStep: 0.08,
   roleTextStep: 0.12,
@@ -84,11 +112,12 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   disabledContrast: 2,
   disabledStep: 0.02,
   tintChroma: 0.03,
-  // Brand swatches Light Green, Tangerine and Blue. Warning is a placeholder (the previous hue 75°,
-  // chroma 0.14) until a swatch covers it.
-  statusSeeds: { success: '#51c35b', warning: '#eba941', danger: '#f57042', info: '#4880ff' },
+  // Brand secondary colors: Light Green, Tangerine (warning) and Blue; danger is a red (#f54242) whose
+  // brand curve is shaped like Tangerine's.
+  statusSeeds: { success: '#51c35b', warning: '#f57042', danger: '#f54242', info: '#4880ff' },
   strokeAlpha: { subtle: 0.08, normal: 0.16 },
   blanketAlpha: 0.48,
+  curve: null,
 }
 
 export interface Token {

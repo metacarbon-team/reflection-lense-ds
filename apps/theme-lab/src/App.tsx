@@ -1,12 +1,14 @@
 import {
   applyPalette,
+  curveKeys,
+  DEFAULT_CURVE,
+  generateCurvePalette,
   cssVarName,
   DEFAULT_PARAMS,
   DEFAULT_SHADOWS,
   DEFAULT_TYPE_SCALE,
-  generateFixedPalette,
+  generateRolePalette,
   generateModeShadows,
-  generatePalette,
   generateTheme,
   generateTypeScale,
   SHADOW_LEVELS,
@@ -15,6 +17,7 @@ import {
   STATUS_ROLES,
   toCssVars,
   validateMode,
+  type CurveParams,
   type GeneratorParams,
   type Mode,
   type ModeTheme,
@@ -39,14 +42,57 @@ const TABS = [
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
-/** Both keep every token color exactly; fixed steps also share one fitted lightness grid across families. */
+/**
+ * Curve (prototype) shows a theme generated on one curve per family, through the seed or through the
+ * brand ramp, with fixed steps sampled from the curves. Role steps give every step the same role in
+ * every family, on the plain theme.
+ */
 const RAMP_KINDS = [
-  { id: 'tokens', label: 'Token ramps' },
-  { id: 'fixed', label: 'Fixed steps' },
+  { id: 'curve', label: 'Curve' },
+  { id: 'roles', label: 'Role steps' },
+] as const
+const CURVE_SOURCES = [
+  { id: 'seed', label: 'Seed curves' },
+  { id: 'brand', label: 'Brand curves' },
 ] as const
 type RampKind = (typeof RAMP_KINDS)[number]['id']
-const paletteFor = (kind: RampKind, theme: ModeTheme) =>
-  kind === 'fixed' ? generateFixedPalette(theme) : generatePalette(theme)
+interface CurveInput {
+  seeds: ThemeSeeds
+  params: GeneratorParams
+  curve: CurveParams
+  onCurve: (c: CurveParams) => void
+}
+/** The mode a palette kind shows, and its palette. */
+const paletteFor = (kind: RampKind, mode: Mode, theme: ModeTheme, input: CurveInput) => {
+  if (kind === 'curve') {
+    const keys = curveKeys(input.seeds[mode], input.params)
+    return { theme, palette: generateCurvePalette(theme, keys, input.curve) }
+  }
+  return { theme, palette: generateRolePalette(theme) }
+}
+
+/** The palette switch, with the curve source next to it when curves are shown. */
+function PaletteControls(props: { input: CurveInput; ramps: RampKind; onRamps: (k: RampKind) => void }) {
+  const { curve, onCurve } = props.input
+  return (
+    <>
+      <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
+      {props.ramps === 'curve' && (
+        <select
+          aria-label="Curve source"
+          value={curve.source}
+          onChange={(e) => onCurve({ ...curve, source: e.target.value as CurveParams['source'] })}
+        >
+          {CURVE_SOURCES.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </>
+  )
+}
 
 function Segmented<T extends string>(props: {
   label: string
@@ -73,19 +119,31 @@ function Segmented<T extends string>(props: {
 }
 
 /** A real screen built from the generated tokens, in one mode at a time, resolved through a palette. */
-function UiPreview(props: { theme: Theme; params: GeneratorParams; ramps: RampKind; onRamps: (k: RampKind) => void }) {
+function UiPreview(props: { theme: Theme; input: CurveInput; ramps: RampKind; onRamps: (k: RampKind) => void }) {
   const [mode, setMode] = useState<Mode>('light')
-  const resolved = applyPalette(props.theme[mode], paletteFor(props.ramps, props.theme[mode]))
-  const issues = validateMode(resolved, props.params).length
+  const { theme: source, palette } = paletteFor(props.ramps, mode, props.theme[mode], props.input)
+  const resolved = applyPalette(source, palette)
+  const issues = validateMode(resolved, props.input.params).length
+  // Mid tones compress the text spacing (ADR 0016): a warning, not a violation.
+  const compressed = source.adjustments.filter((a) => a.reason.startsWith('prominence spacing compressed'))
+  const least = Math.min(...compressed.map((a) => Number(/(\d+)%/.exec(a.reason)?.[1] ?? 100)))
   const style = { ...toCssVars(resolved) } as CSSProperties
   return (
     <section className="lab-ui-preview">
       <div className="lab-row">
         <Segmented label="Mode" options={MODES.map((m) => ({ id: m, label: m }))} value={mode} onChange={setMode} />
-        <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
+        <PaletteControls input={props.input} ramps={props.ramps} onRamps={props.onRamps} />
         <span className={issues ? 'lab-status lab-status-fail' : 'lab-status'}>
           {issues ? `${issues} rule violations` : 'all rules pass'}
         </span>
+        {compressed.length > 0 && (
+          <span
+            className="lab-status lab-status-warn"
+            title={compressed.map((a) => `${a.token}: ${a.reason}`).join('\n')}
+          >
+            mid tone: text spacing compressed to {least}%
+          </span>
+        )}
       </div>
       <div className="lab-stage" style={style}>
         <MirrorScreen />
@@ -100,9 +158,17 @@ export function App() {
   const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
   const [shadows, setShadows] = useState<ShadowParams>(structuredClone(DEFAULT_SHADOWS))
   const [tab, setTab] = useState<Tab>('ui')
-  const [ramps, setRamps] = useState<RampKind>('fixed')
+  const [ramps, setRamps] = useState<RampKind>('curve')
+  const [curve, setCurve] = useState<CurveParams>({ ...DEFAULT_CURVE, source: 'brand' })
+  const input = { seeds, params, curve, onCurve: setCurve }
 
   const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
+  // The curve prototype generates its own theme: every color on its family's curve.
+  const curveTheme = useMemo(
+    () => (ramps === 'curve' ? generateTheme(seeds, { ...params, curve }) : null),
+    [ramps, seeds, params, curve],
+  )
+  const shown = curveTheme ?? theme
   const issues = useMemo(
     () => ({ light: validateMode(theme.light, params), dark: validateMode(theme.dark, params) }),
     [theme, params],
@@ -126,6 +192,7 @@ export function App() {
         </header>
 
         {tab === 'shadows' && <ShadowControls params={shadows} onChange={setShadows} />}
+        {ramps === 'curve' && (tab === 'ui' || tab === 'ramps') && <CurveControls params={curve} onChange={setCurve} />}
 
         <Section title="Seeds">
           {MODES.map((mode) => (
@@ -144,6 +211,14 @@ export function App() {
         </Section>
 
         <Section title="Steps (OKLCH ΔL)">
+          <Slider
+            label="Screen flare"
+            min={0}
+            max={0.02}
+            step={0.001}
+            value={params.flare}
+            onChange={(x) => setParams({ ...params, flare: x })}
+          />
           <Slider
             label="Layer step"
             min={0.01}
@@ -321,11 +396,11 @@ export function App() {
         </div>
 
         {tab === 'ui' ? (
-          <UiPreview theme={theme} params={params} ramps={ramps} onRamps={setRamps} />
+          <UiPreview theme={shown} input={input} ramps={ramps} onRamps={setRamps} />
         ) : tab === 'shadows' ? (
           <ShadowsPreview theme={theme} params={shadows} />
         ) : tab === 'ramps' ? (
-          <RampsPreview theme={theme} ramps={ramps} onRamps={setRamps} />
+          <RampsPreview theme={shown} input={input} ramps={ramps} onRamps={setRamps} />
         ) : (
           <>
             <div className="lab-modes">
@@ -356,19 +431,23 @@ const TAILWIND_SHADOWS: Record<string, string> = {
 const OUTLINES = ['none', 'stroke/neutral/subtle', 'stroke/neutral', 'stroke/neutral/emphasized'] as const
 
 /** Palette ramps of both modes: anchors are token colors, fills are interpolated steps. */
-function RampsPreview(props: { theme: Theme; ramps: RampKind; onRamps: (k: RampKind) => void }) {
+function RampsPreview(props: { theme: Theme; input: CurveInput; ramps: RampKind; onRamps: (k: RampKind) => void }) {
   const { theme } = props
   return (
     <section className="lab-ramps">
-      <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
+      <div className="lab-row">
+        <PaletteControls input={props.input} ramps={props.ramps} onRamps={props.onRamps} />
+      </div>
       <p className="lab-muted">
-        {props.ramps === 'fixed'
-          ? 'Every family has the same steps on one lightness grid, fitted to the tokens: each family puts its token colors on the nearest steps, exactly, and the grid is the average of the families. Δ is how far a family bends away from the grid.'
-          : "Every token color is an anchor on its family's ramp; the other steps are interpolated."}{' '}
+        {props.ramps === 'roles'
+          ? 'A step means the same role in every family and both modes: from the background end (white in light, black in dark) through surface, the background layers, the emphasized fill and its states, focus and ghost, to subtle text and text. Lightness can jump where a role is out of that order.'
+          : props.input.curve.source === 'brand'
+            ? 'Prototype: every family has one curve through the colors of its brand ramp (Branding page) and its seed, from white to black. The generator takes the chroma and hue of every color from the curve at the lightness it solves, so every rule still holds; fills are sampled from the curves on a grid fitted to the tokens. Δ is how far a family bends away from the grid.'
+            : 'Prototype: every family has one curve through its seed from white to black (chroma falls off towards both ends, hue can rotate). The generator takes the chroma and hue of every color from the curve at the lightness it solves, so every rule still holds; fills are sampled from the curves on a grid fitted to the tokens. Δ is how far a family bends away from the grid.'}{' '}
         A dot marks the steps tokens use (hover for the list). Translucent tokens alias a step plus opacity.
       </p>
       {MODES.map((mode) => {
-        const { ramps, grid } = paletteFor(props.ramps, theme[mode])
+        const { ramps, grid } = paletteFor(props.ramps, mode, theme[mode], props.input).palette
         return (
           <div key={mode} className="lab-panel lab-ramps-mode">
             <h2>{mode}</h2>
@@ -413,6 +492,54 @@ function RampsPreview(props: { theme: Theme; ramps: RampKind; onRamps: (k: RampK
         )
       })}
     </section>
+  )
+}
+
+function CurveControls({ params: p, onChange }: { params: CurveParams; onChange: (p: CurveParams) => void }) {
+  return (
+    <Section title="Curve (prototype)">
+      <Slider
+        label="Tint chroma share"
+        min={0}
+        max={1}
+        step={0.05}
+        value={p.tint}
+        onChange={(x) => onChange({ ...p, tint: x })}
+      />
+      {p.source === 'seed' && <SeedCurveControls params={p} onChange={onChange} />}
+    </Section>
+  )
+}
+
+/** The shape of a seed curve; brand curves take theirs from the brand ramps. */
+function SeedCurveControls({ params: p, onChange }: { params: CurveParams; onChange: (p: CurveParams) => void }) {
+  return (
+    <>
+      <Slider
+        label="Chroma falloff to white"
+        min={0.3}
+        max={3}
+        step={0.1}
+        value={p.lightPower}
+        onChange={(x) => onChange({ ...p, lightPower: x })}
+      />
+      <Slider
+        label="Chroma falloff to black"
+        min={0.3}
+        max={3}
+        step={0.1}
+        value={p.darkPower}
+        onChange={(x) => onChange({ ...p, darkPower: x })}
+      />
+      <Slider
+        label="Hue shift (°)"
+        min={-40}
+        max={40}
+        step={1}
+        value={p.hueShift}
+        onChange={(x) => onChange({ ...p, hueShift: x })}
+      />
+    </>
   )
 }
 

@@ -1,5 +1,5 @@
 // Palette ramps for one mode, built around the generated tokens (prototype for the Figma Palette
-// collection). Every token color is an anchor, exactly; the steps in between are interpolated along the
+// collection). Every token color is an anchor, exactly; the steps in between are filled along the
 // family's tone, so tokens alias ramp steps (plus opacity for translucent tokens) instead of holding
 // raw values. Families follow where a token's hue comes from.
 
@@ -89,41 +89,6 @@ function anchorsOf(theme: ModeTheme) {
   return { families, opacity }
 }
 
-export function generatePalette(theme: ModeTheme): ModePalette {
-  const { families, opacity } = anchorsOf(theme)
-  const ramps: Ramp[] = []
-  const bindings: Record<string, PaletteBinding> = {}
-  for (const [family, colors] of families) {
-    const steps: Omit<RampStep, 'step'>[] = [...colors].map(([value, tokens]) => ({
-      value,
-      tokens,
-      kind: tokens.length ? 'anchor' : 'endpoint',
-    }))
-    const byLightness = () => steps.sort((a, b) => lightnessOf(b.value) - lightnessOf(a.value))
-    const hue = hueOf(steps.map((s) => rgbToOklch(hexToRgba(s.value))))
-    // Fill the widest gaps (in lightness) until the ramp has its minimum number of steps.
-    while (steps.length < RAMP_STEPS) {
-      byLightness()
-      let widest = 0
-      for (let i = 1; i < steps.length - 1; i++)
-        if (gap(steps[i]!, steps[i + 1]!) > gap(steps[widest]!, steps[widest + 1]!)) widest = i
-      const a = rgbToOklch(hexToRgba(steps[widest]!.value))
-      const b = rgbToOklch(hexToRgba(steps[widest + 1]!.value))
-      const value = [0.5, 0.33, 0.67].map((t) => interpolate(a, b, t, hue)).find((v) => !colors.has(v))
-      if (!value) break
-      colors.set(value, [])
-      steps.push({ value, tokens: [], kind: 'fill' })
-    }
-    byLightness()
-    const ramp = steps.map((s, i) => ({ ...s, step: FIRST_STEP + i * STEP }))
-    ramps.push({ family, steps: ramp })
-    for (const s of ramp)
-      for (const name of s.tokens) bindings[name] = { family, step: s.step, opacity: opacity[name]! }
-  }
-  ramps.sort(byFamily)
-  return { ramps, bindings }
-}
-
 interface Anchor {
   value: string
   tokens: string[]
@@ -131,19 +96,19 @@ interface Anchor {
 }
 
 /**
- * Places a family's anchors (light to dark, white first and black last) on the steps of the grid
- * nearest to them in lightness, keeping their order: dynamic programming over (anchor, step), cost the
- * squared lightness distance. Steps between two anchors follow the grid's shape between them.
+ * Places a family's anchors (in order, the first and last on the end steps) on the steps of the grid
+ * nearest to their targets (lightness by default), keeping their order: dynamic programming over
+ * (anchor, step), cost the squared distance. Steps between two anchors follow the grid's shape.
  */
-function fitToGrid(anchors: Anchor[], grid: number[]) {
+function fitToGrid(anchors: Anchor[], grid: number[], target = anchors.map((a) => a.color.l)) {
   const m = anchors.length
   const n = grid.length
   const cost = anchors.map(() => grid.map(() => Infinity))
   const from = anchors.map(() => grid.map(() => -1))
-  cost[0]![0] = (grid[0]! - anchors[0]!.color.l) ** 2
+  cost[0]![0] = (grid[0]! - target[0]!) ** 2
   for (let j = 1; j < m; j++)
     for (let k = j; k <= n - m + j; k++) {
-      const d = (grid[k]! - anchors[j]!.color.l) ** 2
+      const d = (grid[k]! - target[j]!) ** 2
       for (let q = j - 1; q < k; q++)
         if (cost[j - 1]![q]! + d < cost[j]![k]!) {
           cost[j]![k] = cost[j - 1]![q]! + d
@@ -153,26 +118,26 @@ function fitToGrid(anchors: Anchor[], grid: number[]) {
   const at = new Array<number>(m)
   at[m - 1] = n - 1
   for (let j = m - 1; j > 0; j--) at[j - 1] = from[j]![at[j]!]!
-  // Lightness of every step, and for fills the two anchors and the position between them.
+  // Target of every step, and for fills the two anchors and the position between them.
   const steps = grid.map((_, k) => {
     const j = at.filter((s) => s <= k).length - 1
-    if (at[j] === k) return { l: anchors[j]!.color.l, anchor: j, between: null }
+    if (at[j] === k) return { l: target[j]!, anchor: j, between: null }
     const a = anchors[j]!.color
     const b = anchors[j + 1]!.color
     const t = (grid[k]! - grid[at[j]!]!) / (grid[at[j + 1]!]! - grid[at[j]!]!)
-    return { l: a.l + (b.l - a.l) * t, anchor: -1, between: { a, b, t } }
+    return { l: target[j]! + (target[j + 1]! - target[j]!) * t, anchor: -1, between: { a, b, t } }
   })
   return steps
 }
 
 /**
- * The fixed-step alternative to {@link generatePalette}: every family has the same number of steps,
+ * Fixed steps: every family has the same number of steps,
  * and a step means about the same lightness in every family. The shared lightness curve (the grid) is
  * fitted to the tokens: each family places its token colors on the nearest steps of the grid, exactly,
  * and the grid becomes the average of the families; repeated until it settles. Token colors stay
  * exact, so every rule still holds; `drift` says how far each family bends away from the grid.
  */
-export function generateFixedPalette(theme: ModeTheme): ModePalette {
+export function generateFixedPalette(theme: ModeTheme, fill?: (family: string, l: number) => string): ModePalette {
   const { families, opacity } = anchorsOf(theme)
   const anchors = [...families].map(([family, colors]) => ({
     family,
@@ -194,22 +159,103 @@ export function generateFixedPalette(theme: ModeTheme): ModePalette {
   const ramps: Ramp[] = []
   const bindings: Record<string, PaletteBinding> = {}
   anchors.forEach(({ family, anchors }, f) => {
-    const hue = hueOf(anchors.map((a) => a.color))
-    const steps: RampStep[] = fitted[f]!.map((s, k) => {
-      const step = FIRST_STEP + k * STEP
-      if (!s.between) {
-        const a = anchors[s.anchor]!
-        for (const name of a.tokens) bindings[name] = { family, step, opacity: opacity[name]! }
-        return { step, value: a.value, tokens: a.tokens, kind: a.tokens.length ? 'anchor' : 'endpoint' }
-      }
-      const { a, b, t } = s.between
-      return { step, value: interpolate(a, b, t, hue), tokens: [], kind: 'fill' }
-    })
+    const steps = rampSteps(family, anchors, fitted[f]!, opacity, bindings, fill)
     const drift = Math.max(...fitted[f]!.map((s, k) => Math.abs(s.l - grid[k]!)))
     ramps.push({ family, steps, drift })
   })
   ramps.sort(byFamily)
   return { ramps, bindings, grid }
+}
+
+/**
+ * Ramp steps from fitted positions: anchors keep their color and bind their tokens; fills interpolate
+ * between their anchors, or come from `fill` at the step's target lightness when given.
+ */
+function rampSteps(
+  family: string,
+  anchors: Anchor[],
+  fitted: ReturnType<typeof fitToGrid>,
+  opacity: Record<string, number>,
+  bindings: Record<string, PaletteBinding>,
+  fill?: (family: string, l: number) => string,
+): RampStep[] {
+  const hue = hueOf(anchors.map((a) => a.color))
+  return fitted.map((s, k) => {
+    const step = FIRST_STEP + k * STEP
+    if (!s.between) {
+      const a = anchors[s.anchor]!
+      for (const name of a.tokens) bindings[name] = { family, step, opacity: opacity[name]! }
+      return { step, value: a.value, tokens: a.tokens, kind: a.tokens.length ? 'anchor' : 'endpoint' }
+    }
+    const { a, b, t } = s.between
+    return { step, value: fill ? fill(family, s.l) : interpolate(a, b, t, hue), tokens: [], kind: 'fill' }
+  })
+}
+
+/**
+ * Role slots, from the background end of the ramp (0) to the text end (14), as in a Radix scale. Null
+ * for on-emphasized text, which goes with whichever end it is closer to.
+ */
+function slotOf(name: string): number | null {
+  const [scope, role, ...rest] = name.split('/')
+  const modifiers = rest.join('/')
+  if (rest.includes('on-emphasized')) return null
+  if (scope === 'surface') return 1
+  if (scope === 'focus') return 9
+  if (scope === 'ghost') return 10
+  if (scope === 'bg' && role !== 'disabled') {
+    const bg: Record<string, number> = {
+      subtle: 2,
+      'subtle/hover': 3,
+      '': 3,
+      'subtle/pressed': 4,
+      hover: 4,
+      pressed: 5,
+      emphasized: 6,
+      'emphasized/hover': 7,
+      'emphasized/pressed': 8,
+    }
+    return bg[modifiers] ?? null
+  }
+  if (scope === 'fg' && modifiers === 'subtle') return 11
+  return 12 // text, strokes and disabled use the text color
+}
+const SLOTS = 15
+
+/**
+ * The role-ordered alternative to {@link generateFixedPalette}: a step means the same role in every
+ * family and both modes, as in Radix scales, so a token always binds the same step. From the
+ * background end (white in light themes, black in dark ones): surface, the four background layers,
+ * the emphasized fill and its states, focus, ghost, subtle text, text, then on-emphasized text next to
+ * the end it is closer to. Tokens stay exact; lightness jumps where a role's color is out of that order.
+ */
+export function generateRolePalette(theme: ModeTheme): ModePalette {
+  const { families, opacity } = anchorsOf(theme)
+  const light = rgbToOklch(hexToRgba(theme.tokens['surface/neutral']!.value)).l > 0.5
+  const [bgEnd, textEnd] = light ? [WHITE, BLACK] : [BLACK, WHITE]
+  const toText = (c: Oklch) => (light ? -c.l : c.l)
+  const ramps: Ramp[] = []
+  const bindings: Record<string, PaletteBinding> = {}
+  for (const [family, colors] of families) {
+    const anchors = [...colors].map(([value, tokens]) => {
+      const color = rgbToOklch(hexToRgba(value))
+      const near = Math.abs(color.l - (light ? 1 : 0)) < Math.abs(color.l - (light ? 0 : 1)) ? 1 : 13
+      const slot =
+        value === bgEnd ? 0 : value === textEnd ? SLOTS - 1 : Math.min(...tokens.map((name) => slotOf(name) ?? near))
+      return { value, tokens, color, slot }
+    })
+    anchors.sort((a, b) => a.slot - b.slot || toText(a.color) - toText(b.color))
+    const n = Math.max(RAMP_STEPS, anchors.length)
+    const scale = (n - 1) / (SLOTS - 1)
+    const fitted = fitToGrid(
+      anchors,
+      Array.from({ length: n }, (_, i) => i),
+      anchors.map((a) => a.slot * scale),
+    )
+    ramps.push({ family, steps: rampSteps(family, anchors, fitted, opacity, bindings) })
+  }
+  ramps.sort(byFamily)
+  return { ramps, bindings }
 }
 
 /** The mode with every token resolved through its ramp step (and opacity). */
@@ -226,5 +272,3 @@ export function applyPalette(theme: ModeTheme, palette: ModePalette): ModeTheme 
 
 const FAMILY_ORDER = ['neutral', 'foreground', 'accent', 'success', 'warning', 'danger', 'info']
 const byFamily = (a: Ramp, b: Ramp) => FAMILY_ORDER.indexOf(a.family) - FAMILY_ORDER.indexOf(b.family)
-const lightnessOf = (hex: string) => rgbToOklch(hexToRgba(hex)).l
-const gap = (a: { value: string }, b: { value: string }) => Math.abs(lightnessOf(a.value) - lightnessOf(b.value))

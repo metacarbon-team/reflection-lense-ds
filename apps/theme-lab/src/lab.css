@@ -353,6 +353,11 @@ code {
   color: #8a1c1c;
 }
 
+.lab-status-warn {
+  background: #fbf0d4;
+  color: #6b4a00;
+}
+
 .lab-layer {
   border-radius: 10px;
   padding: 12px;

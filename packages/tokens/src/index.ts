@@ -19,22 +19,31 @@ export {
   applyPalette,
   familyOf,
   generateFixedPalette,
-  generatePalette,
+  generateRolePalette,
   RAMP_STEPS,
   type ModePalette,
   type PaletteBinding,
   type Ramp,
   type RampStep,
 } from './palette'
+export {
+  BRAND_SHAPES,
+  curveKeys,
+  familyCurve,
+  generateCurvePalette,
+  shapeCurve,
+  toneFor,
+  DEFAULT_CURVE,
+  type CurveParams,
+} from './curve'
 export { cssVarName, toCssVars } from './css'
 export { contrast, hexToRgba, rgbaToHex, rgbToOklch, oklchToRgb, composite, lightness } from './color'
 
 /**
- * Default theme seeds: warm paper and near-black in light, the same pair swapped in dark. The lime
- * accent of the "Mirror · CLI parity" concept (Figma node 2850:3075) is the dark accent; light uses a
- * muted olive of the same family.
+ * Default theme seeds from the brand palette (Branding page): Off White and Off Black, swapped
+ * between the modes, and Neon Yellow as the accent in both.
  */
 export const DEFAULT_SEEDS = {
-  light: { bg: '#faf8f3', fg: '#1a1b1a', accent: '#627150' },
+  light: { bg: '#f8f6f0', fg: '#1a1b1a', accent: '#cee04b' },
   dark: { bg: '#1a1b1a', fg: '#f8f6f0', accent: '#cee04b' },
 } as const

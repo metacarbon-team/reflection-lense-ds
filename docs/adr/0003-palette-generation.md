@@ -91,3 +91,6 @@ The generator always returns a valid theme together with a report of what was sh
 - 2026-10-28 — resolved open question: status roles have base colors (success `#51c35b`, danger `#f57042`, info `#4880ff`; warning still a placeholder). Their hue and chroma stay fixed, lightness is solved like any role, and the hue still shifts on conflict with the accent.
 - 2026-10-28 — accent and status `emphasized` fills are kept exactly, on-emphasized text adapts instead, status hues no longer shift: see [0011](0011-exact-emphasized-colors.md).
 - 2026-10-30 — the palette has ramps after all, derived from the tokens on one fitted grid per mode; tokens are still solved from relations. See [0013](0013-palette-ramps.md).
+- 2026-10-30 — danger base color is `#f54242` (was the Tangerine swatch `#f57042`).
+- 2026-10-30 — the background is the anchor and never drifts: text, layers and raised adapt to it. See [0015](0015-layer-direction.md).
+- 2026-10-30 — warning base color is Tangerine `#f57042` from the brand's secondary palette; the default light background is Off White `#f8f6f0`.
