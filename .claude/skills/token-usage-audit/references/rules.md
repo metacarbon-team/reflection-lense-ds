@@ -21,6 +21,7 @@ Product decisions clarified on 2026-11-03. Use these during contextual review al
 | --- | --- | --- |
 | `surface/neutral` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
 | `bg/*` | Backgrounds of anything above the window background. | Choose role and strength for the content; nesting alone does not prescribe every choice. |
+| `bg/neutral/subtle` / `bg/neutral` | Subtle shares the surface color; normal is one layer step away (ADR 0019). | Equal surface/subtle values are intentional. Keep bindings distinct by purpose: window versus content. |
 | `bg/neutral/raised` | Forms, inputs, modals and menus; normal is translucent. | Review the element's purpose and rendered background. |
 | `bg/neutral/raised/emphasized` | The same raised family at 100% opacity, mainly for modals. | Mainly is a preference, not an exclusive restriction: other uses or a normal raised modal are not automatically errors. |
 | `fg/<role>` and `fg/<role>/subtle` | Text and icon hierarchy. | The designer chooses the hierarchy; validate scope, pairing and contrast rather than imposing a token on every label type. |

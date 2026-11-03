@@ -70,12 +70,17 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       fail(translucent ? 'opacity: must be translucent' : 'opacity: must be opaque', name, c.a, translucent ? 0 : 1)
   }
 
-  // Layer stack: monotonic, with a minimum step.
+  // Neutral subtle shares the surface color; normal sits one layer step away (ADR 0019).
   const stack = ['surface/neutral', 'bg/neutral/subtle', 'bg/neutral'].filter(has)
-  const sign = Math.sign(L(get(stack[1]!)) - L(get(stack[0]!)))
-  for (let i = 1; i < stack.length; i++) {
-    const d = sign * (L(get(stack[i]!)) - L(get(stack[i - 1]!)))
-    if (d < p.layerStep - TOLERANCE) fail('layer separation', stack[i]!, d, p.layerStep, stack[i - 1])
+  const surface = get('surface/neutral')
+  const subtle = get('bg/neutral/subtle')
+  const normal = get('bg/neutral')
+  const sign = surface && normal ? Math.sign(L(normal) - L(surface)) : 0
+  if (surface && subtle && rgbaToHex(surface) !== rgbaToHex(subtle))
+    fail('neutral subtle matches surface', 'bg/neutral/subtle', 1, 0, 'surface/neutral')
+  if (surface && normal) {
+    const d = Math.abs(L(normal) - L(surface))
+    if (d < p.layerStep - TOLERANCE) fail('layer separation', 'bg/neutral', d, p.layerStep, 'surface/neutral')
   }
 
   // Raised (ADR 0007, 0015): on one side of every neutral layer, the same side for all of them; its

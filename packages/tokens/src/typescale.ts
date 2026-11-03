@@ -9,7 +9,7 @@ export interface TypeScaleParams {
   fixed: number[]
   /** Modular steps above base. */
   steps: number
-  /** Line-height multipliers; the result is rounded up to the 4px grid. */
+  /** Line-height multipliers; round to the nearest 4px grid point, with ties rounding up (ADR 0018). */
   leading: { body: number; heading: number }
 }
 
@@ -18,7 +18,7 @@ export const DEFAULT_TYPE_SCALE: TypeScaleParams = {
   ratio: { desktop: 1.25, mobile: 1.2 },
   fixed: [12, 13, 14],
   steps: 6,
-  leading: { body: 1.5, heading: 1.2 },
+  leading: { body: 1.25, heading: 1.25 },
 }
 
 export interface TypeStep {
@@ -34,7 +34,7 @@ export function generateTypeScale(p: TypeScaleParams = DEFAULT_TYPE_SCALE): {
   desktop: TypeStep[]
   mobile: TypeStep[]
 } {
-  const grid = (px: number) => Math.ceil(px / 4) * 4
+  const grid = (px: number) => Math.round(px / 4) * 4
   const forRatio = (ratio: number): TypeStep[] => {
     const fixed = p.fixed.map((size) => ({ name: String(size), size, lineHeight: grid(size * p.leading.body) }))
     const modular = Array.from({ length: Math.min(p.steps, MODULAR_NAMES.length - 1) + 1 }, (_, i) => {

@@ -194,11 +194,11 @@ function build(
     return quantize(base)
   }
 
-  // 1. Neutral stack: surface → bg/neutral/subtle → bg/neutral.
+  // 1. Neutral stack (ADR 0019): surface = subtle; normal is one layer step away.
   const surface = quantize(paint(bgTone, l0))
   put('surface/neutral', surface)
-  const subtleL = stepped(l0, bgTone, p.layerStep, layerDir)
-  const normalL = stepped(subtleL, bgTone, p.layerStep, layerDir)
+  const subtleL = l0
+  const normalL = stepped(l0, bgTone, p.layerStep, layerDir)
   const layers: Rgb[] = [surface] // bases and states, where controls sit
   const neutralBases: Rgb[] = [surface]
   neutralBases.push(withStates('bg/neutral/subtle', subtleL, bgTone, layers))

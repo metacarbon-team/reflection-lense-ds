@@ -42,20 +42,17 @@ const TABS = [
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
-/**
- * Curve (prototype) shows a theme generated on one curve per family, through the seed or through the
- * brand ramp, with fixed steps sampled from the curves. Role steps give every step the same role in
- * every family, on the plain theme.
- */
+/** Role steps is the active path. Keep the curve experiment available for a future revisit. */
+const ENABLE_CURVE = false
 const RAMP_KINDS = [
-  { id: 'curve', label: 'Curve' },
+  // { id: 'curve', label: 'Curve' }, // Restore together with ENABLE_CURVE when revisiting the prototype.
   { id: 'roles', label: 'Role steps' },
 ] as const
 const CURVE_SOURCES = [
   { id: 'seed', label: 'Seed curves' },
   { id: 'brand', label: 'Brand curves' },
 ] as const
-type RampKind = (typeof RAMP_KINDS)[number]['id']
+type RampKind = 'roles' | 'curve'
 interface CurveInput {
   seeds: ThemeSeeds
   params: GeneratorParams
@@ -64,7 +61,7 @@ interface CurveInput {
 }
 /** The mode a palette kind shows, and its palette. */
 const paletteFor = (kind: RampKind, mode: Mode, theme: ModeTheme, input: CurveInput) => {
-  if (kind === 'curve') {
+  if (ENABLE_CURVE && kind === 'curve') {
     const keys = curveKeys(input.seeds[mode], input.params)
     return { theme, palette: generateCurvePalette(theme, keys, input.curve) }
   }
@@ -74,6 +71,7 @@ const paletteFor = (kind: RampKind, mode: Mode, theme: ModeTheme, input: CurveIn
 /** The palette switch, with the curve source next to it when curves are shown. */
 function PaletteControls(props: { input: CurveInput; ramps: RampKind; onRamps: (k: RampKind) => void }) {
   const { curve, onCurve } = props.input
+  if (!ENABLE_CURVE) return <span className="lab-muted">Role steps</span>
   return (
     <>
       <Segmented label="Palette" options={RAMP_KINDS} value={props.ramps} onChange={props.onRamps} />
@@ -158,14 +156,16 @@ export function App() {
   const [typeScale, setTypeScale] = useState<TypeScaleParams>(structuredClone(DEFAULT_TYPE_SCALE))
   const [shadows, setShadows] = useState<ShadowParams>(structuredClone(DEFAULT_SHADOWS))
   const [tab, setTab] = useState<Tab>('ui')
-  const [ramps, setRamps] = useState<RampKind>('curve')
+  const [selectedRamps, setRamps] = useState<RampKind>('roles')
+  // Force Role steps even if Fast Refresh preserves the old curve selection in an open lab.
+  const ramps: RampKind = ENABLE_CURVE ? selectedRamps : 'roles'
   const [curve, setCurve] = useState<CurveParams>({ ...DEFAULT_CURVE, source: 'brand' })
   const input = { seeds, params, curve, onCurve: setCurve }
 
   const theme = useMemo(() => generateTheme(seeds, params), [seeds, params])
   // The curve prototype generates its own theme: every color on its family's curve.
   const curveTheme = useMemo(
-    () => (ramps === 'curve' ? generateTheme(seeds, { ...params, curve }) : null),
+    () => (ENABLE_CURVE && ramps === 'curve' ? generateTheme(seeds, { ...params, curve }) : null),
     [ramps, seeds, params, curve],
   )
   const shown = curveTheme ?? theme
@@ -192,7 +192,9 @@ export function App() {
         </header>
 
         {tab === 'shadows' && <ShadowControls params={shadows} onChange={setShadows} />}
-        {ramps === 'curve' && (tab === 'ui' || tab === 'ramps') && <CurveControls params={curve} onChange={setCurve} />}
+        {ENABLE_CURVE && ramps === 'curve' && (tab === 'ui' || tab === 'ramps') && (
+          <CurveControls params={curve} onChange={setCurve} />
+        )}
 
         <Section title="Seeds">
           {MODES.map((mode) => (

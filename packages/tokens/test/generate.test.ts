@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
 import { BRAND_SHAPES, curveKeys, DEFAULT_CURVE, familyCurve, generateCurvePalette, toneFor } from '../src/curve'
 import { applyPalette, familyOf, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
-import { generateTypeScale } from '../src/typescale'
+import { DEFAULT_TYPE_SCALE, generateTypeScale } from '../src/typescale'
 import type { ModeTheme } from '../src/types'
 import { validateMode, type Issue } from '../src/validate'
 
@@ -160,11 +160,28 @@ describe('generator', () => {
     const mode = generateMode('dark', { bg: '#000000', fg: '#f8f6f0', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
     const surface = hexToRgba(mode.tokens['surface/neutral']!.value)
-    // The background stays pure black. Close to the light theme's 1.09 and 1.20; without flare these
-    // were 1.02 and 1.05.
+    // Subtle shares the black surface; normal retains one visible step under screen flare.
     expect(mode.tokens['surface/neutral']!.value).toBe('#000000')
-    expect(contrast(hexToRgba(mode.tokens['bg/neutral/subtle']!.value), surface)).toBeGreaterThan(1.06)
-    expect(contrast(hexToRgba(mode.tokens['bg/neutral']!.value), surface)).toBeGreaterThan(1.15)
+    expect(mode.tokens['bg/neutral/subtle']!.value).toBe('#000000')
+    expect(contrast(hexToRgba(mode.tokens['bg/neutral']!.value), surface)).toBeGreaterThan(1.06)
+  })
+
+  it('shares surface with subtle and moves normal to the former subtle step (ADR 0019)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of [theme.light, theme.dark]) {
+      expect(mode.tokens['bg/neutral/subtle']!.value).toBe(mode.tokens['surface/neutral']!.value)
+      expect(mode.tokens['bg/neutral']!.value).toBe(mode.mode === 'light' ? '#edebe5' : '#232423')
+      expect(validateMode(mode)).toEqual([])
+      const broken = structuredClone(mode)
+      broken.tokens['bg/neutral/subtle']!.value = mode.tokens['bg/neutral']!.value
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'neutral subtle matches surface', token: 'bg/neutral/subtle' }),
+      )
+      broken.tokens['bg/neutral']!.value = mode.tokens['surface/neutral']!.value
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'layer separation', token: 'bg/neutral' }),
+      )
+    }
   })
 
   it('reports what it shifted', () => {
@@ -181,7 +198,15 @@ describe('type scale', () => {
     expect(desktop.slice(0, 4).map((s) => s.size)).toEqual([12, 13, 14, 16])
     expect(desktop.find((s) => s.name === 'lg')!.size).toBe(20)
     expect(mobile.find((s) => s.name === 'xl')!.size).toBeLessThan(desktop.find((s) => s.name === 'xl')!.size)
-    for (const s of desktop) expect(s.lineHeight % 4).toBe(0)
+    for (const s of [...desktop, ...mobile]) expect(s.lineHeight % 4).toBe(0)
+    // Default 1.25 leading stays compact for small UI text, in both modes.
+    for (const scale of [desktop, mobile]) expect(scale.slice(0, 4).map((s) => s.lineHeight)).toEqual([16, 16, 16, 20])
+    expect(desktop.find((s) => s.name === '2xl')!.lineHeight).toBe(40)
+    expect(mobile.find((s) => s.name === 'xl')!.lineHeight).toBe(28)
+    // Custom leading still rounds down when closer (21 → 20), and up on a tie (18 → 20).
+    const custom = generateTypeScale({ ...DEFAULT_TYPE_SCALE, leading: { body: 1.5, heading: 1.2 } })
+    expect(custom.desktop.find((s) => s.name === '14')!.lineHeight).toBe(20)
+    expect(custom.desktop.find((s) => s.name === '12')!.lineHeight).toBe(20)
   })
 })
 
@@ -200,7 +225,10 @@ describe('palette', () => {
       expect(applyPalette(mode, roles).tokens).toEqual(mode.tokens)
       for (const role of ['accent', 'success', 'danger', 'info'])
         expect(roles.bindings[`bg/${role}/emphasized`]!.step).toBe(roles.bindings['bg/neutral/emphasized']!.step)
-      expect(roles.bindings['bg/accent/subtle']!.step).toBe(roles.bindings['bg/neutral/subtle']!.step)
+      // Neutral subtle intentionally shares the surface anchor (ADR 0019), unlike tinted roles.
+      expect(roles.bindings['bg/neutral/subtle']).toEqual(roles.bindings['surface/neutral'])
+      for (const role of ['success', 'warning', 'danger', 'info'])
+        expect(roles.bindings[`bg/${role}/subtle`]!.step).toBe(roles.bindings['bg/accent/subtle']!.step)
     }
   })
 })
