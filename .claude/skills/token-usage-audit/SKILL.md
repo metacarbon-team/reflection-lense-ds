@@ -1,6 +1,7 @@
 ---
 name: token-usage-audit
-description: Audit how Reflection Lense components use color tokens: bindings, token scope versus layer, opacity, text/fill pairing, variant states (hover, pressed, disabled, focus), rendered contrast and shadows. Use this skill whenever the user wants to check, validate, lint, review or audit token usage, variable bindings or colors of components in the Figma design-system file, to find where colors broke after a token migration, rebind, or palette change, or asks "які компоненти юзають не ті токени", "перевір токени в компонентах", "де поламались кольори". Also use it before shipping a component change to Figma, and later for the same checks on the React library (see references/frontend.md). Read-only by default; it proposes fixes and applies them only after the user approves.
+description: >-
+  Audit how Reflection Lense components use color tokens: bindings, token scope versus layer, opacity, text/fill pairing, variant states (hover, pressed, disabled, focus), rendered contrast and shadows. Use this skill whenever the user wants to check, validate, lint, review or audit token usage, variable bindings or colors of components in the Figma design-system file, to find where colors broke after a token migration, rebind, or palette change, or asks "які компоненти юзають не ті токени", "перевір токени в компонентах", "де поламались кольори". Also use it before shipping a component change to Figma, and later for the same checks on the React library (see references/frontend.md). Read-only by default; it proposes fixes and applies them only after the user approves.
 ---
 
 # Token usage audit
@@ -9,7 +10,9 @@ Checks how **components** use color tokens. It reads the file, reports by severi
 
 Scope is component token usage only. Documentation frames around the components (headers, spec lines, explicit Light/Dark modes on doc frames, how many themes a page shows) belong to the documentation skill. The script audits only `COMPONENT_SET`, `COMPONENT` and `INSTANCE` subtrees, but it still reads the surrounding doc frames as the background a component sits on.
 
-The token grammar and the decisions behind every rule are in `docs/adr` (0002 naming, 0008 disabled, 0011 emphasized, 0012 text prominences, 0010 shadows). The rule catalogue with rationale and fixes is in [references/rules.md](references/rules.md). Read it before explaining a finding or proposing a fix.
+The token grammar and the decisions behind every rule are in `docs/adr` (0002 naming, 0007 raised, 0008 disabled, 0011 emphasized, 0012 text prominences, 0010 shadows, 0017 current surface usage and local modes). The semantic usage guide and rule catalogue with rationale and fixes are in [references/rules.md](references/rules.md). Read them before explaining a finding or proposing a fix.
+
+Supplement the script with the semantic usage guide: inspect confirmed element purposes, including window background versus content, raised surfaces and modal backdrops. Label contextual findings separately from script totals; do not claim the script implements these checks. Preserve designer choices for hierarchy, stroke strength and status sentiment, and resolve colors in each component's local mode.
 
 ## Workflow
 

@@ -16,12 +16,16 @@ export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke', 'blanket
 export const DISABLED = 'disabled'
 
 /**
- * Translucent scopes, `bg/neutral/raised` and its states (ADR 0007) and the disabled role (ADR 0008):
+ * Translucent scopes, normal `bg/neutral/raised` and its states (ADR 0007), and the disabled role (ADR 0008):
  * opacity reads from the name.
  */
 export const isTranslucent = (name: string) => {
   const [scope, role, ...rest] = name.split('/')
-  return TRANSLUCENT_SCOPES.includes(scope as Scope) || role === DISABLED || (scope === 'bg' && rest.includes('raised'))
+  return (
+    TRANSLUCENT_SCOPES.includes(scope as Scope) ||
+    role === DISABLED ||
+    (scope === 'bg' && rest.includes('raised') && !rest.includes('emphasized'))
+  )
 }
 
 export type Mode = 'light' | 'dark'

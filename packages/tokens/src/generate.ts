@@ -230,6 +230,16 @@ function build(
   put('bg/neutral/raised/pressed', layerPole, raisedPressed.a ?? MAX_ALPHA)
   layers.push(...raisedOver, ...raisedHover.over, ...raisedPressed.over)
 
+  // Raised normal keeps its existing translucent behavior. Emphasized uses the same RGB at 100%.
+  // At a white/black endpoint its opaque interaction states must move inward to stay distinct.
+  const raisedSolidL = raisedDir > 0 ? 1 : 0
+  const raisedSolidTone = flat(0, 0)
+  const raisedSolidHover = stepped(raisedSolidL, raisedSolidTone, p.stateStep, raisedDir > 0 ? -1 : 1)
+  const raisedSolidPressed = stepped(raisedSolidHover, raisedSolidTone, p.stateStep, raisedDir > 0 ? -1 : 1)
+  put('bg/neutral/raised/emphasized', awayPole)
+  put('bg/neutral/raised/emphasized/hover', paint(raisedSolidTone, raisedSolidHover))
+  put('bg/neutral/raised/emphasized/pressed', paint(raisedSolidTone, raisedSolidPressed))
+
   // 2. Tinted role backgrounds.
   const tinted: Rgb[] = []
   for (const r of ROLES) {

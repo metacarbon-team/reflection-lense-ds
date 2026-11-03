@@ -130,3 +130,4 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 - 2026-10-28 — resolved open question: shadows are a scale, `shadow/2xs` … `shadow/2xl`. See [0010](0010-shadow-tokens.md).
 - 2026-10-28 — text has two prominences, `fg/<role>` and `fg/<role>/subtle`; `emphasized` remains for `bg` only. See [0012](0012-two-text-prominences.md).
 - 2026-10-30 — the neutral stack moves to whichever side of `surface` keeps the text readable, not always towards the text. See [0015](0015-layer-direction.md).
+- 2026-11-03 — raised gains an opaque emphasized strength; inverse regions use local component mode inversion. These decisions are superseded by [0017](0017-semantic-surface-usage.md).

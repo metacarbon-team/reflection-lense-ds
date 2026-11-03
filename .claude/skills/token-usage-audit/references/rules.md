@@ -6,12 +6,35 @@ Token grammar (ADR 0002): `scope/role/[prominence]/[context]/[state]`.
 
 - **Scopes**: `surface`, `bg`, `fg`, `stroke`, `ghost`, `focus`, `blanket`.
 - **Roles**: `neutral`, `accent`, `success`, `warning`, `danger`, `info`.
-- **Prominences**: `subtle`, normal (omitted), `emphasized`, plus `bg/neutral/raised`.
+- **Prominences**: `subtle`, normal (omitted), `emphasized`. The neutral raised family has normal (`bg/neutral/raised`) and emphasized (`bg/neutral/raised/emphasized`), each with hover/pressed states.
 - **Context**: `on-emphasized`.
 - **States**: `hover`, `pressed`.
 - **Disabled**: one universal set, `bg/disabled`, `fg/disabled` and `stroke/disabled`.
 
 In Figma, a token whose name collides with a group repeats its last segment (`bg/neutral/neutral`). The audit strips that repetition before matching.
+
+## Semantic usage guide
+
+Product decisions clarified on 2026-11-03. Use these during contextual review alongside the script's findings; the script does not automatically infer every layer's product purpose.
+
+| Token family | Intended use | Audit interpretation |
+| --- | --- | --- |
+| `surface/neutral` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
+| `bg/*` | Backgrounds of anything above the window background. | Choose role and strength for the content; nesting alone does not prescribe every choice. |
+| `bg/neutral/raised` | Forms, inputs, modals and menus; normal is translucent. | Review the element's purpose and rendered background. |
+| `bg/neutral/raised/emphasized` | The same raised family at 100% opacity, mainly for modals. | Mainly is a preference, not an exclusive restriction: other uses or a normal raised modal are not automatically errors. |
+| `fg/<role>` and `fg/<role>/subtle` | Text and icon hierarchy. | The designer chooses the hierarchy; validate scope, pairing and contrast rather than imposing a token on every label type. |
+| `stroke/*` | Boundaries and dividers, with strength chosen by the designer. | Do not report a prominence choice alone as misuse. Existing binding, scope and contrast checks still apply. |
+| `blanket/neutral` | Backdrop behind a modal, covering the underlying interface. | Distinguish the backdrop from the modal body, which uses a background token. |
+| Status roles: `success`, `warning`, `danger`, `info` | Express the sentiment of an action or feedback. | Selection is a designer judgment; do not infer mandatory sentiment from a label alone. Pairing and contrast rules still apply. |
+
+### Local mode inversion
+
+A dark tooltip or panel in a light interface, or a light component in a dark interface, uses a local light ↔ dark mode inversion on that component. Descendants resolve the same semantic tokens in the local mode; no separate inverse tokens are needed. Do not flag a deliberate component mode override as misuse or reset it to the page mode. Audit resolved colors in the component's actual mode. Documentation-frame modes remain outside this audit's scope.
+
+### Raised emphasized text
+
+`bg/neutral/raised/emphasized` is an opaque raised background, distinct from the strong solid fill `bg/neutral/emphasized`. It does not automatically require `fg/neutral/on-emphasized`. Use the normal/subtle foreground hierarchy and check rendered contrast in the component's actual mode, including custom themes.
 
 ## A — Bindings
 

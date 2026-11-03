@@ -52,7 +52,8 @@ export function familyOf(name: string): string {
   const [scope, role, ...rest] = name.split('/')
   if (role === 'disabled' || scope === 'blanket' || rest.includes('on-emphasized')) return 'foreground'
   if (role !== 'neutral') return role!
-  if (scope === 'surface' || (scope === 'bg' && !rest.includes('emphasized'))) return 'neutral'
+  if (scope === 'surface' || (scope === 'bg' && (rest.includes('raised') || !rest.includes('emphasized'))))
+    return 'neutral'
   return 'foreground'
 }
 
@@ -214,6 +215,10 @@ function slotOf(name: string): number | null {
       emphasized: 6,
       'emphasized/hover': 7,
       'emphasized/pressed': 8,
+      // Raised endpoints share white/black; their distinct opaque states use the solid-fill slots.
+      'raised/emphasized': 6,
+      'raised/emphasized/hover': 7,
+      'raised/emphasized/pressed': 8,
     }
     return bg[modifiers] ?? null
   }

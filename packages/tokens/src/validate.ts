@@ -54,9 +54,14 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const okRole =
       (ROLES as readonly string[]).includes(role ?? '') ||
       (role === DISABLED && ['bg', 'fg', 'stroke'].includes(scope!) && rest.length === 0)
-    const order = rest.map((m) => MODIFIERS[m])
+    // Raised is a background family with normal (omitted) and emphasized prominence.
+    const raisedFamily = scope === 'bg' && role === 'neutral' && rest[0] === 'raised'
+    const modifiers = raisedFamily ? rest.slice(1) : rest
+    const order = modifiers.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
-    const okRaised = !rest.includes('raised') || (scope === 'bg' && role === 'neutral')
+    const okRaised =
+      !rest.includes('raised') ||
+      (raisedFamily && /^(emphasized(\/(hover|pressed))?|hover|pressed)?$/.test(modifiers.join('/')))
     // Text has two prominences, normal and subtle (ADR 0012).
     const okFg = scope !== 'fg' || !rest.includes('emphasized')
     if (!okScope || !okRole || !okRest || !okRaised || !okFg) fail('grammar', name, 0, 1)

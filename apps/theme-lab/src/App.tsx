@@ -894,7 +894,20 @@ function Layer({ name, depth, children }: { name: string; depth: number; childre
             } as CSSProperties
           }
         >
-          Raised input
+          Raised normal
+        </span>
+        <span
+          className="lab-input lab-fill"
+          style={
+            {
+              '--fill': v('bg/neutral/raised/emphasized'),
+              '--fill-hover': v('bg/neutral/raised/emphasized/hover'),
+              '--fill-pressed': v('bg/neutral/raised/emphasized/pressed'),
+              border: `1px solid ${v('stroke/neutral/emphasized')}`,
+            } as CSSProperties
+          }
+        >
+          Raised emphasized
         </span>
         <button type="button" className="lab-btn lab-fill" style={fill('neutral', true)}>
           Neutral solid

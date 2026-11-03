@@ -3,7 +3,7 @@ import { composite, contrast, hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch } fro
 import { generateMode, generateTheme } from '../src/generate'
 import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
 import { BRAND_SHAPES, curveKeys, DEFAULT_CURVE, familyCurve, generateCurvePalette, toneFor } from '../src/curve'
-import { applyPalette, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
+import { applyPalette, familyOf, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { generateTypeScale } from '../src/typescale'
 import type { ModeTheme } from '../src/types'
@@ -80,6 +80,33 @@ describe('generator', () => {
     expect(validateMode(white)).toEqual([])
     const sunk = composite(hexToRgba(white.tokens['bg/neutral/raised']!.value), hexToRgba('#ffffff'))
     expect(rgbToOklch(sunk).l).toBeLessThan(1)
+  })
+
+  it('adds opaque raised emphasized with distinct states and preserves its neutral palette family', () => {
+    for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
+      const name = 'bg/neutral/raised/emphasized'
+      const normal = hexToRgba(mode.tokens['bg/neutral/raised']!.value)
+      expect(mode.tokens[name]!.value).toBe(rgbaToHex({ ...normal, a: 1 }))
+      const values = [name, `${name}/hover`, `${name}/pressed`].map((token) => {
+        expect(mode.tokens[token]!.opacity).toBe('opaque')
+        expect(familyOf(token)).toBe('neutral')
+        const color = hexToRgba(mode.tokens[token]!.value)
+        expect(color.a).toBe(1)
+        expect(contrast(hexToRgba(mode.tokens['fg/neutral']!.value), color)).toBeGreaterThanOrEqual(4.5)
+        return mode.tokens[token]!.value
+      })
+      expect(new Set(values).size).toBe(3)
+      expect(validateMode(mode)).toEqual([])
+      const broken = structuredClone(mode)
+      broken.tokens[`${name}/hover`]!.value = broken.tokens[name]!.value
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'state separation', token: `${name}/hover` }),
+      )
+      broken.tokens[name]!.value = rgbaToHex({ ...normal, a: 0.5 })
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'opacity: must be opaque', token: name }),
+      )
+    }
   })
 
   it('keeps accent and status fills exactly, adapting their text instead (ADR 0011)', () => {

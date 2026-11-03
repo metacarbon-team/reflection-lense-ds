@@ -20,6 +20,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0014](0014-screen-flare.md)            | Lightness steps measured with screen flare     | Accepted |
 | [0015](0015-layer-direction.md)         | The background never moves; layers adapt to it | Accepted |
 | [0016](0016-compressed-text-spacing.md) | Text spacing compresses on mid tones           | Accepted |
+| [0017](0017-semantic-surface-usage.md)  | Semantic surface usage and local modes          | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 
