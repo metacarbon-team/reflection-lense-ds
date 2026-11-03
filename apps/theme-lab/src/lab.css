@@ -122,6 +122,130 @@ code {
   font-size: 11px;
 }
 
+.lab-token-export {
+  display: grid;
+  gap: 10px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.lab-token-export p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.lab-export-choice,
+.lab-export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lab-export-actions button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.lab-token-export summary {
+  cursor: pointer;
+}
+
+.lab-token-browser {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.lab-token-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  gap: 24px;
+  align-items: start;
+}
+
+.lab-token-intro h2 {
+  font-size: 20px;
+}
+.lab-token-intro p {
+  line-height: 1.5;
+}
+.lab-token-export-panel > summary {
+  font-weight: 600;
+}
+.lab-token-export-panel .lab-token-export {
+  margin-top: 16px;
+}
+
+.lab-token-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.lab-token-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.lab-token-filters label:first-child {
+  flex: 1;
+  min-width: 200px;
+}
+.lab-token-filters input,
+.lab-token-filters select {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--lab-border);
+  border-radius: 6px;
+  background: var(--lab-panel);
+  color: var(--lab-text);
+}
+
+.lab-token-category {
+  min-width: 0;
+}
+.lab-token-table-wrap {
+  overflow-x: auto;
+}
+.lab-token-category table {
+  table-layout: fixed;
+}
+.lab-token-category th {
+  font-weight: 500;
+}
+.lab-token-category code {
+  overflow-wrap: anywhere;
+}
+.lab-token-category th:first-child {
+  width: 38%;
+}
+.lab-token-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lab-token-checker {
+  display: inline-block;
+  flex: 0 0 24px;
+  height: 24px;
+  border: 1px solid var(--lab-border);
+  border-radius: 5px;
+  overflow: hidden;
+  background: repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 / 8px 8px;
+}
+.lab-token-checker > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 1100px) {
+  .lab-token-intro {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lab-main {
   padding: 16px;
   display: grid;

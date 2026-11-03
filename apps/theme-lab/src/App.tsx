@@ -29,6 +29,7 @@ import {
 } from '@reflection/tokens'
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { MirrorScreen } from './ui-preview/MirrorScreen'
+import { TokenBrowser } from './TokenBrowser'
 
 /** `var(--…)` for a canonical token name. */
 const v = (name: string) => `var(${cssVarName(name)})`
@@ -39,6 +40,7 @@ const TABS = [
   { id: 'palette', label: 'Palette swatches' },
   { id: 'shadows', label: 'Shadows' },
   { id: 'ramps', label: 'Ramps' },
+  { id: 'tokens', label: 'Tokens' },
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
@@ -169,6 +171,13 @@ export function App() {
     [ramps, seeds, params, curve],
   )
   const shown = curveTheme ?? theme
+  const exportTheme = useMemo(
+    () => ({
+      light: applyPalette(shown.light, generateRolePalette(shown.light)),
+      dark: applyPalette(shown.dark, generateRolePalette(shown.dark)),
+    }),
+    [shown],
+  )
   const issues = useMemo(
     () => ({ light: validateMode(theme.light, params), dark: validateMode(theme.dark, params) }),
     [theme, params],
@@ -363,15 +372,6 @@ export function App() {
             onChange={(x) => setTypeScale({ ...typeScale, ratio: { ...typeScale.ratio, mobile: x } })}
           />
         </Section>
-
-        <Section title="Export">
-          <textarea
-            className="lab-export"
-            readOnly
-            rows={8}
-            value={JSON.stringify({ seeds, params, typeScale, shadows }, null, 2)}
-          />
-        </Section>
       </aside>
 
       <main className="lab-main">
@@ -403,6 +403,13 @@ export function App() {
           <ShadowsPreview theme={theme} params={shadows} />
         ) : tab === 'ramps' ? (
           <RampsPreview theme={shown} input={input} ramps={ramps} onRamps={setRamps} />
+        ) : tab === 'tokens' ? (
+          <TokenBrowser
+            theme={exportTheme}
+            shadows={shadows}
+            typeScale={typeScale}
+            settings={JSON.stringify({ seeds, params, typeScale, shadows }, null, 2)}
+          />
         ) : (
           <>
             <div className="lab-modes">

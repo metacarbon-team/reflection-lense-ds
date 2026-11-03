@@ -25,6 +25,8 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0019](0019-neutral-subtle-surface.md) | Neutral subtle shares the surface color       | Accepted |
 | [0020](0020-geist-mono.md) | Geist Mono for monospace text | Accepted |
 | [0021](0021-dimension-token-exports.md) | Public exports for dimension tokens | Accepted |
+| [0022](0022-dtcg-export.md) | DTCG export from Theme Lab | Accepted |
+| [0023](0023-all-modes-export.md) | Export all modes together | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

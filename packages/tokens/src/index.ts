@@ -1,4 +1,5 @@
 export * from './types'
+export { toDtcg, toDtcgAllModes, type DtcgGroup, type DtcgToken } from './dtcg'
 export { generateTheme, generateMode } from './generate'
 export { validateMode, type Issue } from './validate'
 export { generateTypeScale, DEFAULT_TYPE_SCALE, type TypeScaleParams, type TypeStep } from './typescale'
