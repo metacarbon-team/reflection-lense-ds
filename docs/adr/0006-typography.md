@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-28
 - Supersedes: —
+- Mono font choice superseded by [0020](0020-geist-mono.md): use Geist Mono. The original choice below is retained as history.
 
 ## Context
 

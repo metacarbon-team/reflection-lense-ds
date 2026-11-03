@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-28
 - Supersedes: —
+- Public export requirements and implementation status: [0021](0021-dimension-token-exports.md).
 
 ## Context
 

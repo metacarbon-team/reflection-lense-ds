@@ -1,6 +1,7 @@
 /* Chrome of the internal Theme Lab. Previews use generated tokens only; this file styles the tool. */
 
 :root {
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
   --lab-bg: #f4f4f2;
   --lab-panel: #ffffff;
   --lab-text: #1c1c1a;
@@ -43,7 +44,7 @@ h3 {
 }
 
 code {
-  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 
@@ -108,7 +109,7 @@ code {
 .lab-hex {
   min-width: 0;
   width: 100%;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   padding: 4px 6px;
   border: 1px solid var(--lab-border);
@@ -117,7 +118,7 @@ code {
 
 .lab-export {
   width: 100%;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 

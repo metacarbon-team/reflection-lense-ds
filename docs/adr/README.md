@@ -23,6 +23,8 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0017](0017-semantic-surface-usage.md)  | Semantic surface usage and local modes          | Accepted |
 | [0018](0018-nearest-line-height-grid.md) | Round line height to the nearest grid point   | Accepted |
 | [0019](0019-neutral-subtle-surface.md) | Neutral subtle shares the surface color       | Accepted |
+| [0020](0020-geist-mono.md) | Geist Mono for monospace text | Accepted |
+| [0021](0021-dimension-token-exports.md) | Public exports for dimension tokens | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 
