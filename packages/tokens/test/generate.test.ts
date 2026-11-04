@@ -64,28 +64,28 @@ describe('generator', () => {
     expect(failures.slice(0, 10)).toEqual([])
   }, 120_000)
 
-  it('makes raised translucent, lighter in light themes and sunken in dark ones (ADR 0007)', () => {
+  it('makes form fields translucent, lighter in light themes and sunken in dark ones (ADR 0007, 0026)', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
-      const raised = hexToRgba(mode.tokens['bg/neutral/raised']!.value)
+      const form = hexToRgba(mode.tokens['form/neutral']!.value)
       const surface = hexToRgba(mode.tokens[SURFACE]!.value)
-      const over = rgbToOklch(composite(raised, surface)).l - rgbToOklch(surface).l
-      expect(mode.tokens['bg/neutral/raised']!.opacity).toBe('translucent')
-      expect(raised.a).toBeLessThan(1)
+      const over = rgbToOklch(composite(form, surface)).l - rgbToOklch(surface).l
+      expect(mode.tokens['form/neutral']!.opacity).toBe('translucent')
+      expect(form.a).toBeLessThan(1)
       expect(mode.mode === 'light' ? over : -over).toBeGreaterThan(0)
     }
-    // A pure white seed leaves no room above it: the surface stays and raised goes to the layers' side.
+    // A pure white seed leaves no room above it: the surface stays and form fields go to the layers' side.
     const white = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })
     expect(white.tokens[SURFACE]!.value).toBe('#ffffff')
     expect(validateMode(white)).toEqual([])
-    const sunk = composite(hexToRgba(white.tokens['bg/neutral/raised']!.value), hexToRgba('#ffffff'))
+    const sunk = composite(hexToRgba(white.tokens['form/neutral']!.value), hexToRgba('#ffffff'))
     expect(rgbToOklch(sunk).l).toBeLessThan(1)
   })
 
-  it('adds opaque raised emphasized with distinct states and preserves its neutral palette family', () => {
+  it('adds the opaque emphasized card with distinct states in the neutral palette family (ADR 0026)', () => {
     for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
-      const name = 'bg/neutral/raised/emphasized'
-      const normal = hexToRgba(mode.tokens['bg/neutral/raised']!.value)
+      const name = 'card/neutral/emphasized'
+      const normal = hexToRgba(mode.tokens['form/neutral']!.value)
       expect(mode.tokens[name]!.value).toBe(rgbaToHex({ ...normal, a: 1 }))
       const values = [name, `${name}/hover`, `${name}/pressed`].map((token) => {
         expect(mode.tokens[token]!.opacity).toBe('opaque')
@@ -105,6 +105,49 @@ describe('generator', () => {
       broken.tokens[name]!.value = rgbaToHex({ ...normal, a: 0.5 })
       expect(validateMode(broken)).toContainEqual(
         expect.objectContaining({ rule: 'opacity: must be opaque', token: name }),
+      )
+    }
+  })
+
+  it('replaces raised with form and card scopes; cards mirror the background stack (ADR 0026)', () => {
+    for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
+      expect(Object.keys(mode.tokens).filter((n) => n.includes('raised'))).toEqual([])
+      for (const name of ['form/neutral', 'form/neutral/hover', 'form/neutral/pressed'])
+        expect(mode.tokens[name]!.opacity).toBe('translucent')
+      for (const prominence of ['/subtle', ''])
+        for (const state of ['', '/hover', '/pressed']) {
+          const card = mode.tokens[`card/neutral${prominence}${state}`]!
+          expect(card.opacity).toBe('opaque')
+          expect(card.value).toBe(mode.tokens[`bg/neutral${prominence}${state}`]!.value)
+        }
+      const broken = structuredClone(mode)
+      broken.tokens['form/accent'] = { ...mode.tokens['form/neutral']!, name: 'form/accent' }
+      broken.tokens['form/neutral/subtle'] = { ...mode.tokens['form/neutral']!, name: 'form/neutral/subtle' }
+      broken.tokens['bg/neutral/raised'] = { ...mode.tokens['form/neutral']!, name: 'bg/neutral/raised' }
+      const grammar = validateMode(broken).filter((i) => i.rule === 'grammar').map((i) => i.token)
+      expect(grammar).toEqual(expect.arrayContaining(['form/accent', 'form/neutral/subtle', 'bg/neutral/raised']))
+    }
+  })
+
+  it('turns the lightest status tint into a status card (ADR 0027)', () => {
+    for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
+      for (const role of ['success', 'warning', 'danger', 'info']) {
+        expect(mode.tokens[`bg/${role}/subtle`]).toBeUndefined()
+        for (const state of ['', '/hover', '/pressed']) expect(mode.tokens[`card/${role}${state}`]!.opacity).toBe('opaque')
+        expect(mode.tokens[`bg/${role}`]).toBeDefined()
+        expect(mode.tokens[`bg/${role}/emphasized`]).toBeDefined()
+      }
+      expect(mode.tokens['bg/accent/subtle']).toBeDefined()
+      expect(mode.tokens['card/accent']).toBeUndefined()
+      const broken = structuredClone(mode)
+      broken.tokens['card/accent'] = { ...mode.tokens['bg/accent/subtle']!, name: 'card/accent' }
+      broken.tokens['card/danger/subtle'] = { ...mode.tokens['card/danger']!, name: 'card/danger/subtle' }
+      const grammar = validateMode(broken).filter((i) => i.rule === 'grammar').map((i) => i.token)
+      expect(grammar).toEqual(expect.arrayContaining(['card/accent', 'card/danger/subtle']))
+      // The status card still carries its role's text at 4.5:1.
+      broken.tokens['card/danger'] = { ...mode.tokens['card/danger']!, value: mode.tokens['fg/danger']!.value }
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'text contrast', token: 'fg/danger', against: 'card/danger' }),
       )
     }
   })
@@ -202,6 +245,20 @@ describe('generator', () => {
     }
   })
 
+  it('adds a translucent focus halo in the ring color (ADR 0025)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of [theme.light, theme.dark]) {
+      const ring = mode.tokens['focus/accent']!
+      const halo = mode.tokens['focus/accent/subtle']!
+      expect(halo.opacity).toBe('translucent')
+      expect(halo.value.slice(0, 7)).toBe(ring.value)
+      expect(hexToRgba(halo.value).a).toBeCloseTo(DEFAULT_PARAMS.focusHaloAlpha, 2)
+      const broken = structuredClone(mode)
+      broken.tokens['focus/accent/subtle']!.value = '#00000040'
+      expect(validateMode(broken)).toContainEqual(expect.objectContaining({ rule: 'focus halo matches ring' }))
+    }
+  })
+
   it('reports what it shifted', () => {
     const mode = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#ffe066' })
     expect(mode.adjustments.some((a) => a.token === 'bg/accent/emphasized')).toBe(false)
@@ -246,7 +303,7 @@ describe('palette', () => {
       // Neutral subtle intentionally shares the surface anchor (ADR 0019), unlike tinted roles.
       expect(roles.bindings['bg/neutral/subtle']).toEqual(roles.bindings[SURFACE])
       for (const role of ['success', 'warning', 'danger', 'info'])
-        expect(roles.bindings[`bg/${role}/subtle`]!.step).toBe(roles.bindings['bg/accent/subtle']!.step)
+        expect(roles.bindings[`card/${role}`]!.step).toBe(roles.bindings['bg/accent/subtle']!.step)
     }
   })
 })

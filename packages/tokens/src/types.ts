@@ -6,31 +6,45 @@ export type Role = (typeof ROLES)[number]
 export const STATUS_ROLES = ['success', 'warning', 'danger', 'info'] as const
 export type StatusRole = (typeof STATUS_ROLES)[number]
 
-export const SCOPES = ['surface', 'bg', 'fg', 'stroke', 'focus', 'ghost'] as const
+export const SCOPES = ['surface', 'bg', 'form', 'card', 'fg', 'stroke', 'focus', 'ghost'] as const
 export type Scope = (typeof SCOPES)[number]
 
-/** Opacity is fixed by scope (ADR 0002). */
-export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke']
+/** Opacity is fixed by scope (ADR 0002, 0026). */
+export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke', 'form']
+
+/** Scopes that exist only in the neutral role (ADR 0026). */
+export const NEUTRAL_ONLY_SCOPES: readonly Scope[] = ['form']
+
+/** Roles with cards: neutral, and the statuses, whose lightest tint is a card (ADR 0026, 0027). */
+export const CARD_ROLES: readonly string[] = ['neutral', ...STATUS_ROLES]
+
+/**
+ * The lightest tint of a colored role: `bg/accent/subtle` for accent, `card/<status>` for the status
+ * roles (ADR 0027). One step further is `bg/<role>`.
+ */
+export const tintOf = (role: Exclude<Role, 'neutral'>) =>
+  (STATUS_ROLES as readonly string[]).includes(role) ? `card/${role}` : `bg/${role}/subtle`
 
 /** The surface group has no roles: the window canvas and the modal backdrop (ADR 0024). */
 export const SURFACE = 'surface'
 export const BACKDROP = 'surface/backdrop'
 export const SURFACE_TOKENS: readonly string[] = [SURFACE, BACKDROP]
 
+/** The focus ring (ADR 0025): an opaque 1px ring and a translucent halo of the same color. */
+export const FOCUS = 'focus/accent'
+export const FOCUS_HALO = 'focus/accent/subtle'
+
 /** The disabled role: one set for every disabled control, `bg/`, `fg/` and `stroke/disabled` (ADR 0008). */
 export const DISABLED = 'disabled'
 
 /**
- * Translucent scopes, normal `bg/neutral/raised` and its states (ADR 0007), the disabled role (ADR 0008)
- * and the backdrop (ADR 0024): opacity reads from the name.
+ * Translucent scopes (including `form`, ADR 0026), the disabled role (ADR 0008), the backdrop
+ * (ADR 0024) and the focus halo (ADR 0025): opacity reads from the name.
  */
 export const isTranslucent = (name: string) => {
-  const [scope, role, ...rest] = name.split('/')
+  const [scope, role] = name.split('/')
   return (
-    TRANSLUCENT_SCOPES.includes(scope as Scope) ||
-    name === BACKDROP ||
-    role === DISABLED ||
-    (scope === 'bg' && rest.includes('raised') && !rest.includes('emphasized'))
+    TRANSLUCENT_SCOPES.includes(scope as Scope) || name === BACKDROP || name === FOCUS_HALO || role === DISABLED
   )
 }
 
@@ -79,8 +93,8 @@ export interface GeneratorParams {
   layerStep: number
   /** Minimum ΔL between a fill and its hover, and between hover and pressed. */
   stateStep: number
-  /** Minimum ΔL by which `bg/neutral/raised` moves away from every neutral layer (ADR 0007). */
-  raisedStep: number
+  /** Minimum ΔL by which `form/neutral` moves away from every neutral layer (ADR 0007, 0026). */
+  formStep: number
   /** Minimum ΔL between fg prominences. */
   fgStep: number
   /** ΔL from `fg/<role>/subtle` to `fg/<role>` for accent and status roles, which have no text seed (ADR 0012). */
@@ -101,6 +115,8 @@ export interface GeneratorParams {
   statusSeeds: Record<StatusRole, string>
   strokeAlpha: { subtle: number; normal: number }
   backdropAlpha: number
+  /** Alpha of the focus halo, `focus/accent/subtle` (ADR 0025). */
+  focusHaloAlpha: number
   /**
    * Prototype: when set, every color takes chroma and hue from its family's curve at the lightness
    * the generator solves, instead of the constant chroma and hue of its role.
@@ -112,8 +128,8 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   flare: 0.005,
   layerStep: 0.03,
   stateStep: 0.03,
-  // Most of the room above Off White (#f8f6f0 is 0.027 below white), so raised reads on it.
-  raisedStep: 0.02,
+  // Most of the room above Off White (#f8f6f0 is 0.027 below white), so form fields read on it.
+  formStep: 0.02,
   fgStep: 0.08,
   roleTextStep: 0.12,
   textContrast: 4.5,
@@ -127,6 +143,7 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   statusSeeds: { success: '#51c35b', warning: '#f57042', danger: '#f54242', info: '#4880ff' },
   strokeAlpha: { subtle: 0.08, normal: 0.16 },
   backdropAlpha: 0.48,
+  focusHaloAlpha: 0.25,
   curve: null,
 }
 

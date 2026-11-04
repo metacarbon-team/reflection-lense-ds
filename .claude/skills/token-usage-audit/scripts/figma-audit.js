@@ -90,7 +90,7 @@ const TITLES = {
   'A6b layer-opacity': 'Layer opacity below 100%',
   'B7 pairing': 'Text and fill pairing',
   'B8 states': 'Variant states',
-  'B9 raised-ghost': 'Raised or ghost misuse',
+  'B9 form-ghost': 'Form or ghost misuse',
   'C10 text-contrast': 'Text contrast',
   'C11 non-text-contrast': 'Non-text contrast (icons, graphics, boundaries)',
   'C12 shadows': 'Shadows outside shadow/* styles',
@@ -178,10 +178,10 @@ const checkNode = (node) => {
         report('A5 role-mismatch', 'warning', node, `stroke ${t.name}`, 'boundaries take stroke/* tokens')
       }
 
-      // B9 — raised on a tinted role background.
-      if (key === 'fills' && t.name.startsWith('bg/neutral/raised')) {
+      // B9 — form field on a tinted role background (ADR 0026).
+      if (key === 'fills' && t.name.startsWith('form/neutral')) {
         const bg = backgroundOf(node).opaque
-        if (bg && /^bg\/(accent|success|warning|danger|info)/.test(bg.name)) report('B9 raised-ghost', 'warning', node, `raised on ${bg.name}`, 'raised belongs on neutral layers')
+        if (bg && /^(bg\/(accent|success|warning|danger|info)|card\/(success|warning|danger|info))/.test(bg.name)) report('B9 form-ghost', 'warning', node, `form/neutral on ${bg.name}`, 'form fields belong on neutral layers')
       }
     }
   }
@@ -280,8 +280,9 @@ const checkStates = (set) => {
       if (ghost && rootFill(c)) report('B8 states', 'warning', c, 'ghost control has a fill when disabled', 'ghost disabled keeps no fill')
     }
     if (state === 'focus') {
-      const uses = (n) => [...(n.effects ?? []), ...(Array.isArray(n.strokes) ? n.strokes : [])].some((e) => e.boundVariables?.color && tokenOf(e.boundVariables.color.id).name === 'focus/accent') || (typeof n.effectStyleId === 'string' && /focus/i.test(effectStyles.get(n.effectStyleId) ?? ''))
-      if (!uses(c) && !c.findOne((n) => uses(n))) report('B8 states', 'warning', c, 'focus variant without focus/accent', 'draw the focus ring with focus/accent')
+      // ADR 0025: one focus indicator, the focus/ring effect style.
+      const uses = (n) => typeof n.effectStyleId === 'string' && effectStyles.get(n.effectStyleId) === 'focus/ring'
+      if (!uses(c) && !c.findOne((n) => uses(n))) report('B8 states', 'warning', c, 'focus variant without the focus/ring effect style', 'apply focus/ring; do not recolor strokes for focus')
     }
   }
 }

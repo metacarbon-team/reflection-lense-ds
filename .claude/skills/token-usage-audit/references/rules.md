@@ -4,10 +4,12 @@ Rule ids are stable across runs and reports. A4 is retired: modes on documentati
 
 Token grammar (ADR 0002): `scope/role/[prominence]/[context]/[state]`.
 
-- **Scopes**: `surface`, `bg`, `fg`, `stroke`, `ghost`, `focus`.
+- **Scopes**: `surface`, `bg`, `form`, `card`, `fg`, `stroke`, `ghost`, `focus`.
+- **Form and card** (ADR 0026, 0027): `form/neutral` (+ `hover`, `pressed`) is translucent, neutral only, with no prominence. Cards are opaque: `card/neutral/subtle`, `card/neutral`, `card/neutral/emphasized`, and one card per status role, `card/{success,warning,danger,info}` — the role's lightest tint (formerly `bg/<status>/subtle`). Each has `hover` and `pressed`. Status roles keep `bg/<status>` and `bg/<status>/emphasized`; accent keeps `bg/accent/subtle`.
+- **Focus** (ADR 0025): `focus/accent` (opaque ring) and `focus/accent/subtle` (translucent halo). Components use the single `focus/ring` effect style: halo spread 4px, ring spread 1px.
 - **Surface group** (ADR 0024): no roles, exactly `surface` (window canvas; Figma `surface/surface`) and `surface/backdrop` (translucent).
 - **Roles**: `neutral`, `accent`, `success`, `warning`, `danger`, `info`.
-- **Prominences**: `subtle`, normal (omitted), `emphasized`. The neutral raised family has normal (`bg/neutral/raised`) and emphasized (`bg/neutral/raised/emphasized`), each with hover/pressed states.
+- **Prominences**: `subtle`, normal (omitted), `emphasized`.
 - **Context**: `on-emphasized`.
 - **States**: `hover`, `pressed`.
 - **Disabled**: one universal set, `bg/disabled`, `fg/disabled` and `stroke/disabled`.
@@ -23,8 +25,9 @@ Product decisions clarified on 2026-11-03. Use these during contextual review al
 | `surface` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
 | `bg/*` | Backgrounds of anything above the window background. | Choose role and strength for the content; nesting alone does not prescribe every choice. |
 | `bg/neutral/subtle` / `bg/neutral` | Subtle shares the surface color; normal is one layer step away (ADR 0019). | Equal surface/subtle values are intentional. Keep bindings distinct by purpose: window versus content. |
-| `bg/neutral/raised` | Forms, inputs, modals and menus; normal is translucent. | Review the element's purpose and rendered background. |
-| `bg/neutral/raised/emphasized` | The same raised family at 100% opacity, mainly for modals. | Mainly is a preference, not an exclusive restriction: other uses or a normal raised modal are not automatically errors. |
+| `form/neutral` | Inputs, text areas, selects and other form fields; translucent. | Review the element's purpose and rendered background. |
+| `card/neutral/*` | Cards, modals, menus, popovers and other lifted surfaces; opaque. `subtle` and normal currently equal `bg/neutral/subtle` and `bg/neutral`; `emphasized` is the white/black endpoint, mainly for modals. | Equal card/bg values are intentional; keep bindings distinct by purpose. Mainly is a preference, not an exclusive restriction. |
+| `card/<status>` | Informative cards, callouts and status panels (ADR 0027). | Text uses the role's `fg`; contrast is validated as on any tinted background. |
 | `fg/<role>` and `fg/<role>/subtle` | Text and icon hierarchy. | The designer chooses the hierarchy; validate scope, pairing and contrast rather than imposing a token on every label type. |
 | `stroke/*` | Boundaries and dividers, with strength chosen by the designer. | Do not report a prominence choice alone as misuse. Existing binding, scope and contrast checks still apply. |
 | `surface/backdrop` | Backdrop behind a modal, covering the underlying interface. | Distinguish the backdrop from the modal body, which uses a background token. |
@@ -34,9 +37,9 @@ Product decisions clarified on 2026-11-03. Use these during contextual review al
 
 A dark tooltip or panel in a light interface, or a light component in a dark interface, uses a local light ↔ dark mode inversion on that component. Descendants resolve the same semantic tokens in the local mode; no separate inverse tokens are needed. Do not flag a deliberate component mode override as misuse or reset it to the page mode. Audit resolved colors in the component's actual mode. Documentation-frame modes remain outside this audit's scope.
 
-### Raised emphasized text
+### Emphasized card text
 
-`bg/neutral/raised/emphasized` is an opaque raised background, distinct from the strong solid fill `bg/neutral/emphasized`. It does not automatically require `fg/neutral/on-emphasized`. Use the normal/subtle foreground hierarchy and check rendered contrast in the component's actual mode, including custom themes.
+`card/neutral/emphasized` is an opaque lifted surface, distinct from the strong solid fill `bg/neutral/emphasized`. It does not automatically require `fg/neutral/on-emphasized`. Use the normal/subtle foreground hierarchy and check rendered contrast in the component's actual mode, including custom themes.
 
 ## A — Bindings
 
@@ -109,14 +112,14 @@ The background is the nearest opaque fill behind the text, translucent layers co
 - **disabled**: every bound paint in the variant uses `bg/disabled`, `fg/disabled` or `stroke/disabled`, whatever the control's role (error otherwise). `focus/*` and `shadow/*` are exempt.
   - Only a ghost control keeps no fill when disabled (warning if it has one).
   - Outline and filled controls take `bg/disabled`.
-- **focus**: the variant draws its ring with `focus/accent`, as a stroke, a bound effect color, or a focus effect style (warning otherwise).
+- **focus**: the variant applies the `focus/ring` effect style (ADR 0025), on itself or a child; a recolored stroke is not a focus indicator (warning otherwise).
 
-### B9 raised-ghost (warning)
+### B9 form-ghost (warning)
 
-`bg/neutral/raised` on a tinted role background (`bg/accent`, `bg/success`, …).
+`form/neutral` on a tinted role background (`bg/accent`, `bg/success`, `card/danger`, …).
 
-- **Why**: raised is a step of the neutral stack (ADR 0007). On a tint it reads as a hole.
-- **Fix**: put raised content on a neutral layer, or use the role's own steps.
+- **Why**: form fields step away from the neutral stack (ADR 0007, 0026). On a tint they read as a hole.
+- **Fix**: put form fields on a neutral layer, or use the role's own steps.
 
 ## C — Rendered result
 

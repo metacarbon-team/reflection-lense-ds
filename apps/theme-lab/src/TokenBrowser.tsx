@@ -14,6 +14,8 @@ type Row = { name: string; category: string; values: [DtcgToken, DtcgToken]; typ
 const CATEGORIES: Record<string, string> = {
   surface: 'Surface',
   bg: 'Background',
+  form: 'Form',
+  card: 'Card',
   fg: 'Foreground',
   stroke: 'Stroke',
   focus: 'Focus',

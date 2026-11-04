@@ -5,11 +5,16 @@ import { composite, contrast, hexToRgba, perceivedLightness, rgbaToHex, type Rgb
 import {
   DEFAULT_PARAMS,
   DISABLED,
+  FOCUS,
+  FOCUS_HALO,
+  CARD_ROLES,
+  NEUTRAL_ONLY_SCOPES,
   ROLES,
   SCOPES,
   SURFACE,
   SURFACE_TOKENS,
   isTranslucent,
+  tintOf,
   type GeneratorParams,
   type ModeTheme,
   type Scope,
@@ -27,7 +32,6 @@ export interface Issue {
 const MODIFIERS: Record<string, number> = {
   subtle: 0,
   emphasized: 0,
-  raised: 0,
   'on-emphasized': 1,
   hover: 2,
   pressed: 2,
@@ -56,19 +60,21 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const okRole =
       (ROLES as readonly string[]).includes(role ?? '') ||
       (role === DISABLED && ['bg', 'fg', 'stroke'].includes(scope!) && rest.length === 0)
-    // Raised is a background family with normal (omitted) and emphasized prominence.
-    const raisedFamily = scope === 'bg' && role === 'neutral' && rest[0] === 'raised'
-    const modifiers = raisedFamily ? rest.slice(1) : rest
-    const order = modifiers.map((m) => MODIFIERS[m])
+    const order = rest.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
-    const okRaised =
-      !rest.includes('raised') ||
-      (raisedFamily && /^(emphasized(\/(hover|pressed))?|hover|pressed)?$/.test(modifiers.join('/')))
     // Text has two prominences, normal and subtle (ADR 0012).
     const okFg = scope !== 'fg' || !rest.includes('emphasized')
+    // Form and card exist only in the neutral role; form has no prominence (ADR 0026).
+    const statesOnly = rest.every((m) => m === 'hover' || m === 'pressed')
+    const okNeutralOnly = !NEUTRAL_ONLY_SCOPES.includes(scope as Scope) || role === 'neutral'
+    const okForm = scope !== 'form' || statesOnly
+    // Cards: neutral in three strengths; a status card is its role's lightest tint, no prominence (ADR 0027).
+    const okCard = scope !== 'card' || (CARD_ROLES.includes(role ?? '') && (role === 'neutral' || statesOnly))
     // The surface group has no roles: exactly `surface` and `surface/backdrop` (ADR 0024).
     const okGrammar =
-      scope === SURFACE ? SURFACE_TOKENS.includes(name) : okScope && okRole && okRest && okRaised && okFg
+      scope === SURFACE
+        ? SURFACE_TOKENS.includes(name)
+        : okScope && okRole && okRest && okFg && okNeutralOnly && okForm && okCard
     if (!okGrammar) fail('grammar', name, 0, 1)
     const translucent = isTranslucent(name)
     if (translucent ? c.a >= 1 : c.a < 1)
@@ -88,21 +94,21 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     if (d < p.layerStep - TOLERANCE) fail('layer separation', 'bg/neutral', d, p.layerStep, SURFACE)
   }
 
-  // Raised (ADR 0007, 0015): on one side of every neutral layer, the same side for all of them; its
+  // Form fields (ADR 0007, 0015, 0026): on one side of every neutral layer, the same side for all of them; its
   // states a state step each along the stack. Composites over the stack count as layers.
-  const raisedOver = (name: string): [string, Rgb][] =>
+  const formOver = (name: string): [string, Rgb][] =>
     has(name) ? stack.map((b) => [`${name} over ${b}`, composite(get(name)!, get(b)!)]) : []
-  const raised = raisedOver('bg/neutral/raised')
-  const raisedHover = raisedOver('bg/neutral/raised/hover')
-  const raisedPressed = raisedOver('bg/neutral/raised/pressed')
-  const raisedSide = raised.length ? Math.sign(L(raised[0]![1]) - L(get(stack[0]!))) || -sign : -sign
-  raised.forEach(([, c], i) => {
-    const d = raisedSide * (L(c) - L(get(stack[i]!)))
-    if (d < p.raisedStep - TOLERANCE) fail('raised separation', 'bg/neutral/raised', d, p.raisedStep, stack[i])
+  const form = formOver('form/neutral')
+  const formHover = formOver('form/neutral/hover')
+  const formPressed = formOver('form/neutral/pressed')
+  const formSide = form.length ? Math.sign(L(form[0]![1]) - L(get(stack[0]!))) || -sign : -sign
+  form.forEach(([, c], i) => {
+    const d = formSide * (L(c) - L(get(stack[i]!)))
+    if (d < p.formStep - TOLERANCE) fail('form separation', 'form/neutral', d, p.formStep, stack[i])
   })
   for (const [states, from] of [
-    [raisedHover, raised],
-    [raisedPressed, raisedHover],
+    [formHover, form],
+    [formPressed, formHover],
   ] as const) {
     states.forEach(([name, c], i) => {
       const prev = from[i]
@@ -112,21 +118,21 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     })
   }
 
-  // Layers controls sit on (bases, states and raised) and bases for ghost composites.
+  // Layers controls sit on (bases, states and form) and bases for ghost composites.
   const layerNames = [...color.keys()].filter((n) =>
     /^(surface|bg\/neutral(\/subtle)?(\/hover|\/pressed)?)$/.test(n),
   )
   const layers: [string, Rgb][] = [
     ...layerNames.map((n): [string, Rgb] => [n, get(n)!]),
-    ...raised,
-    ...raisedHover,
-    ...raisedPressed,
+    ...form,
+    ...formHover,
+    ...formPressed,
   ]
-  const ghostBases: [string, Rgb][] = [...stack.map((n): [string, Rgb] => [n, get(n)!]), ...raised]
+  const ghostBases: [string, Rgb][] = [...stack.map((n): [string, Rgb] => [n, get(n)!]), ...form]
   const ghostNames = [...color.keys()].filter((n) => n.startsWith('ghost/'))
 
   // Disabled (ADR 0008): the fill is barely visible on every neutral layer; the text reaches its
-  // (non-AA) contrast on every layer, raised and the disabled fill, and never reads as enabled.
+  // (non-AA) contrast on every layer, form and the disabled fill, and never reads as enabled.
   const disabledBg = get(`bg/${DISABLED}`)
   const disabledFg = get(`fg/${DISABLED}`)
   const disabledOver: [string, Rgb][] = disabledBg
@@ -150,7 +156,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const tinted =
       role === 'neutral'
         ? []
-        : [...color.keys()].filter((n) => new RegExp(`^bg/${role}(/subtle)?(/hover|/pressed)?$`).test(n))
+        : [...color.keys()].filter((n) => new RegExp(`^(bg/${role}(/subtle)?|card/${role})(/hover|/pressed)?$`).test(n))
     const backgrounds: [string, Rgb][] = [...layers, ...tinted.map((n): [string, Rgb] => [n, get(n)!])]
     for (const g of ghostNames)
       for (const [b, under] of ghostBases) backgrounds.push([`${g} over ${b}`, composite(get(g)!, under)])
@@ -169,7 +175,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       const required = atPole ? MIN_COMPRESSED_STEP : p.fgStep
       if (d < required - TOLERANCE) fail('fg prominence separation', fgSteps[i]!, d, required, fgSteps[i - 1])
     }
-    const bgSteps = [`bg/${role}/subtle`, `bg/${role}`].filter(has)
+    const bgSteps = [role === 'neutral' ? 'bg/neutral/subtle' : tintOf(role), `bg/${role}`].filter(has)
     if (bgSteps.length === 2) {
       const d = Math.abs(L(get(bgSteps[1]!)) - L(get(bgSteps[0]!)))
       if (d < p.layerStep - TOLERANCE) fail('bg prominence separation', bgSteps[1]!, d, p.layerStep, bgSteps[0])
@@ -199,8 +205,13 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       if (r < p.nonTextContrast) fail('focus contrast', 'focus/accent', r, p.nonTextContrast, n)
     }
   }
+  // The halo is the ring's color, translucent (ADR 0025).
+  const ring = get(FOCUS)
+  const halo = get(FOCUS_HALO)
+  if (ring && halo && rgbaToHex({ ...halo, a: 1 }) !== rgbaToHex({ ...ring, a: 1 }))
+    fail('focus halo matches ring', FOCUS_HALO, 0, 1, FOCUS)
 
-  // State separation of opaque fills (raised states are checked on their composites above).
+  // State separation of opaque fills (form states are checked on their composites above).
   for (const name of color.keys()) {
     if (isTranslucent(name) || !has(`${name}/hover`) || !has(`${name}/pressed`)) continue
     const d1 = Math.abs(L(get(`${name}/hover`)) - L(get(name)))

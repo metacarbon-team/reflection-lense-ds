@@ -15,6 +15,7 @@ import {
   DEFAULT_SEEDS,
   ROLES,
   STATUS_ROLES,
+  tintOf,
   toCssVars,
   validateMode,
   type CurveParams,
@@ -247,12 +248,12 @@ export function App() {
             onChange={(x) => setParams({ ...params, stateStep: x })}
           />
           <Slider
-            label="Raised step"
+            label="Form step"
             min={0.005}
             max={0.04}
             step={0.0025}
-            value={params.raisedStep}
-            onChange={(x) => setParams({ ...params, raisedStep: x })}
+            value={params.formStep}
+            onChange={(x) => setParams({ ...params, formStep: x })}
           />
           <Slider
             label="Disabled step"
@@ -343,6 +344,14 @@ export function App() {
             step={0.01}
             value={params.backdropAlpha}
             onChange={(x) => setParams({ ...params, backdropAlpha: x })}
+          />
+          <Slider
+            label="Focus halo"
+            min={0.05}
+            max={0.6}
+            step={0.01}
+            value={params.focusHaloAlpha}
+            onChange={(x) => setParams({ ...params, focusHaloAlpha: x })}
           />
         </Section>
 
@@ -686,7 +695,7 @@ function ShadowsPreview({ theme, params }: { theme: Theme; params: ShadowParams 
   const style = { ...toCssVars(theme[mode]), color: v('fg/neutral') } as CSSProperties
   // Edges come from stroke tokens, separately from the shadow.
   const card = (boxShadow: string): CSSProperties => ({
-    background: v('bg/neutral/raised'),
+    background: v('card/neutral/emphasized'),
     boxShadow,
     border: outline === 'none' ? 'none' : `${outlineWidth}px solid ${v(outline)}`,
   })
@@ -790,7 +799,10 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
         <button
           type="button"
           className="lab-btn"
-          style={{ ...fill('neutral', true), outline: `2px solid ${v('focus/accent')}`, outlineOffset: 2 }}
+          style={{
+            ...fill('neutral', true),
+            boxShadow: `0 0 0 1px ${v('focus/accent')}, 0 0 0 4px ${v('focus/accent/subtle')}`,
+          }}
         >
           Focused
         </button>
@@ -848,7 +860,7 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
 
 /** CSS custom properties driving the interactive classes in lab.css. */
 const fill = (role: Role, emphasized: boolean): CSSProperties => {
-  const base = emphasized ? `bg/${role}/emphasized` : role === 'neutral' ? 'bg/neutral/subtle' : `bg/${role}/subtle`
+  const base = emphasized ? `bg/${role}/emphasized` : role === 'neutral' ? 'bg/neutral/subtle' : tintOf(role)
   return {
     '--fill': v(base),
     '--fill-hover': v(`${base}/hover`),
@@ -896,27 +908,27 @@ function Layer({ name, depth, children }: { name: string; depth: number; childre
           className="lab-input lab-fill"
           style={
             {
-              '--fill': v('bg/neutral/raised'),
-              '--fill-hover': v('bg/neutral/raised/hover'),
-              '--fill-pressed': v('bg/neutral/raised/pressed'),
+              '--fill': v('form/neutral'),
+              '--fill-hover': v('form/neutral/hover'),
+              '--fill-pressed': v('form/neutral/pressed'),
               border: `1px solid ${v('stroke/neutral/emphasized')}`,
             } as CSSProperties
           }
         >
-          Raised normal
+          Form
         </span>
         <span
           className="lab-input lab-fill"
           style={
             {
-              '--fill': v('bg/neutral/raised/emphasized'),
-              '--fill-hover': v('bg/neutral/raised/emphasized/hover'),
-              '--fill-pressed': v('bg/neutral/raised/emphasized/pressed'),
+              '--fill': v('card/neutral/emphasized'),
+              '--fill-hover': v('card/neutral/emphasized/hover'),
+              '--fill-pressed': v('card/neutral/emphasized/pressed'),
               border: `1px solid ${v('stroke/neutral/emphasized')}`,
             } as CSSProperties
           }
         >
-          Raised emphasized
+          Card emphasized
         </span>
         <button type="button" className="lab-btn lab-fill" style={fill('neutral', true)}>
           Neutral solid

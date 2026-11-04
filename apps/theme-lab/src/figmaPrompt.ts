@@ -26,6 +26,8 @@ Use the Palette → Core → Theme relationship. Light/Dark and Desktop/Mobile a
 
 Include colors and transparency, typography, and shadows as effect styles. The payload contains all modes, resolved DTCG tokens, and palette ramps with token mappings. DTCG $root means the base token at its parent path.
 
+Name Figma variables by the canonical token path. When a token is also a group (a DTCG $root), repeat its last segment in Figma (ADR 0002): bg/neutral → bg/neutral/neutral, bg/accent/emphasized → bg/accent/emphasized/emphasized, surface → surface/surface. Core routes follow the same rule under their light/ and dark/ prefixes. Code syntax always uses the canonical name (var(--bg-neutral)).
+
 Check the result against the supplied values in each mode and summarize changes and any gaps.
 
 PAYLOAD

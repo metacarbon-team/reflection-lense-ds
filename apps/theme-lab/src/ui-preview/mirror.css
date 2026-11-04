@@ -343,7 +343,7 @@
   height: 20px;
   padding: 2px 6px;
   border-radius: 6px;
-  background: var(--bg-neutral-raised);
+  background: var(--form-neutral);
   box-shadow:
     var(--m-shadow-raised),
     0 0 0 0.5px var(--stroke-neutral);
@@ -427,7 +427,7 @@
   height: 28px;
   border: 1px solid var(--stroke-neutral);
   border-radius: 8px;
-  background: var(--bg-neutral-raised);
+  background: var(--form-neutral);
 }
 
 .m-edited-text {
@@ -455,7 +455,7 @@
   flex-direction: column;
   border: 1px solid var(--stroke-neutral-subtle);
   border-radius: 6px;
-  background: var(--bg-neutral-raised);
+  background: var(--form-neutral);
   overflow: hidden;
 }
 
@@ -519,14 +519,14 @@
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: var(--bg-neutral-raised);
+  background: var(--form-neutral);
   box-shadow:
     0 2px 3px rgba(0, 0, 0, 0.14),
     0 0 0 0.5px var(--stroke-neutral);
 }
 
 .m-scroll-bottom:hover {
-  background: var(--bg-neutral-raised-hover);
+  background: var(--form-neutral-hover);
 }
 
 /* Composer */
@@ -563,7 +563,7 @@
 }
 
 .m-chip-raised:hover {
-  background: var(--bg-neutral-raised-hover);
+  background: var(--form-neutral-hover);
 }
 
 .m-branch {
@@ -581,18 +581,19 @@
   padding: 12px;
   border: 1px solid var(--stroke-neutral);
   border-radius: 10px;
-  background: var(--bg-neutral-raised);
+  background: var(--form-neutral);
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.08),
     0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* The system focus ring (ADR 0025): 1px ring and 4px halo, over the input's own elevation. */
 .m-input-focused {
-  border-color: var(--focus-accent);
   box-shadow:
+    0 0 0 1px var(--focus-accent),
+    0 0 0 4px var(--focus-accent-subtle),
     0 4px 14px rgba(0, 0, 0, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 0 0 3px color-mix(in srgb, var(--focus-accent) 25%, transparent);
+    0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .m-textarea {

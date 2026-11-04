@@ -53,7 +53,9 @@ export function familyOf(name: string): string {
   if (name === SURFACE) return 'neutral'
   if (name === BACKDROP || role === 'disabled' || rest.includes('on-emphasized')) return 'foreground'
   if (role !== 'neutral') return role!
-  if (scope === 'bg' && (rest.includes('raised') || !rest.includes('emphasized'))) return 'neutral'
+  // Form fields and cards are neutral surfaces in every strength (ADR 0026).
+  if (scope === 'form' || scope === 'card') return 'neutral'
+  if (scope === 'bg' && !rest.includes('emphasized')) return 'neutral'
   return 'foreground'
 }
 
@@ -205,7 +207,10 @@ function slotOf(name: string): number | null {
   if (name === BACKDROP) return 12
   if (scope === 'focus') return 9
   if (scope === 'ghost') return 10
-  if (scope === 'bg' && role !== 'disabled') {
+  if (scope === 'form') return null // translucent, white/black: goes with whichever end is closer
+  // Cards share the background slots; the emphasized card is the white/black endpoint, its distinct
+  // opaque states use the solid-fill slots.
+  if ((scope === 'bg' || scope === 'card') && role !== 'disabled') {
     const bg: Record<string, number> = {
       subtle: 2,
       'subtle/hover': 3,
@@ -216,12 +221,10 @@ function slotOf(name: string): number | null {
       emphasized: 6,
       'emphasized/hover': 7,
       'emphasized/pressed': 8,
-      // Raised endpoints share white/black; their distinct opaque states use the solid-fill slots.
-      'raised/emphasized': 6,
-      'raised/emphasized/hover': 7,
-      'raised/emphasized/pressed': 8,
     }
-    return bg[modifiers] ?? null
+    // A status card is its role's lightest tint, the slot of a subtle background (ADR 0027).
+    const key = scope === 'card' && role !== 'neutral' ? ['subtle', ...rest].join('/') : modifiers
+    return bg[key] ?? null
   }
   if (scope === 'fg' && modifiers === 'subtle') return 11
   return 12 // text, strokes and disabled use the text color

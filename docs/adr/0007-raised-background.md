@@ -1,6 +1,6 @@
 # 0007. Raised background
 
-- Status: Accepted
+- Status: Superseded by [0026](0026-form-and-card-scopes.md)
 - Date: 2026-10-28
 - Supersedes: the opacity-by-scope rule of [0002](0002-semantic-color-naming.md) (one exception, below)
 

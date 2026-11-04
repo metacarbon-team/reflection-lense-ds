@@ -20,10 +20,13 @@ import {
 import {
   BACKDROP,
   DEFAULT_PARAMS,
+  FOCUS,
+  FOCUS_HALO,
   ROLES,
   STATUS_ROLES,
   SURFACE,
   isTranslucent,
+  tintOf,
   type Adjustment,
   type GeneratorParams,
   type Mode,
@@ -76,12 +79,12 @@ export function generateMode(mode: Mode, seeds: ModeSeeds, params: GeneratorPara
   // Text sits on one side of the background (`dir`), layers move to one side of it (`layerDir`):
   // towards the text when they fit, away from it on mid tones where they would cost text contrast.
   const seeded: 1 | -1 = Math.abs(fg.l - bg.l) < 1e-3 ? (bg.l >= 0.5 ? -1 : 1) : fg.l > bg.l ? 1 : -1
-  /** A build with the text on side `dir` of the background, layers on `layerDir`, raised on `raisedDir`. */
-  const solve = (dir: 1 | -1, layerDir: 1 | -1, raisedDir: 1 | -1) =>
-    build(mode, bg.l, dir, layerDir, raisedDir, bg, fg, accent, params)
+  /** A build with the text on side `dir` of the background, layers on `layerDir`, form fields on `formDir`. */
+  const solve = (dir: 1 | -1, layerDir: 1 | -1, formDir: 1 | -1) =>
+    build(mode, bg.l, dir, layerDir, formDir, bg, fg, accent, params)
 
   // The background never moves (ADR 0015): everything else adapts to it. In order, the text on its
-  // seeded side, then on the other; the layers towards the text, then away from it; raised opposite
+  // seeded side, then on the other; the layers towards the text, then away from it; form fields opposite
   // the layers, then on their side when there is no room beyond the background. The first build that
   // passes every rule wins; ordinary themes take the first. When none passes (mid-tone backgrounds,
   // where even the better of white and black text barely reaches 4.5:1), the one that keeps text
@@ -92,8 +95,8 @@ export function generateMode(mode: Mode, seeds: ModeSeeds, params: GeneratorPara
   let best: { result: Build; issues: number } | undefined
   search: for (const dir of [seeded, other])
     for (const layerDir of [dir, -dir as 1 | -1])
-      for (const raisedDir of [-layerDir as 1 | -1, layerDir]) {
-        const result = solve(dir, layerDir, raisedDir)
+      for (const formDir of [-layerDir as 1 | -1, layerDir]) {
+        const result = solve(dir, layerDir, formDir)
         if (result.feasible) {
           best = { result, issues: 0 }
           break search
@@ -119,7 +122,7 @@ function build(
   l0: number,
   dir: 1 | -1,
   layerDir: 1 | -1,
-  raisedDir: 1 | -1,
+  formDir: 1 | -1,
   bg: Oklch,
   fg: Oklch,
   accent: Oklch,
@@ -206,17 +209,17 @@ function build(
   neutralBases.push(withStates('bg/neutral/subtle', subtleL, bgTone, layers))
   neutralBases.push(withStates('bg/neutral', normalL, bgTone, layers))
 
-  // 1b. Raised (ADR 0007): translucent, on one side of every neutral layer, opposite the layers where
+  // 1b. Form fields (ADR 0007, 0026): translucent, on one side of every neutral layer, opposite the layers where
   //     the background leaves room and on their side where it does not (ADR 0015). Its states move
-  //     along the layers like every other state. The text contrast rule counts raised as a layer.
-  const awayPole = quantize(rgb(raisedDir > 0 ? 1 : 0, 0, 0))
+  //     along the layers like every other state. The text contrast rule counts form fields as a layer.
+  const awayPole = quantize(rgb(formDir > 0 ? 1 : 0, 0, 0))
   const layerPole = quantize(rgb(layerDir < 0 ? 0 : 1, 0, 0))
   /** Position along the layers: larger = further from the surface. */
   const tl = (l: number) => layerDir * l
-  const raisedA = raisedAlpha(awayPole, neutralBases, p.raisedStep, p.flare)
-  const raisedOver = neutralBases.map((B) => composite({ ...awayPole, a: raisedA ?? MAX_ALPHA }, B))
+  const formA = poleAlpha(awayPole, neutralBases, p.formStep, p.flare)
+  const formOver = neutralBases.map((B) => composite({ ...awayPole, a: formA ?? MAX_ALPHA }, B))
   /** Smallest layer-pole alpha a state step beyond `from` on every base, and the composites it gives. */
-  const raisedState = (from: Rgb[], min: number) => {
+  const formState = (from: Rgb[], min: number) => {
     const a = solveAlpha(
       (a) =>
         a >= min &&
@@ -224,37 +227,44 @@ function build(
     )
     return { a, over: neutralBases.map((B) => composite({ ...layerPole, a: a ?? MAX_ALPHA }, B)) }
   }
-  const raisedHover = raisedState(raisedOver, 0)
-  const raisedPressed = raisedState(raisedHover.over, raisedHover.a ?? MAX_ALPHA)
-  if (raisedA === null || raisedHover.a === null || raisedPressed.a === null) feasible = false
-  put('bg/neutral/raised', awayPole, raisedA ?? MAX_ALPHA)
-  put('bg/neutral/raised/hover', layerPole, raisedHover.a ?? MAX_ALPHA)
-  put('bg/neutral/raised/pressed', layerPole, raisedPressed.a ?? MAX_ALPHA)
-  layers.push(...raisedOver, ...raisedHover.over, ...raisedPressed.over)
+  const formHover = formState(formOver, 0)
+  const formPressed = formState(formHover.over, formHover.a ?? MAX_ALPHA)
+  if (formA === null || formHover.a === null || formPressed.a === null) feasible = false
+  put('form/neutral', awayPole, formA ?? MAX_ALPHA)
+  put('form/neutral/hover', layerPole, formHover.a ?? MAX_ALPHA)
+  put('form/neutral/pressed', layerPole, formPressed.a ?? MAX_ALPHA)
+  layers.push(...formOver, ...formHover.over, ...formPressed.over)
 
-  // Raised normal keeps its existing translucent behavior. Emphasized uses the same RGB at 100%.
-  // At a white/black endpoint its opaque interaction states must move inward to stay distinct.
-  const raisedSolidL = raisedDir > 0 ? 1 : 0
-  const raisedSolidTone = flat(0, 0)
-  const raisedSolidHover = stepped(raisedSolidL, raisedSolidTone, p.stateStep, raisedDir > 0 ? -1 : 1)
-  const raisedSolidPressed = stepped(raisedSolidHover, raisedSolidTone, p.stateStep, raisedDir > 0 ? -1 : 1)
-  put('bg/neutral/raised/emphasized', awayPole)
-  put('bg/neutral/raised/emphasized/hover', paint(raisedSolidTone, raisedSolidHover))
-  put('bg/neutral/raised/emphasized/pressed', paint(raisedSolidTone, raisedSolidPressed))
+  // 1c. Cards (ADR 0026). Emphasized is the form fields' RGB at 100%: the white/black endpoint, with
+  //     opaque states that move inward to stay distinct. Subtle and normal take the background
+  //     stack's values for now, so cards can diverge later without renaming consumers.
+  const cardSolidL = formDir > 0 ? 1 : 0
+  const cardSolidTone = flat(0, 0)
+  const cardSolidHover = stepped(cardSolidL, cardSolidTone, p.stateStep, formDir > 0 ? -1 : 1)
+  const cardSolidPressed = stepped(cardSolidHover, cardSolidTone, p.stateStep, formDir > 0 ? -1 : 1)
+  put('card/neutral/emphasized', awayPole)
+  put('card/neutral/emphasized/hover', paint(cardSolidTone, cardSolidHover))
+  put('card/neutral/emphasized/pressed', paint(cardSolidTone, cardSolidPressed))
+  for (const prominence of ['/subtle', ''])
+    for (const state of ['', '/hover', '/pressed']) {
+      const name = `card/neutral${prominence}${state}`
+      tokens[name] = { ...tokens[`bg/neutral${prominence}${state}`]!, name }
+    }
 
-  // 2. Tinted role backgrounds.
+  // 2. Tinted role backgrounds: the lightest tint (`bg/accent/subtle`, or the status card
+  //    `card/<status>`, ADR 0027), then `bg/<role>` one layer step further.
   const tinted: Rgb[] = []
   for (const r of ROLES) {
     if (r === 'neutral') continue
     const tone = tintTone(r)
     const ls = stepped(l0, tone, p.layerStep, layerDir)
-    withStates(`bg/${r}/subtle`, ls, tone, tinted)
+    withStates(tintOf(r), ls, tone, tinted)
     withStates(`bg/${r}`, stepped(ls, tone, p.layerStep, layerDir), tone, tinted)
   }
 
   // 3. Ghost fills: translucent, the only fill of transparent controls, visible on every neutral layer
-  //    and on raised.
-  const ghostBases = [...neutralBases, ...raisedOver]
+  //    and on form fields.
+  const ghostBases = [...neutralBases, ...formOver]
   // Role ghosts tint towards a mid tone; when the layers move away from the text, towards the layers'
   // side instead, so a hovered ghost never costs text contrast (ADR 0015).
   const ghostL = layerDir === dir ? 0.5 : layerDir > 0 ? 0.9 : 0.1
@@ -365,7 +375,10 @@ function build(
     focusL = reach.reduce((a, b) => (t(b) > t(a) ? b : a))
     adjust('focus/accent', 'moved to reach 3:1 against every layer', from, paint(roleTone.accent, focusL))
   }
-  put('focus/accent', paint(roleTone.accent, focusL))
+  const focus = paint(roleTone.accent, focusL)
+  put(FOCUS, focus)
+  // The halo around the ring (ADR 0025): the same color, translucent and decorative.
+  put(FOCUS_HALO, focus, p.focusHaloAlpha)
 
   // 7. Strokes: translucent, on the role's primary text color. Emphasized carries control
   //    boundaries and reaches 3:1 on every layer.
@@ -379,15 +392,15 @@ function build(
   }
 
   // 8. Disabled role (ADR 0008): the neutral text color with alpha. The fill is barely visible on
-  //    every neutral layer; the text reaches its (non-AA) contrast on every layer, raised and the
+  //    every neutral layer; the text reaches its (non-AA) contrast on every layer, form fields and the
   //    disabled fill, and stays below the text target.
   const ink = fgPrimary.neutral!
-  const disabledA = raisedAlpha(ink, neutralBases, p.disabledStep, p.flare)
+  const disabledA = poleAlpha(ink, neutralBases, p.disabledStep, p.flare)
   if (disabledA === null) feasible = false
   put('bg/disabled', ink, disabledA ?? MAX_ALPHA)
   const disabledUnder = [
     ...neutralBases,
-    ...raisedOver,
+    ...formOver,
     ...neutralBases.map((B) => composite({ ...ink, a: disabledA ?? MAX_ALPHA }, B)),
   ]
   const disabledText = solveAlpha((a) =>
@@ -404,7 +417,7 @@ function build(
 }
 
 /** Smallest alpha of `pole` that moves every base by at least `step` in screen lightness, or null. */
-function raisedAlpha(pole: Rgb, bases: Rgb[], step: number, flare: number): number | null {
+function poleAlpha(pole: Rgb, bases: Rgb[], step: number, flare: number): number | null {
   const seen = (c: Rgb) => perceivedLightness(c, flare)
   return solveAlpha((a) => bases.every((B) => Math.abs(seen(composite({ ...pole, a }, B)) - seen(B)) >= step))
 }
