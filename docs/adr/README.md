@@ -27,6 +27,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0021](0021-dimension-token-exports.md) | Public exports for dimension tokens | Accepted |
 | [0022](0022-dtcg-export.md) | DTCG export from Theme Lab | Accepted |
 | [0023](0023-all-modes-export.md) | Export all modes together | Accepted |
+| [0024](0024-surface-group.md) | Surface group: canvas and backdrop | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

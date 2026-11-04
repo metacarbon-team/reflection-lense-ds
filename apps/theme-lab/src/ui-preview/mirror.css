@@ -18,7 +18,7 @@
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.1),
     0 22px 70px rgba(0, 0, 0, 0.42);
-  background: var(--surface-neutral);
+  background: var(--surface);
   color: var(--fg-neutral);
   font-family: var(--m-sans);
   font-size: 13px;
@@ -124,7 +124,7 @@
   flex-direction: column;
   flex-shrink: 0;
   width: 256px;
-  background: var(--surface-neutral);
+  background: var(--surface);
 }
 
 .m-titlebar {
@@ -244,7 +244,7 @@
   align-items: center;
   min-width: 0;
   border-left: 1px solid var(--stroke-neutral-subtle);
-  background: var(--surface-neutral);
+  background: var(--surface);
 }
 
 .m-header {

@@ -4,7 +4,7 @@
 // raw values. Families follow where a token's hue comes from.
 
 import { hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch, type Oklch } from './color'
-import type { ModeTheme } from './types'
+import { BACKDROP, SURFACE, type ModeTheme } from './types'
 
 /** Minimum number of steps per ramp; a family with more distinct colors gets more steps. */
 export const RAMP_STEPS = 15
@@ -46,14 +46,14 @@ export interface ModePalette {
 /**
  * The family a token's color belongs to. `neutral` is the tone of the background seed (canvas and
  * layers), `foreground` the tone of the text seed (text, neutral solid fill, on-emphasized text,
- * disabled, neutral strokes); accent and status roles are their own families.
+ * disabled, neutral strokes, backdrop); accent and status roles are their own families.
  */
 export function familyOf(name: string): string {
   const [scope, role, ...rest] = name.split('/')
-  if (role === 'disabled' || scope === 'blanket' || rest.includes('on-emphasized')) return 'foreground'
+  if (name === SURFACE) return 'neutral'
+  if (name === BACKDROP || role === 'disabled' || rest.includes('on-emphasized')) return 'foreground'
   if (role !== 'neutral') return role!
-  if (scope === 'surface' || (scope === 'bg' && (rest.includes('raised') || !rest.includes('emphasized'))))
-    return 'neutral'
+  if (scope === 'bg' && (rest.includes('raised') || !rest.includes('emphasized'))) return 'neutral'
   return 'foreground'
 }
 
@@ -201,7 +201,8 @@ function slotOf(name: string): number | null {
   const [scope, role, ...rest] = name.split('/')
   const modifiers = rest.join('/')
   if (rest.includes('on-emphasized')) return null
-  if (scope === 'surface') return 1
+  if (name === SURFACE) return 1
+  if (name === BACKDROP) return 12
   if (scope === 'focus') return 9
   if (scope === 'ghost') return 10
   if (scope === 'bg' && role !== 'disabled') {
@@ -236,7 +237,7 @@ const SLOTS = 15
  */
 export function generateRolePalette(theme: ModeTheme): ModePalette {
   const { families, opacity } = anchorsOf(theme)
-  const light = rgbToOklch(hexToRgba(theme.tokens['surface/neutral']!.value)).l > 0.5
+  const light = rgbToOklch(hexToRgba(theme.tokens[SURFACE]!.value)).l > 0.5
   const [bgEnd, textEnd] = light ? [WHITE, BLACK] : [BLACK, WHITE]
   const toText = (c: Oklch) => (light ? -c.l : c.l)
   const ramps: Ramp[] = []

@@ -6,23 +6,29 @@ export type Role = (typeof ROLES)[number]
 export const STATUS_ROLES = ['success', 'warning', 'danger', 'info'] as const
 export type StatusRole = (typeof STATUS_ROLES)[number]
 
-export const SCOPES = ['surface', 'bg', 'fg', 'stroke', 'focus', 'blanket', 'ghost'] as const
+export const SCOPES = ['surface', 'bg', 'fg', 'stroke', 'focus', 'ghost'] as const
 export type Scope = (typeof SCOPES)[number]
 
 /** Opacity is fixed by scope (ADR 0002). */
-export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke', 'blanket']
+export const TRANSLUCENT_SCOPES: readonly Scope[] = ['ghost', 'stroke']
+
+/** The surface group has no roles: the window canvas and the modal backdrop (ADR 0024). */
+export const SURFACE = 'surface'
+export const BACKDROP = 'surface/backdrop'
+export const SURFACE_TOKENS: readonly string[] = [SURFACE, BACKDROP]
 
 /** The disabled role: one set for every disabled control, `bg/`, `fg/` and `stroke/disabled` (ADR 0008). */
 export const DISABLED = 'disabled'
 
 /**
- * Translucent scopes, normal `bg/neutral/raised` and its states (ADR 0007), and the disabled role (ADR 0008):
- * opacity reads from the name.
+ * Translucent scopes, normal `bg/neutral/raised` and its states (ADR 0007), the disabled role (ADR 0008)
+ * and the backdrop (ADR 0024): opacity reads from the name.
  */
 export const isTranslucent = (name: string) => {
   const [scope, role, ...rest] = name.split('/')
   return (
     TRANSLUCENT_SCOPES.includes(scope as Scope) ||
+    name === BACKDROP ||
     role === DISABLED ||
     (scope === 'bg' && rest.includes('raised') && !rest.includes('emphasized'))
   )
@@ -94,7 +100,7 @@ export interface GeneratorParams {
   /** Base colors of the status roles: their hue and chroma are kept, lightness is solved like any role. */
   statusSeeds: Record<StatusRole, string>
   strokeAlpha: { subtle: number; normal: number }
-  blanketAlpha: number
+  backdropAlpha: number
   /**
    * Prototype: when set, every color takes chroma and hue from its family's curve at the lightness
    * the generator solves, instead of the constant chroma and hue of its role.
@@ -120,7 +126,7 @@ export const DEFAULT_PARAMS: GeneratorParams = {
   // brand curve is shaped like Tangerine's.
   statusSeeds: { success: '#51c35b', warning: '#f57042', danger: '#f54242', info: '#4880ff' },
   strokeAlpha: { subtle: 0.08, normal: 0.16 },
-  blanketAlpha: 0.48,
+  backdropAlpha: 0.48,
   curve: null,
 }
 

@@ -46,7 +46,7 @@ describe('DTCG export', () => {
       }
     }
     expect(Object.keys(all).filter((name) => name.includes('/family/'))).toHaveLength(3)
-    expect(all['light/surface/neutral']).not.toEqual(all['dark/surface/neutral'])
+    expect(all['light/surface']).not.toEqual(all['dark/surface'])
     expect(all['font/desktop/size/lg']).not.toEqual(all['font/mobile/size/lg'])
   })
   it.each(['light', 'dark'] as const)(

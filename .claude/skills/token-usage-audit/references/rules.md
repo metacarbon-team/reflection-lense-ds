@@ -4,7 +4,8 @@ Rule ids are stable across runs and reports. A4 is retired: modes on documentati
 
 Token grammar (ADR 0002): `scope/role/[prominence]/[context]/[state]`.
 
-- **Scopes**: `surface`, `bg`, `fg`, `stroke`, `ghost`, `focus`, `blanket`.
+- **Scopes**: `surface`, `bg`, `fg`, `stroke`, `ghost`, `focus`.
+- **Surface group** (ADR 0024): no roles, exactly `surface` (window canvas; Figma `surface/surface`) and `surface/backdrop` (translucent).
 - **Roles**: `neutral`, `accent`, `success`, `warning`, `danger`, `info`.
 - **Prominences**: `subtle`, normal (omitted), `emphasized`. The neutral raised family has normal (`bg/neutral/raised`) and emphasized (`bg/neutral/raised/emphasized`), each with hover/pressed states.
 - **Context**: `on-emphasized`.
@@ -19,14 +20,14 @@ Product decisions clarified on 2026-11-03. Use these during contextual review al
 
 | Token family | Intended use | Audit interpretation |
 | --- | --- | --- |
-| `surface/neutral` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
+| `surface` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
 | `bg/*` | Backgrounds of anything above the window background. | Choose role and strength for the content; nesting alone does not prescribe every choice. |
 | `bg/neutral/subtle` / `bg/neutral` | Subtle shares the surface color; normal is one layer step away (ADR 0019). | Equal surface/subtle values are intentional. Keep bindings distinct by purpose: window versus content. |
 | `bg/neutral/raised` | Forms, inputs, modals and menus; normal is translucent. | Review the element's purpose and rendered background. |
 | `bg/neutral/raised/emphasized` | The same raised family at 100% opacity, mainly for modals. | Mainly is a preference, not an exclusive restriction: other uses or a normal raised modal are not automatically errors. |
 | `fg/<role>` and `fg/<role>/subtle` | Text and icon hierarchy. | The designer chooses the hierarchy; validate scope, pairing and contrast rather than imposing a token on every label type. |
 | `stroke/*` | Boundaries and dividers, with strength chosen by the designer. | Do not report a prominence choice alone as misuse. Existing binding, scope and contrast checks still apply. |
-| `blanket/neutral` | Backdrop behind a modal, covering the underlying interface. | Distinguish the backdrop from the modal body, which uses a background token. |
+| `surface/backdrop` | Backdrop behind a modal, covering the underlying interface. | Distinguish the backdrop from the modal body, which uses a background token. |
 | Status roles: `success`, `warning`, `danger`, `info` | Express the sentiment of an action or feedback. | Selection is a designer judgment; do not infer mandatory sentiment from a label alone. Pairing and contrast rules still apply. |
 
 ### Local mode inversion

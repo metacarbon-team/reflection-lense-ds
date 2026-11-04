@@ -17,7 +17,6 @@ const CATEGORIES: Record<string, string> = {
   fg: 'Foreground',
   stroke: 'Stroke',
   focus: 'Focus',
-  blanket: 'Blanket',
   ghost: 'Ghost',
   shadow: 'Shadows',
   'shadow-color': 'Shadow colors',

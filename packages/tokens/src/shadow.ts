@@ -3,7 +3,7 @@
 // line. Edges are not part of a shadow: they come from stroke tokens.
 
 import { hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch, type Rgb } from './color'
-import type { ModeTheme, Token } from './types'
+import { SURFACE, type ModeTheme, type Token } from './types'
 
 export const SHADOW_LEVELS = ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const
 export const SHADOW_LAYERS = ['contact', 'ambient'] as const
@@ -112,7 +112,7 @@ export interface ModeShadows {
 
 /** Shadow tokens of one mode (ADR 0010): geometry is shared, color follows the mode's surface. */
 export function generateModeShadows(theme: ModeTheme, p: ShadowParams = DEFAULT_SHADOWS): ModeShadows {
-  const color = shadowColor(theme.tokens['surface/neutral']!.value, p.tint)
+  const color = shadowColor(theme.tokens[SURFACE]!.value, p.tint)
   const scale = theme.mode === 'dark' ? p.darkAlphaScale : 1
   const colors: Record<string, Token> = {}
   const composite: Record<string, string> = {}

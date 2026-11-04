@@ -7,6 +7,8 @@ import {
   DISABLED,
   ROLES,
   SCOPES,
+  SURFACE,
+  SURFACE_TOKENS,
   isTranslucent,
   type GeneratorParams,
   type ModeTheme,
@@ -64,23 +66,26 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       (raisedFamily && /^(emphasized(\/(hover|pressed))?|hover|pressed)?$/.test(modifiers.join('/')))
     // Text has two prominences, normal and subtle (ADR 0012).
     const okFg = scope !== 'fg' || !rest.includes('emphasized')
-    if (!okScope || !okRole || !okRest || !okRaised || !okFg) fail('grammar', name, 0, 1)
+    // The surface group has no roles: exactly `surface` and `surface/backdrop` (ADR 0024).
+    const okGrammar =
+      scope === SURFACE ? SURFACE_TOKENS.includes(name) : okScope && okRole && okRest && okRaised && okFg
+    if (!okGrammar) fail('grammar', name, 0, 1)
     const translucent = isTranslucent(name)
     if (translucent ? c.a >= 1 : c.a < 1)
       fail(translucent ? 'opacity: must be translucent' : 'opacity: must be opaque', name, c.a, translucent ? 0 : 1)
   }
 
   // Neutral subtle shares the surface color; normal sits one layer step away (ADR 0019).
-  const stack = ['surface/neutral', 'bg/neutral/subtle', 'bg/neutral'].filter(has)
-  const surface = get('surface/neutral')
+  const stack = [SURFACE, 'bg/neutral/subtle', 'bg/neutral'].filter(has)
+  const surface = get(SURFACE)
   const subtle = get('bg/neutral/subtle')
   const normal = get('bg/neutral')
   const sign = surface && normal ? Math.sign(L(normal) - L(surface)) : 0
   if (surface && subtle && rgbaToHex(surface) !== rgbaToHex(subtle))
-    fail('neutral subtle matches surface', 'bg/neutral/subtle', 1, 0, 'surface/neutral')
+    fail('neutral subtle matches surface', 'bg/neutral/subtle', 1, 0, SURFACE)
   if (surface && normal) {
     const d = Math.abs(L(normal) - L(surface))
-    if (d < p.layerStep - TOLERANCE) fail('layer separation', 'bg/neutral', d, p.layerStep, 'surface/neutral')
+    if (d < p.layerStep - TOLERANCE) fail('layer separation', 'bg/neutral', d, p.layerStep, SURFACE)
   }
 
   // Raised (ADR 0007, 0015): on one side of every neutral layer, the same side for all of them; its
@@ -109,7 +114,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
 
   // Layers controls sit on (bases, states and raised) and bases for ghost composites.
   const layerNames = [...color.keys()].filter((n) =>
-    /^(surface\/neutral|bg\/neutral(\/subtle)?(\/hover|\/pressed)?)$/.test(n),
+    /^(surface|bg\/neutral(\/subtle)?(\/hover|\/pressed)?)$/.test(n),
   )
   const layers: [string, Rgb][] = [
     ...layerNames.map((n): [string, Rgb] => [n, get(n)!]),

@@ -6,7 +6,7 @@ import { BRAND_SHAPES, curveKeys, DEFAULT_CURVE, familyCurve, generateCurvePalet
 import { applyPalette, familyOf, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
 import { DEFAULT_TYPE_SCALE, generateTypeScale } from '../src/typescale'
-import type { ModeTheme } from '../src/types'
+import { BACKDROP, SURFACE, type ModeTheme } from '../src/types'
 import { validateMode, type Issue } from '../src/validate'
 
 describe('color math', () => {
@@ -49,7 +49,7 @@ describe('generator', () => {
       const seeds = { bg: hex(), fg: hex(), accent: hex() }
       for (const mode of ['light', 'dark'] as const) {
         const generated = generateMode(mode, seeds)
-        if (generated.tokens['surface/neutral']!.value !== seeds.bg)
+        if (generated.tokens[SURFACE]!.value !== seeds.bg)
           failures.push(`${seeds.bg} ${mode}: background moved`)
         // On mid tones the text spacing is compressed at the pole (ADR 0016) and still passes. On the
         // most saturated ones the band between the 4.5:1 floor and white or black is narrower than
@@ -68,7 +68,7 @@ describe('generator', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
       const raised = hexToRgba(mode.tokens['bg/neutral/raised']!.value)
-      const surface = hexToRgba(mode.tokens['surface/neutral']!.value)
+      const surface = hexToRgba(mode.tokens[SURFACE]!.value)
       const over = rgbToOklch(composite(raised, surface)).l - rgbToOklch(surface).l
       expect(mode.tokens['bg/neutral/raised']!.opacity).toBe('translucent')
       expect(raised.a).toBeLessThan(1)
@@ -76,7 +76,7 @@ describe('generator', () => {
     }
     // A pure white seed leaves no room above it: the surface stays and raised goes to the layers' side.
     const white = generateMode('light', { bg: '#ffffff', fg: '#111111', accent: '#1d4ed8' })
-    expect(white.tokens['surface/neutral']!.value).toBe('#ffffff')
+    expect(white.tokens[SURFACE]!.value).toBe('#ffffff')
     expect(validateMode(white)).toEqual([])
     const sunk = composite(hexToRgba(white.tokens['bg/neutral/raised']!.value), hexToRgba('#ffffff'))
     expect(rgbToOklch(sunk).l).toBeLessThan(1)
@@ -133,7 +133,7 @@ describe('generator', () => {
   it('keeps the background and moves the text to the other side when it cannot reach 4.5:1', () => {
     const mode = generateMode('dark', { bg: '#1a1b1a', fg: '#000000', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
-    const surface = rgbToOklch(hexToRgba(mode.tokens['surface/neutral']!.value)).l
+    const surface = rgbToOklch(hexToRgba(mode.tokens[SURFACE]!.value)).l
     expect(Math.abs(surface - rgbToOklch(hexToRgba('#1a1b1a')).l)).toBeLessThan(0.03)
     expect(rgbToOklch(hexToRgba(mode.tokens['fg/neutral']!.value)).l).toBeGreaterThan(surface)
   })
@@ -141,7 +141,7 @@ describe('generator', () => {
   it('compresses the text spacing on a mid tone and says so (ADR 0016)', () => {
     const mode = generateMode('light', { bg: '#847033', fg: '#1a1b1a', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
-    expect(mode.tokens['surface/neutral']!.value).toBe('#847033')
+    expect(mode.tokens[SURFACE]!.value).toBe('#847033')
     expect(mode.tokens['fg/neutral']!.value).toBe('#ffffff')
     expect(mode.tokens['fg/neutral/subtle']!.value).not.toBe('#ffffff')
     expect(mode.adjustments.some((a) => a.token === 'fg/neutral' && a.reason.includes('compressed'))).toBe(true)
@@ -152,16 +152,16 @@ describe('generator', () => {
       for (const mode of ['light', 'dark'] as const) {
         const m = generateMode(mode, { bg: '#d8c0c0', fg, accent: '#cee04b' })
         expect(validateMode(m)).toEqual([])
-        expect(m.tokens['surface/neutral']!.value).toBe('#d8c0c0')
+        expect(m.tokens[SURFACE]!.value).toBe('#d8c0c0')
       }
   })
 
   it('keeps a visible hierarchy on a pure black background (ADR 0014)', () => {
     const mode = generateMode('dark', { bg: '#000000', fg: '#f8f6f0', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
-    const surface = hexToRgba(mode.tokens['surface/neutral']!.value)
+    const surface = hexToRgba(mode.tokens[SURFACE]!.value)
     // Subtle shares the black surface; normal retains one visible step under screen flare.
-    expect(mode.tokens['surface/neutral']!.value).toBe('#000000')
+    expect(mode.tokens[SURFACE]!.value).toBe('#000000')
     expect(mode.tokens['bg/neutral/subtle']!.value).toBe('#000000')
     expect(contrast(hexToRgba(mode.tokens['bg/neutral']!.value), surface)).toBeGreaterThan(1.06)
   })
@@ -169,7 +169,7 @@ describe('generator', () => {
   it('shares surface with subtle and moves normal to the former subtle step (ADR 0019)', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
-      expect(mode.tokens['bg/neutral/subtle']!.value).toBe(mode.tokens['surface/neutral']!.value)
+      expect(mode.tokens['bg/neutral/subtle']!.value).toBe(mode.tokens[SURFACE]!.value)
       expect(mode.tokens['bg/neutral']!.value).toBe(mode.mode === 'light' ? '#edebe5' : '#232423')
       expect(validateMode(mode)).toEqual([])
       const broken = structuredClone(mode)
@@ -177,10 +177,28 @@ describe('generator', () => {
       expect(validateMode(broken)).toContainEqual(
         expect.objectContaining({ rule: 'neutral subtle matches surface', token: 'bg/neutral/subtle' }),
       )
-      broken.tokens['bg/neutral']!.value = mode.tokens['surface/neutral']!.value
+      broken.tokens['bg/neutral']!.value = mode.tokens[SURFACE]!.value
       expect(validateMode(broken)).toContainEqual(
         expect.objectContaining({ rule: 'layer separation', token: 'bg/neutral' }),
       )
+    }
+  })
+
+  it('groups the canvas and the backdrop under surface (ADR 0024)', () => {
+    const theme = generateTheme(DEFAULT_SEEDS)
+    for (const mode of [theme.light, theme.dark]) {
+      expect(Object.keys(mode.tokens).filter((n) => n.split('/')[0] === 'surface')).toEqual(
+        expect.arrayContaining([SURFACE, BACKDROP]),
+      )
+      expect(mode.tokens[SURFACE]!.opacity).toBe('opaque')
+      expect(mode.tokens[BACKDROP]!.opacity).toBe('translucent')
+      expect(mode.tokens['surface/neutral']).toBeUndefined()
+      expect(mode.tokens['blanket/neutral']).toBeUndefined()
+      const renamed = structuredClone(mode)
+      renamed.tokens['surface/neutral'] = { ...mode.tokens[SURFACE]!, name: 'surface/neutral' }
+      renamed.tokens['blanket/neutral'] = { ...mode.tokens[BACKDROP]!, name: 'blanket/neutral' }
+      const grammar = validateMode(renamed).filter((i) => i.rule === 'grammar').map((i) => i.token)
+      expect(grammar).toEqual(expect.arrayContaining(['surface/neutral', 'blanket/neutral']))
     }
   })
 
@@ -226,7 +244,7 @@ describe('palette', () => {
       for (const role of ['accent', 'success', 'danger', 'info'])
         expect(roles.bindings[`bg/${role}/emphasized`]!.step).toBe(roles.bindings['bg/neutral/emphasized']!.step)
       // Neutral subtle intentionally shares the surface anchor (ADR 0019), unlike tinted roles.
-      expect(roles.bindings['bg/neutral/subtle']).toEqual(roles.bindings['surface/neutral'])
+      expect(roles.bindings['bg/neutral/subtle']).toEqual(roles.bindings[SURFACE])
       for (const role of ['success', 'warning', 'danger', 'info'])
         expect(roles.bindings[`bg/${role}/subtle`]!.step).toBe(roles.bindings['bg/accent/subtle']!.step)
     }
@@ -272,7 +290,7 @@ describe('brand curves (prototype)', () => {
     const theme = generateTheme(DEFAULT_SEEDS, params)
     for (const mode of ['light', 'dark'] as const) {
       expect(validateMode(theme[mode], params)).toEqual([])
-      expect(theme[mode].tokens['surface/neutral']!.value).toBe(DEFAULT_SEEDS[mode].bg)
+      expect(theme[mode].tokens[SURFACE]!.value).toBe(DEFAULT_SEEDS[mode].bg)
       expect(theme[mode].tokens['bg/accent/emphasized']!.value).toBe(DEFAULT_SEEDS[mode].accent)
     }
     // A navy background keeps its hue on every layer: brand colors never leak into other hues.

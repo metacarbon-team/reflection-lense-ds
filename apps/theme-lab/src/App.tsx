@@ -337,12 +337,12 @@ export function App() {
             onChange={(x) => setParams({ ...params, strokeAlpha: { ...params.strokeAlpha, normal: x } })}
           />
           <Slider
-            label="Blanket"
+            label="Backdrop"
             min={0.1}
             max={0.9}
             step={0.01}
-            value={params.blanketAlpha}
-            onChange={(x) => setParams({ ...params, blanketAlpha: x })}
+            value={params.backdropAlpha}
+            onChange={(x) => setParams({ ...params, backdropAlpha: x })}
           />
         </Section>
 
@@ -728,7 +728,7 @@ function ShadowsPreview({ theme, params }: { theme: Theme; params: ShadowParams 
         </label>
       </div>
       <div className="lab-shadow-stage" style={style}>
-        {(['surface/neutral', 'bg/neutral/subtle'] as const).map((under) => (
+        {(['surface', 'bg/neutral/subtle'] as const).map((under) => (
           <div key={under} className="lab-shadow-layer" style={{ background: v(under) }}>
             <code style={{ color: v('fg/neutral/subtle') }}>on {under}</code>
             <div className="lab-shadow-grid">
@@ -744,7 +744,7 @@ function ShadowsPreview({ theme, params }: { theme: Theme; params: ShadowParams 
                         <span style={{ color: v('fg/neutral/subtle') }}>tw {level}</span>
                       </div>
                     )}
-                    {under === 'surface/neutral' && (
+                    {under === 'surface' && (
                       <code className="lab-shadow-css" style={{ color: v('fg/neutral/subtle') }}>
                         {css.replaceAll(', 0', ',\n0')}
                       </code>
@@ -761,7 +761,7 @@ function ShadowsPreview({ theme, params }: { theme: Theme; params: ShadowParams 
 }
 
 function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<typeof validateMode> }) {
-  const style = { ...toCssVars(theme), background: v('surface/neutral'), color: v('fg/neutral') } as CSSProperties
+  const style = { ...toCssVars(theme), background: v('surface'), color: v('fg/neutral') } as CSSProperties
   return (
     <section className="lab-mode" style={style}>
       <div className="lab-mode-head">
@@ -772,7 +772,7 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
       </div>
 
       <h3 style={{ color: v('fg/neutral/subtle') }}>Layers</h3>
-      <Layer name="surface/neutral" depth={0}>
+      <Layer name="surface" depth={0}>
         <Layer name="bg/neutral/subtle" depth={1}>
           <Layer name="bg/neutral" depth={2} />
         </Layer>
@@ -785,7 +785,7 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
         ))}
       </div>
 
-      <h3 style={{ color: v('fg/neutral/subtle') }}>Focus, disabled, blanket</h3>
+      <h3 style={{ color: v('fg/neutral/subtle') }}>Focus, disabled, backdrop</h3>
       <div className="lab-row">
         <button
           type="button"
@@ -806,9 +806,9 @@ function ModePreview({ theme, issues }: { theme: ModeTheme; issues: ReturnType<t
         >
           Disabled
         </button>
-        <div className="lab-blanket-demo" style={{ background: v('bg/neutral') }}>
+        <div className="lab-backdrop-demo" style={{ background: v('bg/neutral') }}>
           <span>Content</span>
-          <div style={{ position: 'absolute', inset: 0, background: v('blanket/neutral'), borderRadius: 6 }} />
+          <div style={{ position: 'absolute', inset: 0, background: v('surface/backdrop'), borderRadius: 6 }} />
         </div>
       </div>
 

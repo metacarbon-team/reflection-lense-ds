@@ -18,9 +18,11 @@ import {
   type Rgb,
 } from './color'
 import {
+  BACKDROP,
   DEFAULT_PARAMS,
   ROLES,
   STATUS_ROLES,
+  SURFACE,
   isTranslucent,
   type Adjustment,
   type GeneratorParams,
@@ -196,7 +198,7 @@ function build(
 
   // 1. Neutral stack (ADR 0019): surface = subtle; normal is one layer step away.
   const surface = quantize(paint(bgTone, l0))
-  put('surface/neutral', surface)
+  put(SURFACE, surface)
   const subtleL = l0
   const normalL = stepped(l0, bgTone, p.layerStep, layerDir)
   const layers: Rgb[] = [surface] // bases and states, where controls sit
@@ -394,7 +396,7 @@ function build(
   if (disabledText === null) feasible = false
   put('fg/disabled', ink, disabledText ?? MAX_ALPHA)
   put('stroke/disabled', ink, p.strokeAlpha.subtle)
-  put('blanket/neutral', { r: 0, g: 0, b: 0 }, p.blanketAlpha)
+  put(BACKDROP, { r: 0, g: 0, b: 0 }, p.backdropAlpha)
 
   // The validator has the last word: a build only counts when the shipped colors pass every rule.
   if (feasible) feasible = validateMode({ mode, tokens, adjustments }, p).length === 0
