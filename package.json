@@ -3,12 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "pnpm theme && pnpm --filter @reflection/react dev",
     "lab": "pnpm theme && pnpm --filter @reflection/theme-lab dev",
     "theme": "pnpm --filter @reflection/theme build",
     "build": "pnpm -r build",
     "build-storybook": "pnpm theme && pnpm --filter @reflection/react build-storybook",
+    "build:site": "pnpm theme && pnpm --filter @reflection/theme-lab build && pnpm --filter @reflection/react build-storybook && node scripts/build-site.mjs",
     "test": "pnpm -r test",
     "typecheck": "pnpm theme && pnpm -r typecheck",
     "lint": "eslint .",

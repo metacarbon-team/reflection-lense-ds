@@ -189,6 +189,9 @@ export function App() {
           <Status tone={violations ? 'danger' : 'success'} count={violations}>
             {violations ? 'rule violations' : 'All rules pass'}
           </Status>
+          <Button asChild variant="ghost" size="sm">
+            <a href="/storybook/">Docs</a>
+          </Button>
           <Button variant="ghost" size="sm" disabled={!modified} onClick={reset}>
             Reset
           </Button>

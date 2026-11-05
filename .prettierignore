@@ -1,5 +1,6 @@
 dist
 storybook-static
+site
 pnpm-lock.yaml
 # Theme Lab exports, committed as downloaded
 packages/theme/tokens/*.tokens.json
