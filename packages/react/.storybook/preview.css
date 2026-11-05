@@ -1,0 +1,10 @@
+/* Storybook styles: Tailwind v4 with the theme built from the DTCG export (ADR 0032),
+   scanning the library sources. Consumers set up the same three imports. */
+@import 'tailwindcss';
+@import '@reflection/theme/theme.css';
+@import '@reflection/theme/fonts.css';
+@source '../src';
+
+body {
+  @apply bg-surface text-body text-neutral;
+}

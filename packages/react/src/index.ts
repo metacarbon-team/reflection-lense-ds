@@ -1,3 +1,17 @@
 // Public API of the design system. Export every component from here.
 export { cn, type ClassValue } from './lib/cn'
 export type { VariantProps } from 'class-variance-authority'
+
+export * from './components/badge'
+export * from './components/button'
+export * from './components/card'
+export * from './components/dialog'
+export * from './components/field'
+export * from './components/icon-button'
+export * from './components/input'
+export * from './components/menu'
+export * from './components/menu-label'
+export * from './components/select'
+export * from './components/switch'
+export * from './components/tabs'
+export * from './components/textarea'

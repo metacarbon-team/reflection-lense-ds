@@ -1,0 +1,29 @@
+{
+  "name": "@reflection/theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./theme.css": "./dist/theme.css",
+    "./fonts.css": "./fonts/fonts.css",
+    "./tw-merge": {
+      "types": "./dist/tw-merge.d.ts",
+      "import": "./dist/tw-merge.js"
+    },
+    "./tokens.json": "./tokens/reflection.tokens.json"
+  },
+  "files": [
+    "dist",
+    "fonts",
+    "tokens"
+  ],
+  "scripts": {
+    "build": "node build.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "style-dictionary": "^5.8.0",
+    "typescript": "^6.0.3"
+  }
+}

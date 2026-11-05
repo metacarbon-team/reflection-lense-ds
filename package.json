@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @reflection/react dev",
-    "lab": "pnpm --filter @reflection/theme-lab dev",
+    "dev": "pnpm theme && pnpm --filter @reflection/react dev",
+    "lab": "pnpm theme && pnpm --filter @reflection/theme-lab dev",
+    "theme": "pnpm --filter @reflection/theme build",
     "build": "pnpm -r build",
-    "build-storybook": "pnpm --filter @reflection/react build-storybook",
+    "build-storybook": "pnpm theme && pnpm --filter @reflection/react build-storybook",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm theme && pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

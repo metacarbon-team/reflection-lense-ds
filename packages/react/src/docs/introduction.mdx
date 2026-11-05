@@ -4,16 +4,25 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Reflection Lense
 
-Design system built with React and [CVA](https://cva.style).
+React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilities on the theme that Style Dictionary builds from the DTCG export of Theme Lab (ADR 0032). Complex behaviour (dialog, menus, select, tabs, switch) uses Radix primitives.
 
-## Status
+## Setup
 
-- **Tokens** — not defined yet. Next step.
-- **Styling approach** — not chosen yet. CVA is styling-agnostic: variants map to any class strings.
-- **Components** — none yet.
+```css
+@import 'tailwindcss';
+@import '@reflection/theme/theme.css';
+@import '@reflection/theme/fonts.css';
+@source '../node_modules/@reflection/react/dist';
+```
 
-## Structure
+Set `data-mode="light"` or `data-mode="dark"` on `<html>`, or on any subtree for a local mode. Portalled content (dialogs, menus, select options) renders in `<body>`, so set the mode on `<html>`.
 
-- `src/components/` — components, one folder each (`button/button.tsx`, `button.stories.tsx`, `index.ts`)
-- `src/lib/cn.ts` — class name joiner used by every component
-- `src/index.ts` — public API, everything consumers import
+## Conventions
+
+- Variants are `cva` functions exported next to each component (`buttonVariants`, `badgeVariants`…), for styling other elements the same way.
+- `className` is merged with `cn` (`tailwind-merge` that knows the theme's text roles): a utility you pass replaces the component's utility for the same property.
+- Every part renders `data-slot="<part>"` for targeting in CSS.
+- Form controls (Input, Textarea, SelectTrigger) take their id, description, invalid and disabled state from the surrounding `Field`.
+- `asChild` on Button, IconButton and Card renders the only child with their styles.
+
+Use the toolbar's **Mode** control to switch the color mode.

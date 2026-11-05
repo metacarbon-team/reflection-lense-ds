@@ -1,0 +1,64 @@
+import type { ComponentProps, ReactNode } from 'react'
+import { cn } from '../../lib/cn'
+import { useFieldControl } from '../field/field'
+
+/**
+ * Frame shared by Input, Textarea and the Select trigger: form surface, neutral stroke, small shadow;
+ * stronger stroke on hover, focus ring on focus, danger stroke when invalid, disabled fill.
+ */
+export const controlFrame = [
+  'rounded-md border border-neutral bg-form-neutral text-body-small text-neutral shadow-sm',
+  'hover:border-neutral-emphasized',
+  'data-invalid:border-danger-emphasized',
+  'data-disabled:pointer-events-none data-disabled:border-disabled data-disabled:bg-disabled data-disabled:text-disabled data-disabled:shadow-none',
+]
+
+const addon = 'flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled'
+
+export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
+  /** Content before the value: an icon, a country picker, a prefix. */
+  leading?: ReactNode
+  /** Content after the value: an icon, a unit, a clear button. */
+  trailing?: ReactNode
+  /** Classes for the `<input>` itself; `className` styles the frame. */
+  inputClassName?: string
+}
+
+/**
+ * Input: one line of text in the control frame, with optional leading and trailing content. Props go
+ * to the `<input>`; `className` goes to the frame.
+ */
+export function Input({ leading, trailing, className, inputClassName, ...props }: InputProps) {
+  const control = useFieldControl(props)
+  return (
+    <span
+      data-slot="input"
+      data-invalid={control.invalid || undefined}
+      data-disabled={control.disabled || undefined}
+      className={cn(
+        controlFrame,
+        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
+        className,
+      )}
+    >
+      {leading && (
+        <span data-slot="input-addon" className={addon}>
+          {leading}
+        </span>
+      )}
+      <input
+        {...props}
+        {...control.attributes}
+        className={cn(
+          'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled',
+          inputClassName,
+        )}
+      />
+      {trailing && (
+        <span data-slot="input-addon" className={addon}>
+          {trailing}
+        </span>
+      )}
+    </span>
+  )
+}

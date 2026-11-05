@@ -35,6 +35,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0029](0029-tailwind-v4-dimensions-in-rem.md) | Dimension tokens follow Tailwind v4, in rem | Accepted |
 | [0030](0030-type-scale-and-text-roles.md) | Tailwind v4 type scale and text roles with viewport modes | Accepted |
 | [0031](0031-tailwind-tracking.md) | Tracking on Tailwind v4 steps | Accepted |
+| [0032](0032-tailwind-components.md) | Components styled with Tailwind v4 on a Style Dictionary theme | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

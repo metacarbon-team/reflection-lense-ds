@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import pkg from './package.json' with { type: 'json' }
@@ -9,7 +10,7 @@ const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDepen
 const isExternal = (id: string) => external.some((dep) => id === dep || id.startsWith(`${dep}/`))
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     lib: {
       entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),

@@ -6,10 +6,12 @@ import {
   type TypeStep,
   type Viewport,
 } from '@reflection/tokens'
+import { Input } from '@reflection/react'
+import { Choice, Panel, Section } from './ui/lab'
 
 /** rem → px, the value Figma shows. */
 const px = (rem: number) => `${Math.round(rem * 16 * 100) / 100}px`
-const FAMILY_FALLBACK = { sans: 'system-ui, sans-serif', serif: 'Georgia, serif', mono: 'ui-monospace, monospace' }
+const FAMILY = { sans: 'var(--font-family-sans)', serif: 'var(--font-family-serif)', mono: 'var(--font-family-mono)' }
 
 /** Steps of the scale in rem (ADR 0030): size and line height, px shown as the Figma value. */
 export function TypeStepsEditor({
@@ -23,47 +25,51 @@ export function TypeStepsEditor({
   const set = (i: number, patch: Partial<TypeStep>) =>
     onChange({ ...value, steps: value.steps.map((s, j) => (j === i ? { ...s, ...patch } : s)) })
   return (
-    <div className="lab-type-steps">
-      <div className="lab-type-step lab-muted" aria-hidden="true">
-        <span>Step</span>
-        <span>Size, rem</span>
-        <span>Line, rem</span>
-      </div>
-      {value.steps.map((s, i) => (
-        <div className="lab-type-step" key={s.name}>
-          <code>{s.name}</code>
-          <label>
-            <input
-              type="number"
-              aria-label={`${s.name} size in rem`}
-              min={0.625}
-              step={0.0625}
-              value={s.size}
-              onChange={(e) => set(i, { size: Number(e.target.value) })}
-            />
-            <span className="lab-muted">{px(s.size)}</span>
-          </label>
-          <label>
-            <input
-              type="number"
-              aria-label={`${s.name} line height in rem`}
-              min={0.625}
-              step={0.25}
-              value={s.lineHeight}
-              onChange={(e) => set(i, { lineHeight: Number(e.target.value) })}
-            />
-            <span className="lab-muted">{px(s.lineHeight)}</span>
-          </label>
+    <Section title="Steps · rem">
+      <div className="lab-type-steps">
+        <div className="lab-type-step text-label-small text-neutral-subtle" aria-hidden="true">
+          <span>Step</span>
+          <span>Size</span>
+          <span>Line height</span>
         </div>
-      ))}
+        {value.steps.map((s, i) => (
+          <div className="lab-type-step" key={s.name}>
+            <code className="text-code-small">{s.name}</code>
+            <label>
+              <Input
+                type="number"
+                inputClassName="text-code-small"
+                aria-label={`${s.name} size in rem`}
+                min={0.625}
+                step={0.0625}
+                value={s.size}
+                onChange={(e) => set(i, { size: Number(e.target.value) })}
+              />
+              <span className="text-caption text-neutral-subtle">{px(s.size)}</span>
+            </label>
+            <label>
+              <Input
+                type="number"
+                inputClassName="text-code-small"
+                aria-label={`${s.name} line height in rem`}
+                min={0.625}
+                step={0.25}
+                value={s.lineHeight}
+                onChange={(e) => set(i, { lineHeight: Number(e.target.value) })}
+              />
+              <span className="text-caption text-neutral-subtle">{px(s.lineHeight)}</span>
+            </label>
+          </div>
+        ))}
+      </div>
       {issues.length > 0 && (
-        <ul className="lab-type-issues" role="alert">
+        <ul className="lab-type-issues text-caption" role="alert">
           {issues.map((issue) => (
             <li key={issue}>{issue}</li>
           ))}
         </ul>
       )}
-    </div>
+    </Section>
   )
 }
 
@@ -77,27 +83,30 @@ export function TypeRolesPreview({
 }) {
   const valid = validateTypeScale(value).length === 0
   const styles = valid ? { desktop: textStyles(value, 'desktop'), mobile: textStyles(value, 'mobile') } : null
+  const steps = value.steps.map((s) => ({ value: s.name, label: s.name }))
+  const tracking = Object.entries(value.tracking).map(([name, em]) => ({ value: name, label: `${name} · ${em}em` }))
+  const setRole = (i: number, patch: Partial<TypeScaleParams['roles'][number]>) =>
+    onChange({ ...value, roles: value.roles.map((r, j) => (j === i ? { ...r, ...patch } : r)) })
   const setStep = (i: number, viewport: Viewport, step: string) =>
-    onChange({
-      ...value,
-      roles: value.roles.map((r, j) => (j === i ? { ...r, step: { ...r.step, [viewport]: step } } : r)),
-    })
-  const setTracking = (i: number, tracking: string) =>
-    onChange({ ...value, roles: value.roles.map((r, j) => (j === i ? { ...r, tracking } : r)) })
+    setRole(i, { step: { ...value.roles[i]!.step, [viewport]: step } })
   return (
-    <section className="lab-panel">
-      <h2>Text roles</h2>
-      <p className="lab-muted">
-        Each role takes a step per viewport (ADR 0030). Fonts are not bundled yet, so samples use system fallbacks.
-      </p>
-      {!valid && <p role="alert">Fix the type scale steps to preview the roles.</p>}
+    <Panel
+      title="Text roles"
+      description="Each role takes a step per viewport and a tracking step (ADR 0030, 0031). Samples use the bundled NaN Serf fonts; NaN Serf B picks its optical size from the font size."
+    >
+      {!valid && (
+        <p className="text-body-small text-danger" role="alert">
+          Fix the type scale steps to preview the roles.
+        </p>
+      )}
       <table className="lab-table">
         <thead>
           <tr>
             <th>Role</th>
             <th>Desktop</th>
             <th>Mobile</th>
-            <th>Sample (desktop)</th>
+            <th>Tracking</th>
+            <th>Sample · desktop</th>
           </tr>
         </thead>
         <tbody>
@@ -107,45 +116,38 @@ export function TypeRolesPreview({
               <tr key={role.name}>
                 <td>
                   <code>{role.name}</code>
-                  <div className="lab-muted">
+                  <div className="text-caption text-neutral-subtle">
                     {role.family} · {[role.weight, ...Object.values(role.weights ?? {})].join(', ')}
                   </div>
-                  <select
-                    aria-label={`${role.name} tracking`}
-                    value={role.tracking ?? 'normal'}
-                    onChange={(e) => setTracking(i, e.target.value)}
-                  >
-                    {Object.entries(value.tracking).map(([name, em]) => (
-                      <option key={name} value={name}>
-                        tracking {name} ({em}em)
-                      </option>
-                    ))}
-                  </select>
                 </td>
                 {VIEWPORTS.map((viewport) => {
                   const s = styles?.[viewport].find((st) => st.name === role.name)
                   return (
                     <td key={viewport}>
-                      <select
-                        aria-label={`${role.name} ${viewport} step`}
-                        value={role.step[viewport]}
-                        onChange={(e) => setStep(i, viewport, e.target.value)}
-                      >
-                        {value.steps.map((step) => (
-                          <option key={step.name} value={step.name}>
-                            {step.name}
-                          </option>
-                        ))}
-                      </select>
-                      {s && (
-                        <span className="lab-muted">
-                          {' '}
-                          {px(s.step.size)}/{px(s.step.lineHeight)}
-                        </span>
-                      )}
+                      <div className="lab-type-cell">
+                        <Choice
+                          aria-label={`${role.name} ${viewport} step`}
+                          value={role.step[viewport]}
+                          options={steps}
+                          onChange={(step) => setStep(i, viewport, step)}
+                        />
+                        {s && (
+                          <span className="text-caption text-neutral-subtle">
+                            {px(s.step.size)} / {px(s.step.lineHeight)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )
                 })}
+                <td>
+                  <Choice
+                    aria-label={`${role.name} tracking`}
+                    value={role.tracking ?? 'normal'}
+                    options={tracking}
+                    onChange={(t) => setRole(i, { tracking: t })}
+                  />
+                </td>
                 <td
                   style={
                     style && {
@@ -153,7 +155,7 @@ export function TypeRolesPreview({
                       lineHeight: `${style.step.lineHeight}rem`,
                       fontWeight: style.weight,
                       letterSpacing: `${style.tracking.em}em`,
-                      fontFamily: FAMILY_FALLBACK[style.family],
+                      fontFamily: FAMILY[style.family],
                       textDecoration: style.decoration,
                       textTransform: style.textCase,
                     }
@@ -166,6 +168,6 @@ export function TypeRolesPreview({
           })}
         </tbody>
       </table>
-    </section>
+    </Panel>
   )
 }

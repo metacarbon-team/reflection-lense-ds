@@ -8,7 +8,8 @@ import {
   type ShadowParams,
   type TypeScaleParams,
 } from '@reflection/tokens'
-import { TokenExport } from './TokenExport'
+import { Input } from '@reflection/react'
+import { Choice, Panel, Segmented } from './ui/lab'
 
 type Row = { name: string; category: string; values: [DtcgToken, DtcgToken]; typography: boolean; shared: boolean }
 const CATEGORIES: Record<string, string> = {
@@ -87,12 +88,7 @@ function Value({ token }: { token: DtcgToken }) {
   )
 }
 
-export function TokenBrowser(props: {
-  theme: Theme
-  shadows: ShadowParams
-  typeScale: TypeScaleParams
-  settings: string
-}) {
+export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeScale: TypeScaleParams }) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [mode, setMode] = useState('all')
@@ -124,118 +120,104 @@ export function TokenBrowser(props: {
       `${row.name} ${row.values.map(displayValue).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()),
   )
 
+  const categories = [
+    { value: 'all', label: 'All categories' },
+    ...Object.entries(CATEGORIES).map(([value, label]) => ({ value, label })),
+  ]
   return (
     <section className="lab-token-browser" aria-label="Token catalog">
-      <div className="lab-token-intro">
-        <div>
-          <h2>Tokens</h2>
-          <p>All {rows.length} implemented tokens, grouped by category. Values update with your settings.</p>
-          <p className="lab-muted">
-            Compare Light / Dark colors and shadows and Desktop / Mobile text styles; the type scale, font families and
-            dimensions are shared.
-          </p>
-        </div>
-        <details className="lab-panel lab-token-export-panel">
-          <summary>Export tokens · DTCG JSON</summary>
-          <TokenExport theme={props.theme} shadows={props.shadows} typeScale={props.typeScale} />
-          <details>
-            <summary>Generator settings</summary>
-            <textarea
-              className="lab-export"
-              aria-label="Generator settings JSON"
-              readOnly
-              rows={8}
-              value={props.settings}
+      <Panel
+        title="Token catalog"
+        description={`All ${rows.length} implemented tokens, grouped by category. The type scale, font families and dimensions are shared by every mode.`}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="lab-token-search">
+            <Input
+              type="search"
+              aria-label="Search tokens"
+              placeholder="Search by name or value"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
-          </details>
-        </details>
-      </div>
-      <div className="lab-token-filters">
-        <label>
-          Search tokens
-          <input type="search" placeholder="Name or value…" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
-        <label>
-          Category
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="all">All categories</option>
-            {Object.entries(CATEGORIES).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Color modes
-          <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="all">Light + Dark</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <label>
-          Type viewports
-          <select value={viewport} onChange={(e) => setViewport(e.target.value)}>
-            <option value="all">Desktop + Mobile</option>
-            <option value="desktop">Desktop</option>
-            <option value="mobile">Mobile</option>
-          </select>
-        </label>
-      </div>
-      <p className="lab-muted" role="status">
-        {filtered.length} of {rows.length} tokens
-      </p>
-      {!filtered.length && <p>No tokens match your search. Try another name or category.</p>}
-      {Object.entries(CATEGORIES).map(([key, label]) => {
-        const group = filtered.filter((row) => row.category === key)
-        if (!group.length) return null
-        const { typography, shared } = group[0]!
-        const selection = typography ? viewport : mode
-        const labels = typography ? ['Desktop', 'Mobile'] : ['Light', 'Dark']
-        const columns = shared
-          ? [0]
-          : selection === 'all'
-            ? [0, 1]
-            : selection === 'light' || selection === 'desktop'
-              ? [0]
-              : [1]
-        return (
-          <section className="lab-panel lab-token-category" key={key} aria-label={`${label} tokens`}>
-            <h2>
-              {label} <span className="lab-muted">{group.length}</span>
-            </h2>
-            <div className="lab-token-table-wrap">
-              <table className="lab-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Token</th>
-                    {columns.map((i) => (
-                      <th scope="col" key={i}>
-                        {shared ? 'All modes' : labels[i]}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.map((row) => (
-                    <tr key={row.name}>
-                      <th scope="row">
-                        <code>{row.name}</code>
-                      </th>
+          </div>
+          <Choice aria-label="Category" value={category} options={categories} onChange={setCategory} />
+          <Segmented
+            label="Color modes"
+            options={[
+              { id: 'all', label: 'Light + Dark' },
+              { id: 'light', label: 'Light' },
+              { id: 'dark', label: 'Dark' },
+            ]}
+            value={mode}
+            onChange={setMode}
+          />
+          <Segmented
+            label="Type viewports"
+            options={[
+              { id: 'all', label: 'Desktop + Mobile' },
+              { id: 'desktop', label: 'Desktop' },
+              { id: 'mobile', label: 'Mobile' },
+            ]}
+            value={viewport}
+            onChange={setViewport}
+          />
+          <span className="text-caption text-neutral-subtle" role="status">
+            {filtered.length} of {rows.length} tokens
+          </span>
+        </div>
+        {!filtered.length && (
+          <p className="text-body-small">No tokens match your search. Try another name or category.</p>
+        )}
+        {Object.entries(CATEGORIES).map(([key, label]) => {
+          const group = filtered.filter((row) => row.category === key)
+          if (!group.length) return null
+          const { typography, shared } = group[0]!
+          const selection = typography ? viewport : mode
+          const labels = typography ? ['Desktop', 'Mobile'] : ['Light', 'Dark']
+          const columns = shared
+            ? [0]
+            : selection === 'all'
+              ? [0, 1]
+              : selection === 'light' || selection === 'desktop'
+                ? [0]
+                : [1]
+          return (
+            <section className="lab-token-category" key={key} aria-label={`${label} tokens`}>
+              <h3 className="text-overline text-neutral-subtle">
+                {label} · {group.length}
+              </h3>
+              <div className="lab-token-table-wrap">
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Token</th>
                       {columns.map((i) => (
-                        <td key={i}>
-                          <Value token={row.values[i]!} />
-                        </td>
+                        <th scope="col" key={i}>
+                          {shared ? 'All modes' : labels[i]}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )
-      })}
+                  </thead>
+                  <tbody>
+                    {group.map((row) => (
+                      <tr key={row.name}>
+                        <td>
+                          <code>{row.name}</code>
+                        </td>
+                        {columns.map((i) => (
+                          <td key={i}>
+                            <Value token={row.values[i]!} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )
+        })}
+      </Panel>
     </section>
   )
 }

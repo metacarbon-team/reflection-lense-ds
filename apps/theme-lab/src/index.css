@@ -1,0 +1,7 @@
+/* Theme Lab styles: Tailwind with the Reflection theme, as any consumer of the library sets it up.
+   The chrome stays on the default theme (light, :root); previews set the edited theme's variables
+   on their own subtree. */
+@import 'tailwindcss';
+@import '@reflection/theme/theme.css';
+@import '@reflection/theme/fonts.css';
+@source '../../../packages/react/src';
