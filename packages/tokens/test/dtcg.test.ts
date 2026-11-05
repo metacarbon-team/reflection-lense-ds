@@ -121,7 +121,7 @@ describe('DTCG export', () => {
     expect(heading.$value).toMatchObject({
       fontFamily: '{font.family.serif}',
       fontSize: '{font.size.3xl}',
-      fontWeight: 400,
+      fontWeight: '{font.weight.normal}',
       lineHeight: 1.2,
     })
     expect(heading.$extensions![DTCG_EXTENSION]).toEqual({
@@ -130,11 +130,12 @@ describe('DTCG export', () => {
     })
     // Tracking primitives are em numbers; the composite resolves them against its size (ADR 0031).
     expect(desktop['font/tracking/tight']).toEqual({ $type: 'number', $value: -0.025 })
+    expect(desktop['font/weight/light']).toEqual({ $type: 'fontWeight', $value: 300 })
     expect(heading.$value).toMatchObject({ letterSpacing: { value: -0.046875, unit: 'rem' } })
     expect(mobile['typography/heading/large']!.$value).toMatchObject({ fontSize: '{font.size.2xl}' })
     expect(desktop['typography/body/small/medium']!.$value).toMatchObject({
       fontSize: '{font.size.md}',
-      fontWeight: 500,
+      fontWeight: '{font.weight.medium}',
     })
     expect(desktop['typography/link']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textDecoration: 'underline' })
     expect(desktop['typography/overline']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textTransform: 'uppercase' })

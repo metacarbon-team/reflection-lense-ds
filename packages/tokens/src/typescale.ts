@@ -49,6 +49,10 @@ export interface TextStyle {
   textCase?: 'uppercase'
 }
 
+/** Font weights by Tailwind name (`--font-weight-*`); roles use these values only. */
+export const FONT_WEIGHTS = { light: 300, normal: 400, medium: 500, semibold: 600, bold: 700 } as const
+export const weightName = (weight: number) => Object.entries(FONT_WEIGHTS).find(([, value]) => value === weight)?.[0]
+
 const rem = (px: number) => px / REM_BASE
 const step = (name: string, size: number, lineHeight: number): TypeStep => ({
   name,
@@ -191,6 +195,8 @@ export function validateTypeScale(p: TypeScaleParams): string[] {
       if (!names.has(role.step[viewport])) issues.push(`${role.name}: unknown ${viewport} step ${role.step[viewport]}.`)
     if (!((role.tracking ?? 'normal') in p.tracking))
       issues.push(`${role.name}: unknown tracking step ${role.tracking}.`)
+    for (const weight of [role.weight, ...Object.values(role.weights ?? {})])
+      if (!weightName(weight)) issues.push(`${role.name}: weight ${weight} is not a font/weight step.`)
   }
   return issues
 }

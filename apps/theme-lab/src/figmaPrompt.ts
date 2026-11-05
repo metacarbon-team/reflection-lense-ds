@@ -20,7 +20,7 @@ Organize collections as layers, as in our Design System Scaffolder files:
 - Core: theme mapping, with Reflection and Custom modes.
 - Theme: semantic tokens, with Light and Dark modes.
 - Typography: <role>/font-size and <role>/line-height for every text role, with Desktop and Mobile modes; each aliases the role's step in that mode (ADR 0030). <role>/letter-spacing holds px per mode: the composite's letterSpacing × 16 (ADR 0031), since Figma cannot hold em. Text styles bind to their role's variables, and a mobile change is a change of the alias, never of a style.
-- Number value: number primitives with a single mode — spacing, size, radius, border width, and the type scale (font/size/*, font/line-height/*, font/family/*, font/style/*).
+- Number value: number primitives with a single mode — spacing, size, radius, border width, and the type scale (font/size/*, font/line-height/*, font/family/*, font/weight/*). Text styles bind fontWeight to font/weight/*; the optical size (Text, Display…) stays the style's own font, and Figma keeps it when the weight changes.
 
 Use the Palette → Core → Theme relationship. Light/Dark and Desktop/Mobile are modes within collections, not separate collections. Let the supplied data guide the values and mappings, and choose the implementation appropriate for the file.
 

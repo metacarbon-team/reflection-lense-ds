@@ -1,11 +1,18 @@
 import { hexToRgba } from './color'
 import { dimensionTokens, px, rem } from './dimensions'
 import { generateModeShadows, generateShadows, type ShadowParams } from './shadow'
-import { DEFAULT_TYPE_SCALE, textStyles, type TypeScaleParams, type Viewport } from './typescale'
+import {
+  DEFAULT_TYPE_SCALE,
+  FONT_WEIGHTS,
+  textStyles,
+  weightName,
+  type TypeScaleParams,
+  type Viewport,
+} from './typescale'
 import { FOCUS, FOCUS_HALO, type ModeTheme, type Theme } from './types'
 
 export interface DtcgToken {
-  $type: 'color' | 'dimension' | 'number' | 'shadow' | 'fontFamily' | 'typography'
+  $type: 'color' | 'dimension' | 'number' | 'shadow' | 'fontFamily' | 'fontWeight' | 'typography'
   $value: unknown
   $extensions?: Record<string, unknown>
 }
@@ -83,6 +90,7 @@ export function toDtcg(
     put(`font/line-height/${step.name}`, 'dimension', rem(step.lineHeight))
   }
   for (const [name, em] of Object.entries(typeScale.tracking)) put(`font/tracking/${name}`, 'number', em)
+  for (const [name, weight] of Object.entries(FONT_WEIGHTS)) put(`font/weight/${name}`, 'fontWeight', weight)
   for (const [name, family] of Object.entries(FAMILIES)) put(`font/family/${name}`, 'fontFamily', family)
   // Composite styles reference the primitives. DTCG's lineHeight is a ratio, so the step's line-height
   // token travels in $extensions, with underline and uppercase.
@@ -98,7 +106,7 @@ export function toDtcg(
       $value: {
         fontFamily: `{font.family.${style.family}}`,
         fontSize: `{font.size.${style.step.name}}`,
-        fontWeight: style.weight,
+        fontWeight: `{font.weight.${weightName(style.weight)}}`,
         // DTCG has no em: tracking resolved against this style's size (ADR 0031).
         letterSpacing: rem(Math.round(style.tracking.em * style.step.size * 1e6) / 1e6),
         lineHeight: Math.round((style.step.lineHeight / style.step.size) * 10000) / 10000,

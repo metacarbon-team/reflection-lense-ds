@@ -4,6 +4,7 @@ export { generateTheme, generateMode } from './generate'
 export { validateMode, type Issue } from './validate'
 export {
   DEFAULT_TYPE_SCALE,
+  FONT_WEIGHTS,
   textStyles,
   validateTypeScale,
   VIEWPORTS,
