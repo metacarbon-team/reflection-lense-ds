@@ -19,9 +19,8 @@ Organize collections as layers, as in our Design System Scaffolder files:
 - Palette: primitive color ramps.
 - Core: theme mapping, with Reflection and Custom modes.
 - Theme: semantic tokens, with Light and Dark modes.
-- Type scale: font/size/* and font/line-height/* primitives and font families, in a collection with a single mode.
 - Typography: <role>/font-size and <role>/line-height for every text role, with Desktop and Mobile modes; each aliases the role's step in that mode (ADR 0030). Text styles bind to their role's variables, and a mobile change is a change of the alias, never of a style.
-- Number value: dimension primitives — spacing, size, radius and border width.
+- Number value: number primitives with a single mode — spacing, size, radius, border width, and the type scale (font/size/*, font/line-height/*).
 
 Use the Palette → Core → Theme relationship. Light/Dark and Desktop/Mobile are modes within collections, not separate collections. Let the supplied data guide the values and mappings, and choose the implementation appropriate for the file.
 
