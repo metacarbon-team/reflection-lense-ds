@@ -31,6 +31,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0025](0025-focus-ring.md) | One focus ring with a translucent halo | Accepted |
 | [0026](0026-form-and-card-scopes.md) | Form and card scopes replace raised | Accepted |
 | [0027](0027-status-cards.md) | The lightest status tint is a card | Accepted |
+| [0028](0028-calibrated-leading.md) | Leading calibrated to the Figma library | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

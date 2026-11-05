@@ -85,7 +85,7 @@ describe('DTCG export', () => {
     const mobile = flatten(toDtcg(theme.light, { typeScale, viewport: 'mobile' }))
     expect(desktop['font/size/lg']!.$value).toEqual({ value: 30, unit: 'px' })
     expect(mobile['font/size/lg']!.$value).toEqual({ value: 24, unit: 'px' })
-    expect(desktop['font/line-height/base']!.$value).toEqual({ value: 24, unit: 'px' })
+    expect(desktop['font/line-height/base']!.$value).toEqual({ value: 28, unit: 'px' })
     expect(desktop['font/family/mono']!.$value).toBe('Geist Mono')
   })
 })

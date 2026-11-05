@@ -274,8 +274,8 @@ describe('type scale', () => {
     expect(desktop.find((s) => s.name === 'lg')!.size).toBe(20)
     expect(mobile.find((s) => s.name === 'xl')!.size).toBeLessThan(desktop.find((s) => s.name === 'xl')!.size)
     for (const s of [...desktop, ...mobile]) expect(s.lineHeight % 4).toBe(0)
-    // Default 1.25 leading stays compact for small UI text, in both modes.
-    for (const scale of [desktop, mobile]) expect(scale.slice(0, 4).map((s) => s.lineHeight)).toEqual([16, 16, 16, 20])
+    // Default body leading matches the Figma line heights of small UI text, in both modes (ADR 0028).
+    for (const scale of [desktop, mobile]) expect(scale.slice(0, 4).map((s) => s.lineHeight)).toEqual([16, 20, 20, 24])
     expect(desktop.find((s) => s.name === '2xl')!.lineHeight).toBe(40)
     expect(mobile.find((s) => s.name === 'xl')!.lineHeight).toBe(28)
     // Custom leading still rounds down when closer (21 → 20), and up on a tie (18 → 20).

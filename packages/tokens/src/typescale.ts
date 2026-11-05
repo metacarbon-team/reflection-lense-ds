@@ -18,7 +18,8 @@ export const DEFAULT_TYPE_SCALE: TypeScaleParams = {
   ratio: { desktop: 1.25, mobile: 1.2 },
   fixed: [12, 13, 14],
   steps: 6,
-  leading: { body: 1.25, heading: 1.25 },
+  // Calibrated to the Figma library (ADR 0028): body text keeps its line heights.
+  leading: { body: 1.45, heading: 1.25 },
 }
 
 export interface TypeStep {
