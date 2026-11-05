@@ -4,5 +4,6 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm build:site",
   "outputDirectory": "site",
-  "redirects": [{ "source": "/storybook", "destination": "/storybook/", "permanent": true }]
+  "redirects": [{ "source": "/storybook", "destination": "/storybook/", "permanent": true }],
+  "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }]
 }
