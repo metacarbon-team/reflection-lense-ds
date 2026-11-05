@@ -1,8 +1,19 @@
 export * from './types'
-export { toDtcg, toDtcgAllModes, type DtcgGroup, type DtcgToken } from './dtcg'
+export { DTCG_EXTENSION, toDtcg, toDtcgAllModes, type DtcgGroup, type DtcgToken } from './dtcg'
 export { generateTheme, generateMode } from './generate'
 export { validateMode, type Issue } from './validate'
-export { generateTypeScale, DEFAULT_TYPE_SCALE, type TypeScaleParams, type TypeStep } from './typescale'
+export {
+  DEFAULT_TYPE_SCALE,
+  textStyles,
+  validateTypeScale,
+  VIEWPORTS,
+  type FontFamily,
+  type TextRole,
+  type TextStyle,
+  type TypeScaleParams,
+  type TypeStep,
+  type Viewport,
+} from './typescale'
 export {
   generateModeShadows,
   generateShadows,
@@ -37,7 +48,18 @@ export {
   DEFAULT_CURVE,
   type CurveParams,
 } from './curve'
-export { cssVarName, toCssVars } from './css'
+export { cssVarName, dimensionCssVars, toCssVars } from './css'
+export {
+  BORDER_WIDTHS,
+  CONTAINER_SIZES,
+  dimensionTokens,
+  RADII,
+  REM_BASE,
+  SPACING_STEPS,
+  toPx,
+  type Dimension,
+  type DimensionToken,
+} from './dimensions'
 export { contrast, hexToRgba, rgbaToHex, rgbToOklch, oklchToRgb, composite, lightness } from './color'
 
 /**

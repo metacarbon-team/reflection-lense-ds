@@ -21,7 +21,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0015](0015-layer-direction.md)         | The background never moves; layers adapt to it | Accepted |
 | [0016](0016-compressed-text-spacing.md) | Text spacing compresses on mid tones           | Accepted |
 | [0017](0017-semantic-surface-usage.md)  | Semantic surface usage and local modes          | Accepted |
-| [0018](0018-nearest-line-height-grid.md) | Round line height to the nearest grid point   | Accepted |
+| [0018](0018-nearest-line-height-grid.md) | Round line height to the nearest grid point   | Superseded by 0030 |
 | [0019](0019-neutral-subtle-surface.md) | Neutral subtle shares the surface color       | Accepted |
 | [0020](0020-geist-mono.md) | Geist Mono for monospace text | Accepted |
 | [0021](0021-dimension-token-exports.md) | Public exports for dimension tokens | Accepted |
@@ -31,7 +31,9 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0025](0025-focus-ring.md) | One focus ring with a translucent halo | Accepted |
 | [0026](0026-form-and-card-scopes.md) | Form and card scopes replace raised | Accepted |
 | [0027](0027-status-cards.md) | The lightest status tint is a card | Accepted |
-| [0028](0028-calibrated-leading.md) | Leading calibrated to the Figma library | Accepted |
+| [0028](0028-calibrated-leading.md) | Leading calibrated to the Figma library | Superseded by 0030 |
+| [0029](0029-tailwind-v4-dimensions-in-rem.md) | Dimension tokens follow Tailwind v4, in rem | Accepted |
+| [0030](0030-type-scale-and-text-roles.md) | Tailwind v4 type scale and text roles with viewport modes | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

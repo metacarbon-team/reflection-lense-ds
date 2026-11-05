@@ -4,6 +4,7 @@
 - Date: 2026-10-28
 - Supersedes: —
 - Mono font choice superseded by [0020](0020-geist-mono.md): use Geist Mono. The original choice below is retained as history.
+- Size primitives, the modular scale, the 12px minimum and the removal of link styles superseded by [0030](0030-type-scale-and-text-roles.md): Tailwind v4 steps, text roles per viewport, 10px minimum, a `link` role.
 
 ## Context
 

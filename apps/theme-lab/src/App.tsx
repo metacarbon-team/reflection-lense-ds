@@ -10,7 +10,6 @@ import {
   generateRolePalette,
   generateModeShadows,
   generateTheme,
-  generateTypeScale,
   SHADOW_LEVELS,
   DEFAULT_SEEDS,
   ROLES,
@@ -31,6 +30,7 @@ import {
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { MirrorScreen } from './ui-preview/MirrorScreen'
 import { TokenBrowser } from './TokenBrowser'
+import { TypeRolesPreview, TypeStepsEditor } from './TypeScaleEditor'
 
 /** `var(--…)` for a canonical token name. */
 const v = (name: string) => `var(${cssVarName(name)})`
@@ -356,30 +356,7 @@ export function App() {
         </Section>
 
         <Section title="Type scale">
-          <Slider
-            label="Base (px)"
-            min={12}
-            max={20}
-            step={1}
-            value={typeScale.base}
-            onChange={(x) => setTypeScale({ ...typeScale, base: x })}
-          />
-          <Slider
-            label="Ratio desktop"
-            min={1.05}
-            max={1.5}
-            step={0.005}
-            value={typeScale.ratio.desktop}
-            onChange={(x) => setTypeScale({ ...typeScale, ratio: { ...typeScale.ratio, desktop: x } })}
-          />
-          <Slider
-            label="Ratio mobile"
-            min={1.05}
-            max={1.5}
-            step={0.005}
-            value={typeScale.ratio.mobile}
-            onChange={(x) => setTypeScale({ ...typeScale, ratio: { ...typeScale.ratio, mobile: x } })}
-          />
+          <TypeStepsEditor value={typeScale} onChange={setTypeScale} />
         </Section>
       </aside>
 
@@ -426,7 +403,7 @@ export function App() {
                 <ModePreview key={mode} theme={theme[mode]} issues={issues[mode]} />
               ))}
             </div>
-            <TypeScalePreview params={typeScale} />
+            <TypeRolesPreview value={typeScale} onChange={setTypeScale} />
             <TokenTable light={theme.light} dark={theme.dark} />
           </>
         )}
@@ -967,54 +944,6 @@ function RoleRow({ role }: { role: Role }) {
         <span style={{ color: v(`fg/${role}`) }}>normal</span>
       </span>
     </div>
-  )
-}
-
-function TypeScalePreview({ params }: { params: TypeScaleParams }) {
-  const scale = generateTypeScale(params)
-  return (
-    <section className="lab-panel">
-      <h2>Type scale</h2>
-      <p className="lab-muted">Fonts are not bundled yet, so samples use system fallbacks.</p>
-      <table className="lab-table">
-        <thead>
-          <tr>
-            <th>Step</th>
-            <th>Desktop</th>
-            <th>Mobile</th>
-            <th>Sample (desktop)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {scale.desktop.map((d, i) => {
-            const m = scale.mobile[i]!
-            const heading = i >= params.fixed.length + 2
-            return (
-              <tr key={d.name}>
-                <td>
-                  <code>font/size/{d.name}</code>
-                </td>
-                <td>
-                  {d.size}/{d.lineHeight}
-                </td>
-                <td>
-                  {m.size}/{m.lineHeight}
-                </td>
-                <td
-                  style={{
-                    fontSize: d.size,
-                    lineHeight: `${d.lineHeight}px`,
-                    fontFamily: heading ? 'Georgia, serif' : 'system-ui, sans-serif',
-                  }}
-                >
-                  Reflection Lense
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </section>
   )
 }
 

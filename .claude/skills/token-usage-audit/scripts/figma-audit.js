@@ -52,7 +52,9 @@ const paintOf = (node, p) => {
     try {
       const r = token.variable.resolveForConsumer(node).value
       if (r && 'r' in r) { c = { r: r.r, g: r.g, b: r.b }; tokenAlpha = r.a ?? 1 }
-    } catch (e) {}
+    } catch {
+      // Not resolvable for this node: keep the paint's own colour.
+    }
   }
   return { c, a, tokenAlpha, token, paint: p }
 }
@@ -96,7 +98,6 @@ const TITLES = {
   'C12 shadows': 'Shadows outside shadow/* styles',
 }
 const findings = new Map()
-const sourceId = (node) => (node.id.startsWith('I') ? node.id.split(';').pop() : node.id)
 const contextOf = (node) => {
   for (let p = node; p && p.type !== 'PAGE'; p = p.parent) {
     if (p.type === 'COMPONENT') return p.parent?.type === 'COMPONENT_SET' ? `${p.parent.name} › ${p.name}` : p.name
@@ -109,10 +110,13 @@ let pageName = ''
 const report = (rule, severity, node, detail, suggestion) => {
   const key = `${rule}|${severity}|${detail}`
   const f = findings.get(key) ?? { rule, severity, detail, suggestion, sources: new Set(), examples: [] }
-  const src = `${pageName}:${sourceId(node)}`
+  // Only own layers and instance overrides reach here (see `owns`), so each node is its own source.
+  const src = `${pageName}:${node.id}`
   if (!f.sources.has(src)) {
     f.sources.add(src)
-    if (f.examples.length < MAX_EXAMPLES) f.examples.push(`${pageName} · ${contextOf(node)} · ${node.name} (${node.id})`)
+    if (inherits(node)) f.overrides = (f.overrides ?? 0) + 1
+    if (f.examples.length < MAX_EXAMPLES)
+      f.examples.push(`${pageName} · ${contextOf(node)} · ${node.name} (${node.id}${inherits(node) ? ', override' : ''})`)
   }
   findings.set(key, f)
 }
@@ -131,19 +135,34 @@ const inDisabled = (node) => {
   }
   return false
 }
+// Own layers versus instances: an instance and its sublayers inherit every field from the main
+// component, so a finding there is the main component's and is fixed by it. They are checked only
+// for the fields an instance overrides (`overrides` on the instance itself or any instance above it).
+const inherits = (node) => node.type === 'INSTANCE' || node.id.startsWith('I')
+const overridden = (node) => {
+  const fields = new Set()
+  for (let p = node; p && p.type !== 'PAGE'; p = p.parent)
+    if (p.type === 'INSTANCE') for (const o of p.overrides) if (o.id === node.id) o.overriddenFields.forEach((f) => fields.add(f))
+  return fields
+}
+/** Run a check on these fields: always on own layers, on instance layers only where one of them is overridden. */
+const owns = (node, ...fields) => !inherits(node) || fields.some((f) => overridden(node).has(f))
+const PAINT_FIELDS = { fills: ['fills', 'fillStyleId'], strokes: ['strokes', 'strokeStyleId'] }
+const TEXT_FIELDS = ['fills', 'fillStyleId', 'opacity', 'textStyleId']
+
 const hasChildren = (node) => 'children' in node && node.children.length > 0
 const isVector = (node) => ['VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'LINE', 'POLYGON', 'ELLIPSE'].includes(node.type)
 
 const checkNode = (node) => {
   // A6b — layer opacity.
-  if ('opacity' in node && node.opacity < 0.999) {
+  if ('opacity' in node && node.opacity < 0.999 && owns(node, 'opacity')) {
     const kinds = hasChildren(node) ? [...new Set(node.findAll((n) => n.type === 'TEXT' || isVector(n)).map((n) => (n.type === 'TEXT' ? 'text' : 'icon/graphic')))] : [node.type === 'TEXT' ? 'text' : 'shape']
     report('A6b layer-opacity', 'warning', node, `layer at ${Math.round(node.opacity * 100)}% (${kinds.join(', ') || 'no content'})`, 'take transparency from a token colour; keep only for animation frames or images')
   }
 
   for (const key of ['fills', 'strokes']) {
     const paints = node[key]
-    if (!Array.isArray(paints)) continue
+    if (!Array.isArray(paints) || !owns(node, ...PAINT_FIELDS[key])) continue
     for (const p of paints) {
       if (p.visible === false || p.type !== 'SOLID') continue
       const id = p.boundVariables?.color?.id
@@ -187,7 +206,7 @@ const checkNode = (node) => {
   }
 
   // C12 — shadows.
-  if (Array.isArray(node.effects) && node.effects.some((e) => e.visible !== false && (e.type === 'DROP_SHADOW' || e.type === 'INNER_SHADOW'))) {
+  if (Array.isArray(node.effects) && owns(node, 'effects', 'effectStyleId') && node.effects.some((e) => e.visible !== false && (e.type === 'DROP_SHADOW' || e.type === 'INNER_SHADOW'))) {
     const style = typeof node.effectStyleId === 'string' && node.effectStyleId ? effectStyles.get(node.effectStyleId) : null
     if (!style) report('C12 shadows', 'warning', node, 'shadow without an effect style', 'apply a shadow/* style')
     else if (!/(^|\/)(shadow|focus)(\/|$)/i.test(style)) report('C12 shadows', 'warning', node, `effect style "${style}"`, 'use shadow/* (or a focus style)')
@@ -196,7 +215,7 @@ const checkNode = (node) => {
 
 // Text: pairing and contrast.
 const checkText = (node) => {
-  if (typeof node.fills === 'symbol' || node.characters.trim() === '') return
+  if (typeof node.fills === 'symbol' || node.characters.trim() === '' || !owns(node, ...TEXT_FIELDS)) return
   const f = fillsOf(node).map((p) => paintOf(node, p)).filter(Boolean)[0]
   if (!f) return
   const bg = backgroundOf(node)
@@ -219,12 +238,12 @@ const checkText = (node) => {
 // Non-text: icons, fg graphics and emphasized boundaries at 3:1.
 const checkNonText = (node) => {
   if (inDisabled(node)) return
-  const fg = fillsOf(node).map((p) => paintOf(node, p)).find((f) => f?.token && scopeOf(f.token.name) === 'fg' && !isDisabled(f.token.name))
+  const fg = !owns(node, ...PAINT_FIELDS.fills, 'opacity') ? null : fillsOf(node).map((p) => paintOf(node, p)).find((f) => f?.token && scopeOf(f.token.name) === 'fg' && !isDisabled(f.token.name))
   if (fg && !hasChildren(node) && node.type !== 'TEXT') {
     const bg = backgroundOf(node)
     if (contrast(over(fg, bg.c), bg.c) < 2.99) report('C11 non-text-contrast', 'error', node, `${fg.token.name} on ${bg.token?.name ?? hex(bg.c)}: below 3:1`, 'icons and meaningful graphics need 3:1')
   }
-  const stroke = (Array.isArray(node.strokes) ? node.strokes : []).map((p) => paintOf(node, p)).find((s) => s?.token && /^stroke\/[a-z]+\/emphasized$/.test(s.token.name))
+  const stroke = (Array.isArray(node.strokes) && owns(node, ...PAINT_FIELDS.strokes) ? node.strokes : []).map((p) => paintOf(node, p)).find((s) => s?.token && /^stroke\/[a-z]+\/emphasized$/.test(s.token.name))
   if (stroke) {
     const bg = backgroundOf(node)
     if (contrast(over(stroke, bg.c), bg.c) < 2.99) report('C11 non-text-contrast', 'error', node, `${stroke.token.name} on ${bg.token?.name ?? hex(bg.c)}: below 3:1`, 'control boundaries need 3:1')
@@ -290,6 +309,8 @@ const checkStates = (set) => {
 // ---- walk ------------------------------------------------------------------------------------
 const pages = PAGE_IDS.length ? await Promise.all(PAGE_IDS.map((id) => figma.getNodeByIdAsync(id))) : figma.root.children
 let nodes = 0
+/** Instance layers with no override: they follow their main component and are not checked. */
+let inherited = 0
 for (const page of pages) {
   await page.loadAsync()
   pageName = page.name
@@ -300,6 +321,7 @@ for (const page of pages) {
     const audited = inComponent || ['COMPONENT_SET', 'COMPONENT', 'INSTANCE'].includes(node.type)
     if (audited) {
       nodes++
+      if (inherits(node) && overridden(node).size === 0) inherited++
       checkNode(node)
       if (node.type === 'TEXT') checkText(node)
       else checkNonText(node)
@@ -318,7 +340,7 @@ const rules = Object.keys(TITLES)
       title: TITLES[rule],
       errors: items.filter((f) => f.severity === 'error').reduce((s, f) => s + f.sources.size, 0),
       warnings: items.filter((f) => f.severity === 'warning').reduce((s, f) => s + f.sources.size, 0),
-      items: items.slice(0, 12).map((f) => ({ severity: f.severity, detail: f.detail, count: f.sources.size, suggestion: f.suggestion, examples: f.examples })),
+      items: items.slice(0, 12).map((f) => ({ severity: f.severity, detail: f.detail, count: f.sources.size, overrides: f.overrides ?? 0, suggestion: f.suggestion, examples: f.examples })),
       more: Math.max(0, items.length - 12),
     }
   })
@@ -326,6 +348,7 @@ const rules = Object.keys(TITLES)
 return {
   pages: pages.map((p) => p.name),
   nodes,
+  inherited,
   errors: rules.reduce((s, r) => s + r.errors, 0),
   warnings: rules.reduce((s, r) => s + r.warnings, 0),
   rules,

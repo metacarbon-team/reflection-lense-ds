@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-11-03
 - Extends: [0001](0001-token-architecture.md)
+- Scope extended and typography units changed by [0029](0029-tailwind-v4-dimensions-in-rem.md): the export includes dimension scales, and `font/size` and `font/line-height` are in rem.
+- Typography structure superseded by [0030](0030-type-scale-and-text-roles.md): one type scale and `typography` composites per viewport.
 
 ## Decision
 

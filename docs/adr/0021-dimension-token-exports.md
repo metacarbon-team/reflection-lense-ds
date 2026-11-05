@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-11-03
 - Extends: [0005](0005-dimension-scales.md)
+- Implemented by [0029](0029-tailwind-v4-dimensions-in-rem.md): the implementation status below is historical.
 
 ## Context
 

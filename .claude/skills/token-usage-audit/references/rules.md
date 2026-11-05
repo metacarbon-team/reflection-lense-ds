@@ -2,6 +2,8 @@
 
 Rule ids are stable across runs and reports. A4 is retired: modes on documentation frames belong to the documentation skill.
 
+Every rule runs on own layers, and on instance layers only for the fields an instance overrides (SKILL.md, "Own layers and overrides"). Rendered checks (B7, C10, C11) therefore follow the main component: an instance without an override is not re-checked on the background it is placed on.
+
 Token grammar (ADR 0002): `scope/role/[prominence]/[context]/[state]`.
 
 - **Scopes**: `surface`, `bg`, `form`, `card`, `fg`, `stroke`, `ghost`, `focus`.

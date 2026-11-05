@@ -14,11 +14,20 @@ The token grammar and the decisions behind every rule are in `docs/adr` (0002 na
 
 Supplement the script with the semantic usage guide: inspect confirmed element purposes, including window background versus content, form fields, cards and modal backdrops. Label contextual findings separately from script totals; do not claim the script implements these checks. Preserve designer choices for hierarchy, stroke strength and status sentiment, and resolve colors in each component's local mode.
 
+## Own layers and overrides
+
+Every check, count and fix list — in the script and in any ad-hoc validation — separates two groups and reports only them:
+
+- **Own layers**: layers that are not part of an instance (main components, variants, plain frames).
+- **Overrides**: an instance, or a layer inside one, where the field being checked is overridden (`instance.overrides[].overriddenFields` on that instance or any instance above it).
+
+An instance layer without an override inherits the field from its main component and changes with it, so it is neither counted nor fixed separately. For a style, `style.getStyleConsumersAsync()` lists every consumer in the file; classify them the same way.
+
 ## Workflow
 
 1. **Load `figma-use`** before any `use_figma` call. It is mandatory and covers the API pitfalls.
 2. **Pick the pages.** If the user gave a node or page link, use its page. Otherwise list the pages with a small `use_figma` call (`figma.root.children.map(p => [p.id, p.name])`) and audit the component pages. Large pages take a while, so run one to three pages per call.
-3. **Run the audit.** Read [scripts/figma-audit.js](scripts/figma-audit.js), replace `__PAGE_IDS__` with an array of page ids (`['2024:3305']`, or `[]` for every page), and pass the whole text as `code` to `use_figma`. Change nothing else, so results stay comparable between runs. The script returns `{ pages, nodes, errors, warnings, rules: [{ rule, title, errors, warnings, items: [{ severity, detail, count, suggestion, examples }] }] }`. `count` is the number of distinct source layers: instances of one component layer count once.
+3. **Run the audit.** Read [scripts/figma-audit.js](scripts/figma-audit.js), replace `__PAGE_IDS__` with an array of page ids (`['2024:3305']`, or `[]` for every page), and pass the whole text as `code` to `use_figma`. Change nothing else, so results stay comparable between runs. The script returns `{ pages, nodes, inherited, errors, warnings, rules: [{ rule, title, errors, warnings, items: [{ severity, detail, count, overrides, suggestion, examples }] }] }`. `count` is the number of layers to fix (own layers plus overrides); `overrides` is how many of them are instance overrides, marked `override` in the examples.
 4. **Report.** Lead with one line of totals, then a table per rule (errors before warnings), then the findings grouped by component set, with the example node ids. Say plainly which findings are certain (errors) and which need a designer's judgment (warnings), and name the known exceptions from rules.md where they apply. Do not pad the report with rules that found nothing.
 5. **Propose fixes.** For each fixable finding, give a rebinding map: `layer (component › variant) — from → to`. Take the replacement from the grammar and the rule's fix in rules.md. Never invent a token outside the grammar, and never pick a color by hand. Where the right token is unclear (a warning), ask instead of guessing.
 6. **Apply only after an explicit OK**, one batch per component set. Then re-run step 3 on the same pages and report the before/after totals.

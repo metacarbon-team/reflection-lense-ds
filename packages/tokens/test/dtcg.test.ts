@@ -8,6 +8,11 @@ import {
   toDtcgAllModes,
   DEFAULT_SHADOWS,
   DEFAULT_TYPE_SCALE,
+  DTCG_EXTENSION,
+  dimensionCssVars,
+  dimensionTokens,
+  SPACING_STEPS,
+  toPx,
 } from '../src/index'
 import type { DtcgGroup, DtcgToken } from '../src/dtcg'
 
@@ -29,25 +34,34 @@ describe('DTCG export', () => {
   it('includes every mode without overwriting colors or duplicating shared font families', () => {
     const options = {
       shadows: { ...DEFAULT_SHADOWS, darkAlphaScale: 3 },
-      typeScale: { ...DEFAULT_TYPE_SCALE, base: 20 },
+      typeScale: {
+        ...DEFAULT_TYPE_SCALE,
+        roles: DEFAULT_TYPE_SCALE.roles.map((r) =>
+          r.name === 'body' ? { ...r, step: { desktop: 'lg', mobile: 'md' } } : r,
+        ),
+      },
     }
     const all = flatten(toDtcgAllModes(theme, options))
     for (const mode of ['light', 'dark'] as const) {
       for (const viewport of ['desktop', 'mobile'] as const) {
         const single = flatten(toDtcg(theme[mode], { ...options, viewport }))
         for (const [name, token] of Object.entries(single)) {
-          const target = name.startsWith('font/family/')
+          const shared = /^(font|spacing|size|radius|border)\//.test(name)
+          const target = shared
             ? name
-            : name.startsWith('font/')
-              ? `font/${viewport}/${name.slice(5)}`
+            : name.startsWith('typography/')
+              ? `typography/${viewport}/${name.slice(11)}`
               : `${mode}/${name}`
           expect(all[target], target).toEqual(token)
         }
       }
     }
     expect(Object.keys(all).filter((name) => name.includes('/family/'))).toHaveLength(3)
+    expect(Object.keys(all).filter((name) => /^(light|dark)\/(spacing|size|radius|border)\//.test(name))).toEqual([])
+    expect(all['spacing/4']!.$value).toEqual({ value: 1, unit: 'rem' })
     expect(all['light/surface']).not.toEqual(all['dark/surface'])
-    expect(all['font/desktop/size/lg']).not.toEqual(all['font/mobile/size/lg'])
+    expect(all['typography/desktop/body']).not.toEqual(all['typography/mobile/body'])
+    expect(Object.keys(all).filter((name) => /^(light|dark)\/(font|typography)\//.test(name))).toEqual([])
   })
   it.each(['light', 'dark'] as const)(
     'preserves every %s semantic value and alpha without token/group collisions',
@@ -79,13 +93,96 @@ describe('DTCG export', () => {
     expect(tokens['shadow/2xl/contact']!.$type).toBe('color')
   })
 
-  it('uses the selected viewport and current type settings', () => {
-    const typeScale = { ...DEFAULT_TYPE_SCALE, base: 20, ratio: { desktop: 1.5, mobile: 1.2 } }
-    const desktop = flatten(toDtcg(theme.light, { typeScale, viewport: 'desktop' }))
-    const mobile = flatten(toDtcg(theme.light, { typeScale, viewport: 'mobile' }))
-    expect(desktop['font/size/lg']!.$value).toEqual({ value: 30, unit: 'px' })
-    expect(mobile['font/size/lg']!.$value).toEqual({ value: 24, unit: 'px' })
-    expect(desktop['font/line-height/base']!.$value).toEqual({ value: 28, unit: 'px' })
+  it('exports one type scale and composite styles that reference it, per viewport', () => {
+    const desktop = flatten(toDtcg(theme.light, { viewport: 'desktop' }))
+    const mobile = flatten(toDtcg(theme.light, { viewport: 'mobile' }))
+    // Primitives: Tailwind v4 steps in rem, the same in every viewport (ADR 0030).
+    expect(desktop['font/size/lg']!.$value).toEqual({ value: 1.125, unit: 'rem' })
+    expect(desktop['font/line-height/lg']!.$value).toEqual({ value: 1.75, unit: 'rem' })
+    expect(desktop['font/size/sm']!.$value).toEqual({ value: 0.8125, unit: 'rem' })
+    expect(mobile['font/size/lg']).toEqual(desktop['font/size/lg'])
     expect(desktop['font/family/mono']!.$value).toBe('Geist Mono')
+    // Composites: a step per viewport, the line-height token in $extensions.
+    const heading = desktop['typography/heading/large']!
+    expect(heading.$type).toBe('typography')
+    expect(heading.$value).toMatchObject({
+      fontFamily: '{font.family.serif}',
+      fontSize: '{font.size.3xl}',
+      fontWeight: 400,
+      lineHeight: 1.2,
+    })
+    expect(heading.$extensions![DTCG_EXTENSION]).toEqual({ lineHeight: '{font.line-height.3xl}' })
+    expect(mobile['typography/heading/large']!.$value).toMatchObject({ fontSize: '{font.size.2xl}' })
+    expect(desktop['typography/body/small/medium']!.$value).toMatchObject({
+      fontSize: '{font.size.md}',
+      fontWeight: 500,
+    })
+    expect(desktop['typography/link']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textDecoration: 'underline' })
+    expect(desktop['typography/overline']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textTransform: 'uppercase' })
+    expect(desktop['typography/display/large']!.$value).toMatchObject({
+      letterSpacing: { value: -0.0625, unit: 'rem' },
+    })
+  })
+})
+
+describe('dimension scales', () => {
+  const byName = Object.fromEntries(dimensionTokens().map((token) => [token.name, token]))
+
+  it('matches the Tailwind v4 values of the Figma Number value collection, in px', () => {
+    const figma: Record<string, number> = {
+      'spacing/0': 0,
+      'spacing/px': 1,
+      'spacing/0-5': 2,
+      'spacing/1-5': 6,
+      'spacing/3-5': 14,
+      'spacing/4': 16,
+      'spacing/4-5': 18,
+      'spacing/11': 44,
+      'spacing/96': 384,
+      'size/4': 16,
+      'size/3xs': 256,
+      'size/sm': 384,
+      'size/md': 448,
+      'size/2xl': 672,
+      'size/7xl': 1280,
+      'radius/none': 0,
+      'radius/xs': 2,
+      'radius/md': 6,
+      'radius/2xl': 16,
+      'radius/4xl': 32,
+      'radius/full': 9999,
+      'border/width/0': 0,
+      'border/width/1': 1,
+      'border/width/4': 4,
+    }
+    for (const [name, value] of Object.entries(figma)) expect(toPx(byName[name]!.value), name).toBe(value)
+    expect(SPACING_STEPS).toHaveLength(36)
+    expect(Object.keys(byName).filter((name) => name.startsWith('size/'))).toHaveLength(36 + 13)
+  })
+
+  it('keeps px only where Tailwind does and mirrors every spacing step as a size', () => {
+    for (const token of dimensionTokens()) {
+      const inPx = token.name.endsWith('/px') || token.name === 'radius/full' || token.name.startsWith('border/')
+      expect(token.value.unit, token.name).toBe(inPx ? 'px' : 'rem')
+    }
+    for (const step of SPACING_STEPS) {
+      const key = String(step).replace('.', '-')
+      expect(byName[`size/${key}`]).toEqual({
+        name: `size/${key}`,
+        value: byName[`spacing/${key}`]!.value,
+        alias: `spacing/${key}`,
+      })
+    }
+  })
+
+  it('writes CSS custom properties with size steps referring to spacing', () => {
+    const vars = dimensionCssVars()
+    expect(vars['--spacing-4-5']).toBe('1.125rem')
+    expect(vars['--spacing-px']).toBe('1px')
+    expect(vars['--size-4']).toBe('var(--spacing-4)')
+    expect(vars['--size-md']).toBe('28rem')
+    expect(vars['--radius-md']).toBe('0.375rem')
+    expect(vars['--radius-full']).toBe('9999px')
+    expect(vars['--border-width-2']).toBe('2px')
   })
 })

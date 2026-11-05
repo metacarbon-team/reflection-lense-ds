@@ -4,6 +4,7 @@
 - Date: 2026-10-28
 - Supersedes: —
 - Public export requirements and implementation status: [0021](0021-dimension-token-exports.md).
+- Spacing list, size mirror, border widths and units superseded by [0029](0029-tailwind-v4-dimensions-in-rem.md): Tailwind v4 only, in rem.
 
 ## Context
 

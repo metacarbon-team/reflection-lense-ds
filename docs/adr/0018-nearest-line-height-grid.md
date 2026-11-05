@@ -1,6 +1,6 @@
 # 0018. Round line height to the nearest grid point
 
-- Status: Accepted
+- Status: Superseded by [0030](0030-type-scale-and-text-roles.md)
 - Date: 2026-11-03
 - Clarifies: line-height grid rounding in [0006](0006-typography.md)
 - Default body leading superseded by [0028](0028-calibrated-leading.md): 1.45. The rounding rule below stays.

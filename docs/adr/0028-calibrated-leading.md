@@ -1,6 +1,6 @@
 # 0028. Leading calibrated to the Figma library
 
-- Status: Accepted
+- Status: Superseded by [0030](0030-type-scale-and-text-roles.md)
 - Date: 2026-11-05
 - Supersedes: the default body leading of [0018](0018-nearest-line-height-grid.md) (1.25). The rounding rule of 0018 and the heading leading stay.
 

@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS, DEFAULT_SEEDS } from '../src/index'
 import { BRAND_SHAPES, curveKeys, DEFAULT_CURVE, familyCurve, generateCurvePalette, toneFor } from '../src/curve'
 import { applyPalette, familyOf, generateFixedPalette, generateRolePalette, RAMP_STEPS } from '../src/palette'
 import { generateModeShadows, generateShadows, shadowCss } from '../src/shadow'
-import { DEFAULT_TYPE_SCALE, generateTypeScale } from '../src/typescale'
+import { DEFAULT_TYPE_SCALE, textStyles, validateTypeScale } from '../src/typescale'
 import { BACKDROP, SURFACE, type ModeTheme } from '../src/types'
 import { validateMode, type Issue } from '../src/validate'
 
@@ -268,20 +268,44 @@ describe('generator', () => {
 })
 
 describe('type scale', () => {
-  it('keeps the fixed small sizes and grows from base by the ratio', () => {
-    const { desktop, mobile } = generateTypeScale()
-    expect(desktop.slice(0, 4).map((s) => s.size)).toEqual([12, 13, 14, 16])
-    expect(desktop.find((s) => s.name === 'lg')!.size).toBe(20)
-    expect(mobile.find((s) => s.name === 'xl')!.size).toBeLessThan(desktop.find((s) => s.name === 'xl')!.size)
-    for (const s of [...desktop, ...mobile]) expect(s.lineHeight % 4).toBe(0)
-    // Default body leading matches the Figma line heights of small UI text, in both modes (ADR 0028).
-    for (const scale of [desktop, mobile]) expect(scale.slice(0, 4).map((s) => s.lineHeight)).toEqual([16, 20, 20, 24])
-    expect(desktop.find((s) => s.name === '2xl')!.lineHeight).toBe(40)
-    expect(mobile.find((s) => s.name === 'xl')!.lineHeight).toBe(28)
-    // Custom leading still rounds down when closer (21 → 20), and up on a tie (18 → 20).
-    const custom = generateTypeScale({ ...DEFAULT_TYPE_SCALE, leading: { body: 1.5, heading: 1.2 } })
-    expect(custom.desktop.find((s) => s.name === '14')!.lineHeight).toBe(20)
-    expect(custom.desktop.find((s) => s.name === '12')!.lineHeight).toBe(20)
+  it('uses Tailwind v4 steps in rem and maps every role to a step per viewport', () => {
+    const px = (rem: number) => rem * 16
+    expect(DEFAULT_TYPE_SCALE.steps.map((s) => [s.name, px(s.size), px(s.lineHeight)])).toEqual([
+      ['2xs', 10, 16],
+      ['xs', 12, 16],
+      ['sm', 13, 20],
+      ['md', 14, 20],
+      ['base', 16, 24],
+      ['lg', 18, 28],
+      ['xl', 20, 28],
+      ['2xl', 24, 32],
+      ['3xl', 30, 36],
+      ['4xl', 36, 40],
+      ['5xl', 48, 48],
+      ['6xl', 60, 60],
+    ])
+    expect(validateTypeScale(DEFAULT_TYPE_SCALE)).toEqual([])
+    const desktop = Object.fromEntries(textStyles(DEFAULT_TYPE_SCALE, 'desktop').map((s) => [s.name, s]))
+    const mobile = Object.fromEntries(textStyles(DEFAULT_TYPE_SCALE, 'mobile').map((s) => [s.name, s]))
+    expect(desktop['display/large']!.step.name).toBe('5xl')
+    expect(mobile['display/large']!.step.name).toBe('4xl')
+    expect(mobile['heading/small']!.step.name).toBe('lg')
+    expect(desktop['body/large/semibold']!.weight).toBe(600)
+    expect(Object.keys(desktop)).not.toContain('button')
+    expect(Object.keys(desktop)).toHaveLength(29)
+  })
+
+  it('rejects scales out of order, off the grid or below 10px', () => {
+    const steps = DEFAULT_TYPE_SCALE.steps.map((s) => ({ ...s }))
+    steps[2]!.size = 0.875 // sm = md
+    steps[0]!.size = 0.5 // 8px
+    steps[4]!.lineHeight = 1.4
+    const issues = validateTypeScale({ ...DEFAULT_TYPE_SCALE, steps })
+    expect(issues.some((i) => i.includes('must be larger than'))).toBe(true)
+    expect(issues.some((i) => i.includes('minimum'))).toBe(true)
+    expect(issues.some((i) => i.includes('4px'))).toBe(true)
+    const roles = [{ ...DEFAULT_TYPE_SCALE.roles[0]!, step: { desktop: '9xl', mobile: '4xl' } }]
+    expect(validateTypeScale({ ...DEFAULT_TYPE_SCALE, roles })).toEqual(['display/large: unknown desktop step 9xl.'])
   })
 })
 

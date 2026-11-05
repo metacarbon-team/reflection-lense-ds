@@ -57,7 +57,10 @@ export function TokenExport(props: { theme: Theme; shadows: ShadowParams; typeSc
   }
   return (
     <div className="lab-token-export">
-      <p className="lab-muted">DTCG 2025.10 · Colors, shadows and type scale from your current settings.</p>
+      <p className="lab-muted">
+        DTCG 2025.10 · Colors, shadows and type scale from your current settings, plus spacing, size, radius and border
+        width. Dimensions in rem (1rem = 16px).
+      </p>
       <label className="lab-export-choice">
         Export scope
         <select
@@ -73,7 +76,8 @@ export function TokenExport(props: { theme: Theme; shadows: ShadowParams; typeSc
       </label>
       {allModes ? (
         <p className="lab-muted">
-          Includes Light + Dark colors and shadows, Desktop + Mobile type scales, and shared font families.
+          Includes Light + Dark colors and shadows, Desktop + Mobile text styles, and the shared type scale, font
+          families and dimensions.
         </p>
       ) : (
         <>
@@ -91,7 +95,7 @@ export function TokenExport(props: { theme: Theme; shadows: ShadowParams; typeSc
             </select>
           </label>
           <label className="lab-export-choice">
-            Type scale
+            Text styles
             <select
               value={viewport}
               onChange={(e) => {
@@ -140,8 +144,7 @@ export function TokenExport(props: { theme: Theme; shadows: ShadowParams; typeSc
       <details>
         <summary>Preview Figma prompt</summary>
         <textarea className="lab-export" aria-label="Figma handoff prompt" readOnly rows={12} value={prompt} />
-      </details>
-      <p className="lab-muted">Spacing, size and radius exports are not available yet.</p>
+      </details>{' '}
     </div>
   )
 }

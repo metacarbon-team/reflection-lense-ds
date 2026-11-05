@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-11-03
 - Extends: [0022](0022-dtcg-export.md)
+- `font/desktop` and `font/mobile` superseded by [0030](0030-type-scale-and-text-roles.md): shared `font/*` and `typography/desktop`, `typography/mobile`.
 
 ## Decision
 

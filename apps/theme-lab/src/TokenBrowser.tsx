@@ -25,7 +25,14 @@ const CATEGORIES: Record<string, string> = {
   'font/size': 'Font size',
   'font/line-height': 'Line height',
   'font/family': 'Font family',
+  typography: 'Text styles',
+  spacing: 'Spacing',
+  size: 'Size',
+  radius: 'Radius',
+  border: 'Border width',
 }
+/** Groups that are the same in every mode and viewport (ADR 0029, ADR 0030). */
+const SHARED = /^(font|spacing|size|radius|border)\//
 
 function flatten(group: DtcgGroup, prefix = ''): Record<string, DtcgToken> {
   return Object.fromEntries(
@@ -58,6 +65,10 @@ function displayValue(token: DtcgToken): string {
     return layers
       .map((l) => `${l.offsetX.value}px ${l.offsetY.value}px ${l.blur.value}px ${l.spread.value}px ${hex(l.color)}`)
       .join(', ')
+  }
+  if (token.$type === 'typography') {
+    const value = token.$value as { fontSize: string; fontWeight: number; fontFamily: string }
+    return `${value.fontSize} · ${value.fontWeight} · ${value.fontFamily}`
   }
   return String(token.$value)
 }
@@ -92,8 +103,8 @@ export function TokenBrowser(props: {
     const dark = flatten(toDtcg(props.theme.dark, options))
     const mobile = flatten(toDtcg(props.theme.light, { ...options, viewport: 'mobile' }))
     return Object.entries(light).map(([name, token]): Row => {
-      const typography = name.startsWith('font/')
-      const category = typography
+      const typography = name.startsWith('typography/')
+      const category = name.startsWith('font/')
         ? name.split('/').slice(0, 2).join('/')
         : name.startsWith('shadow/') && token.$type === 'color'
           ? 'shadow-color'
@@ -102,7 +113,7 @@ export function TokenBrowser(props: {
         name,
         category,
         typography,
-        shared: category === 'font/family',
+        shared: SHARED.test(name),
         values: [token, (typography ? mobile : dark)[name]!],
       }
     })
@@ -120,7 +131,8 @@ export function TokenBrowser(props: {
           <h2>Tokens</h2>
           <p>All {rows.length} implemented tokens, grouped by category. Values update with your settings.</p>
           <p className="lab-muted">
-            Compare Light / Dark colors and shadows, Desktop / Mobile type scales, and shared font families.
+            Compare Light / Dark colors and shadows and Desktop / Mobile text styles; the type scale, font families and
+            dimensions are shared.
           </p>
         </div>
         <details className="lab-panel lab-token-export-panel">
