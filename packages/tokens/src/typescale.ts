@@ -23,14 +23,16 @@ export interface TextRole {
   weights?: Record<string, number>
   /** The step this role uses in each viewport. */
   step: Record<Viewport, string>
-  /** Letter spacing in px per viewport; 0 when omitted. */
-  tracking?: Record<Viewport, number>
+  /** Tracking step (`font/tracking/<name>`, ADR 0031); `normal` when omitted. */
+  tracking?: string
   decoration?: 'underline'
   textCase?: 'uppercase'
 }
 
 export interface TypeScaleParams {
   steps: TypeStep[]
+  /** Tracking steps in em (Tailwind's `--tracking-*`). */
+  tracking: Record<string, number>
   roles: TextRole[]
 }
 
@@ -41,8 +43,8 @@ export interface TextStyle {
   family: FontFamily
   weight: number
   step: TypeStep
-  /** Letter spacing in rem. */
-  tracking: number
+  /** Tracking step and its value in em. */
+  tracking: { name: string; em: number }
   decoration?: 'underline'
   textCase?: 'uppercase'
 }
@@ -72,35 +74,37 @@ export const DEFAULT_TYPE_SCALE: TypeScaleParams = {
     step('5xl', 48, 48),
     step('6xl', 60, 60),
   ],
-  // Weights and tracking as in the Figma library (ADR 0030).
+  // Tailwind v4 `--tracking-*` (ADR 0031).
+  tracking: { tighter: -0.05, tight: -0.025, normal: 0, wide: 0.025, wider: 0.05, widest: 0.1 },
+  // Weights as in the Figma library (ADR 0030), tracking steps from ADR 0031.
   roles: [
     {
       name: 'display/large',
       family: 'serif',
       weight: 300,
       step: { desktop: '5xl', mobile: '4xl' },
-      tracking: { desktop: -1, mobile: -0.8 },
+      tracking: 'tight',
     },
     {
       name: 'display',
       family: 'serif',
       weight: 300,
       step: { desktop: '4xl', mobile: '3xl' },
-      tracking: { desktop: -0.4, mobile: -0.3 },
+      tracking: 'tight',
     },
     {
       name: 'heading/large',
       family: 'serif',
       weight: 400,
       step: { desktop: '3xl', mobile: '2xl' },
-      tracking: { desktop: -0.3, mobile: -0.2 },
+      tracking: 'tight',
     },
     {
       name: 'heading',
       family: 'serif',
       weight: 400,
       step: { desktop: '2xl', mobile: 'xl' },
-      tracking: { desktop: -0.3, mobile: -0.2 },
+      tracking: 'tight',
     },
     { name: 'heading/small', family: 'serif', weight: 400, step: both('lg') },
     {
@@ -126,14 +130,14 @@ export const DEFAULT_TYPE_SCALE: TypeScaleParams = {
       family: 'sans',
       weight: 400,
       step: both('2xs'),
-      tracking: { desktop: 0.2, mobile: 0.2 },
+      tracking: 'wide',
     },
     {
       name: 'overline',
       family: 'sans',
       weight: 600,
       step: both('xs'),
-      tracking: { desktop: 0.7, mobile: 0.7 },
+      tracking: 'wider',
       textCase: 'uppercase',
     },
   ],
@@ -149,7 +153,7 @@ export function textStyles(p: TypeScaleParams = DEFAULT_TYPE_SCALE, viewport: Vi
       role: role.name,
       family: role.family,
       step: s,
-      tracking: rem(role.tracking?.[viewport] ?? 0),
+      tracking: { name: role.tracking ?? 'normal', em: p.tracking[role.tracking ?? 'normal'] ?? 0 },
       decoration: role.decoration,
       textCase: role.textCase,
     }
@@ -182,8 +186,11 @@ export function validateTypeScale(p: TypeScaleParams): string[] {
     if (prev && s.size <= prev.size)
       issues.push(`${s.name}: ${s.size}rem must be larger than ${prev.name} (${prev.size}rem).`)
   })
-  for (const role of p.roles)
+  for (const role of p.roles) {
     for (const viewport of VIEWPORTS)
       if (!names.has(role.step[viewport])) issues.push(`${role.name}: unknown ${viewport} step ${role.step[viewport]}.`)
+    if (!((role.tracking ?? 'normal') in p.tracking))
+      issues.push(`${role.name}: unknown tracking step ${role.tracking}.`)
+  }
   return issues
 }

@@ -82,6 +82,8 @@ export function TypeRolesPreview({
       ...value,
       roles: value.roles.map((r, j) => (j === i ? { ...r, step: { ...r.step, [viewport]: step } } : r)),
     })
+  const setTracking = (i: number, tracking: string) =>
+    onChange({ ...value, roles: value.roles.map((r, j) => (j === i ? { ...r, tracking } : r)) })
   return (
     <section className="lab-panel">
       <h2>Text roles</h2>
@@ -108,6 +110,17 @@ export function TypeRolesPreview({
                   <div className="lab-muted">
                     {role.family} · {[role.weight, ...Object.values(role.weights ?? {})].join(', ')}
                   </div>
+                  <select
+                    aria-label={`${role.name} tracking`}
+                    value={role.tracking ?? 'normal'}
+                    onChange={(e) => setTracking(i, e.target.value)}
+                  >
+                    {Object.entries(value.tracking).map(([name, em]) => (
+                      <option key={name} value={name}>
+                        tracking {name} ({em}em)
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 {VIEWPORTS.map((viewport) => {
                   const s = styles?.[viewport].find((st) => st.name === role.name)
@@ -139,7 +152,7 @@ export function TypeRolesPreview({
                       fontSize: `${style.step.size}rem`,
                       lineHeight: `${style.step.lineHeight}rem`,
                       fontWeight: style.weight,
-                      letterSpacing: `${style.tracking}rem`,
+                      letterSpacing: `${style.tracking.em}em`,
                       fontFamily: FAMILY_FALLBACK[style.family],
                       textDecoration: style.decoration,
                       textTransform: style.textCase,

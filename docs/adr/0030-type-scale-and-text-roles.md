@@ -4,6 +4,7 @@
 - Date: 2026-11-05
 - Supersedes: in [0006](0006-typography.md), the size primitives named by px, the modular scale with a ratio per mode, the 12px minimum and the removal of link styles; the leading rule of [0028](0028-calibrated-leading.md) and the line-height rounding of [0018](0018-nearest-line-height-grid.md); the per-viewport type primitives in the DTCG export of [0022](0022-dtcg-export.md) and [0023](0023-all-modes-export.md)
 - Extends: [0029](0029-tailwind-v4-dimensions-in-rem.md)
+- Tracking superseded by [0031](0031-tailwind-tracking.md): Tailwind tracking steps in em.
 
 ## Context
 

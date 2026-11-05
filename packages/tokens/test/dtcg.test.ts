@@ -93,6 +93,19 @@ describe('DTCG export', () => {
     expect(tokens['shadow/2xl/contact']!.$type).toBe('color')
   })
 
+  it.each(['light', 'dark'] as const)('exports the %s focus ring as a 1px ring over a 4px halo', (mode) => {
+    const tokens = flatten(toDtcg(theme[mode]))
+    const ring = tokens['focus/ring']!
+    expect(ring.$type).toBe('shadow')
+    const layers = ring.$value as { color: unknown; spread: { value: number }; blur: { value: number } }[]
+    expect(layers.map((l) => [l.spread.value, l.blur.value])).toEqual([
+      [1, 0],
+      [4, 0],
+    ])
+    expect(layers[0]!.color).toEqual(tokens['focus/accent']!.$value)
+    expect(layers[1]!.color).toEqual(tokens['focus/accent/subtle']!.$value)
+  })
+
   it('exports one type scale and composite styles that reference it, per viewport', () => {
     const desktop = flatten(toDtcg(theme.light, { viewport: 'desktop' }))
     const mobile = flatten(toDtcg(theme.light, { viewport: 'mobile' }))
@@ -111,7 +124,13 @@ describe('DTCG export', () => {
       fontWeight: 400,
       lineHeight: 1.2,
     })
-    expect(heading.$extensions![DTCG_EXTENSION]).toEqual({ lineHeight: '{font.line-height.3xl}' })
+    expect(heading.$extensions![DTCG_EXTENSION]).toEqual({
+      lineHeight: '{font.line-height.3xl}',
+      letterSpacing: '{font.tracking.tight}',
+    })
+    // Tracking primitives are em numbers; the composite resolves them against its size (ADR 0031).
+    expect(desktop['font/tracking/tight']).toEqual({ $type: 'number', $value: -0.025 })
+    expect(heading.$value).toMatchObject({ letterSpacing: { value: -0.046875, unit: 'rem' } })
     expect(mobile['typography/heading/large']!.$value).toMatchObject({ fontSize: '{font.size.2xl}' })
     expect(desktop['typography/body/small/medium']!.$value).toMatchObject({
       fontSize: '{font.size.md}',
@@ -120,7 +139,7 @@ describe('DTCG export', () => {
     expect(desktop['typography/link']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textDecoration: 'underline' })
     expect(desktop['typography/overline']!.$extensions![DTCG_EXTENSION]).toMatchObject({ textTransform: 'uppercase' })
     expect(desktop['typography/display/large']!.$value).toMatchObject({
-      letterSpacing: { value: -0.0625, unit: 'rem' },
+      letterSpacing: { value: -0.075, unit: 'rem' },
     })
   })
 })

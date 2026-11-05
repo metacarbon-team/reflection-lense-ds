@@ -291,6 +291,8 @@ describe('type scale', () => {
     expect(mobile['display/large']!.step.name).toBe('4xl')
     expect(mobile['heading/small']!.step.name).toBe('lg')
     expect(desktop['body/large/semibold']!.weight).toBe(600)
+    expect(desktop['overline']!.tracking).toEqual({ name: 'wider', em: 0.05 })
+    expect(desktop['body']!.tracking).toEqual({ name: 'normal', em: 0 })
     expect(Object.keys(desktop)).not.toContain('button')
     expect(Object.keys(desktop)).toHaveLength(29)
   })

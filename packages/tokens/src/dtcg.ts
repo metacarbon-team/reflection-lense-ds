@@ -2,10 +2,10 @@ import { hexToRgba } from './color'
 import { dimensionTokens, px, rem } from './dimensions'
 import { generateModeShadows, generateShadows, type ShadowParams } from './shadow'
 import { DEFAULT_TYPE_SCALE, textStyles, type TypeScaleParams, type Viewport } from './typescale'
-import type { ModeTheme, Theme } from './types'
+import { FOCUS, FOCUS_HALO, type ModeTheme, type Theme } from './types'
 
 export interface DtcgToken {
-  $type: 'color' | 'dimension' | 'shadow' | 'fontFamily' | 'typography'
+  $type: 'color' | 'dimension' | 'number' | 'shadow' | 'fontFamily' | 'typography'
   $value: unknown
   $extensions?: Record<string, unknown>
 }
@@ -68,16 +68,29 @@ export function toDtcg(
     })
     put(`shadow/${level.name}`, 'shadow', layers)
   }
+  // The focus ring of ADR 0025: a 1px ring over a 4px translucent halo, ring first (on top).
+  const ring = (token: string, spread: number) => ({
+    color: color(theme.tokens[token]!.value),
+    offsetX: px(0),
+    offsetY: px(0),
+    blur: px(0),
+    spread: px(spread),
+  })
+  put('focus/ring', 'shadow', [ring(FOCUS, 1), ring(FOCUS_HALO, 4)])
   const typeScale = options.typeScale ?? DEFAULT_TYPE_SCALE
   for (const step of typeScale.steps) {
     put(`font/size/${step.name}`, 'dimension', rem(step.size))
     put(`font/line-height/${step.name}`, 'dimension', rem(step.lineHeight))
   }
+  for (const [name, em] of Object.entries(typeScale.tracking)) put(`font/tracking/${name}`, 'number', em)
   for (const [name, family] of Object.entries(FAMILIES)) put(`font/family/${name}`, 'fontFamily', family)
   // Composite styles reference the primitives. DTCG's lineHeight is a ratio, so the step's line-height
   // token travels in $extensions, with underline and uppercase.
   for (const style of textStyles(typeScale, options.viewport ?? 'desktop')) {
-    const extension: Record<string, string> = { lineHeight: `{font.line-height.${style.step.name}}` }
+    const extension: Record<string, string> = {
+      lineHeight: `{font.line-height.${style.step.name}}`,
+      letterSpacing: `{font.tracking.${style.tracking.name}}`,
+    }
     if (style.decoration) extension.textDecoration = style.decoration
     if (style.textCase) extension.textTransform = style.textCase
     insert(result, `typography/${style.name}`.split('/'), {
@@ -86,7 +99,8 @@ export function toDtcg(
         fontFamily: `{font.family.${style.family}}`,
         fontSize: `{font.size.${style.step.name}}`,
         fontWeight: style.weight,
-        letterSpacing: rem(style.tracking),
+        // DTCG has no em: tracking resolved against this style's size (ADR 0031).
+        letterSpacing: rem(Math.round(style.tracking.em * style.step.size * 1e6) / 1e6),
         lineHeight: Math.round((style.step.lineHeight / style.step.size) * 10000) / 10000,
       },
       $extensions: { [DTCG_EXTENSION]: extension },
