@@ -2,6 +2,7 @@
 export { cn, type ClassValue } from './lib/cn'
 export type { VariantProps } from 'class-variance-authority'
 
+export * from './components/avatar'
 export * from './components/badge'
 export * from './components/button'
 export * from './components/card'

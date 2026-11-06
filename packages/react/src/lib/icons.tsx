@@ -49,3 +49,10 @@ export const DashIcon = (props: IconProps) => (
     <path d="M4 8h8" />
   </Icon>
 )
+
+export const UserIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="8" cy="5.5" r="2.5" />
+    <path d="M3 13.5c.6-2.4 2.6-3.5 5-3.5s4.4 1.1 5 3.5" />
+  </Icon>
+)
