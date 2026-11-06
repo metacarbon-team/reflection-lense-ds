@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { useArgs } from 'storybook/preview-api'
+import { Guideline, Section } from '../../docs/guidelines'
 import { Field } from '../field/field'
-import { Checkbox, type CheckboxProps } from './checkbox'
+import { Checkbox } from './checkbox'
 
 const meta = {
   title: 'Components/Checkbox',
@@ -16,10 +18,11 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+/** Click the box or use the controls: both change `checked`. */
 export const Playground: Story = {
-  render: function Render({ checked: initial, ...args }) {
-    const [checked, setChecked] = useState<CheckboxProps['checked']>(initial)
-    return <Checkbox {...args} checked={checked} onCheckedChange={setChecked} />
+  render: function Render(args) {
+    const [, updateArgs] = useArgs()
+    return <Checkbox {...args} onCheckedChange={(checked) => updateArgs({ checked })} />
   },
 }
 
@@ -114,4 +117,81 @@ export const IndeterminateGroup: Story = {
       </div>
     )
   },
+}
+
+const notifications = [
+  { id: 'product', label: 'Product updates', hint: 'New features, once a month' },
+  { id: 'digest', label: 'Weekly digest', hint: 'Summary of activity in your workspace' },
+  { id: 'security', label: 'Security alerts', hint: 'New sign-ins and password changes' },
+  { id: 'billing', label: 'Billing reminders', hint: 'Upcoming payments and failed charges' },
+]
+
+/** The parent over four children, two of them selected. `mirror` makes the parent follow its children. */
+function NotificationList({ mirror }: { mirror: boolean }) {
+  const prefix = useId()
+  const [selected, setSelected] = useState(['product', 'digest'])
+  const parent = mirror
+    ? selected.length === notifications.length
+      ? true
+      : selected.length === 0
+        ? false
+        : 'indeterminate'
+    : true
+  return (
+    <div className="flex w-full max-w-104 flex-col rounded-xl border border-neutral-subtle bg-card-neutral-emphasized p-4 shadow-sm">
+      <div className="flex items-center gap-2 px-4 py-3">
+        <Checkbox
+          id={`${prefix}-parent`}
+          checked={parent}
+          onCheckedChange={(on) => setSelected(on === true ? notifications.map((n) => n.id) : [])}
+        />
+        <label htmlFor={`${prefix}-parent`} className="text-label-large flex-1 text-neutral">
+          Email notifications
+        </label>
+        <span className="text-body-small text-neutral-subtle">{selected.length} of 4 selected</span>
+      </div>
+      <div className="flex flex-col pl-8">
+        {notifications.map((n) => (
+          <div key={n.id} className="flex flex-col px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={`${prefix}-${n.id}`}
+                checked={selected.includes(n.id)}
+                onCheckedChange={(on) =>
+                  setSelected((s) => (on === true ? [...s, n.id] : s.filter((id) => id !== n.id)))
+                }
+              />
+              <label htmlFor={`${prefix}-${n.id}`} className="text-label-large text-neutral">
+                {n.label}
+              </label>
+            </div>
+            <p className="pl-7 text-body-small text-neutral-subtle">{n.hint}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Usage rules for the Checkbox, from the Figma page "07. Checkbox". */
+export const Documentation: Story = {
+  parameters: { layout: 'padded', controls: { disable: true } },
+  render: () => (
+    <div className="flex max-w-240 flex-col gap-12 text-neutral">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-heading-large">Checkbox</h1>
+        <p className="text-body text-neutral-subtle">
+          A single boolean control with a value (unchecked, checked, indeterminate) and a state.
+        </p>
+      </header>
+      <Section title="Guidelines">
+        <Guideline
+          rule="Use indeterminate only for a partly selected group."
+          comment="Indeterminate marks a parent whose children are only partly selected. If all children are selected the parent is checked; if none, unchecked."
+          doExample={<NotificationList mirror />}
+          dontExample={<NotificationList mirror={false} />}
+        />
+      </Section>
+    </div>
+  ),
 }
