@@ -52,7 +52,7 @@ export const Variants: Story = {
   ),
 }
 
-/** Wrap the list in a `RadioGroup` with `asChild`: arrow keys move the selection between the rows. */
+/** Wrap the list in a `RadioGroup` with `asChild`. A click anywhere on a row selects its radio. */
 export const DeliveryMethod: Story = {
   render: (args) => (
     <Frame>
@@ -63,21 +63,24 @@ export const DeliveryMethod: Story = {
             label="Standard delivery"
             description="3 to 5 days."
             metaLabel="Free"
-            leadingSlot={<Radio value="standard" aria-label="Standard delivery" />}
+            htmlFor="delivery-standard"
+            leadingSlot={<Radio id="delivery-standard" value="standard" />}
           />
           <Item
             size="lg"
             label="Express delivery"
             description="Next day."
             metaLabel="$9"
-            leadingSlot={<Radio value="express" aria-label="Express delivery" />}
+            htmlFor="delivery-express"
+            leadingSlot={<Radio id="delivery-express" value="express" />}
           />
           <Item
             size="lg"
             label="Same-day delivery"
             description="Within 4 hours."
             metaLabel="$19"
-            leadingSlot={<Radio value="same-day" aria-label="Same-day delivery" />}
+            htmlFor="delivery-same-day"
+            leadingSlot={<Radio id="delivery-same-day" value="same-day" />}
           />
         </ItemList>
       </RadioGroup>
@@ -85,7 +88,7 @@ export const DeliveryMethod: Story = {
   ),
 }
 
-/** Switches in the trailing slot, with a divider between the rows. */
+/** Switches in the trailing slot, with a divider between the rows. A click anywhere on a row flips its switch. */
 export const Settings: Story = {
   render: (args) => (
     <Frame>
@@ -94,21 +97,24 @@ export const Settings: Story = {
           size="lg"
           label="Email notifications"
           description="Product news and receipts."
-          trailingSlot={<Switch aria-label="Email notifications" defaultChecked />}
+          htmlFor="settings-email"
+          trailingSlot={<Switch id="settings-email" defaultChecked />}
           divider
         />
         <Item
           size="lg"
           label="Push notifications"
           description="Replies and mentions."
-          trailingSlot={<Switch aria-label="Push notifications" />}
+          htmlFor="settings-push"
+          trailingSlot={<Switch id="settings-push" />}
           divider
         />
         <Item
           size="lg"
           label="Weekly digest"
           description="A summary every Monday."
-          trailingSlot={<Switch aria-label="Weekly digest" />}
+          htmlFor="settings-digest"
+          trailingSlot={<Switch id="settings-digest" />}
         />
       </ItemList>
     </Frame>

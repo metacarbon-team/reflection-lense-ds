@@ -63,6 +63,11 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   state?: 'default' | 'hover' | 'pressed' | 'active' | 'focus' | 'disabled'
   /** Blocks the row and dims its text. Same as `state="disabled"`. */
   disabled?: boolean
+  /**
+   * The `id` of the checkbox, radio or switch in a slot. The row becomes a `label` for it, so a click
+   * anywhere on the row toggles the control and the row text names it.
+   */
+  htmlFor?: string
 }
 
 /** Keeps the description and the error under the title: an empty space the width of each slot on both sides. */
@@ -79,7 +84,7 @@ function Indented({ leading, trailing, children }: { leading: boolean; trailing:
 /**
  * Item: one list row. A control or icon on the left, a title with a description, a meta label and
  * actions on the right. Everything but the title is optional. The row is a plain `div`: give it a
- * `role` and handlers when it is interactive.
+ * `role` and handlers when it is interactive, or set `htmlFor` to tie it to a control in a slot.
  */
 export function Item({
   label,
@@ -92,6 +97,7 @@ export function Item({
   size = 'md',
   state = 'default',
   disabled = false,
+  htmlFor,
   className,
   ...props
 }: ItemProps) {
@@ -99,12 +105,19 @@ export function Item({
   const roles = textRoles[size]
   const hasLeading = hasContent(leadingSlot)
   const hasTrailing = hasContent(trailingSlot)
+  // With `htmlFor` the row is a <label>. The cast keeps the div props; `htmlFor` is passed on its own.
+  const Root = (htmlFor === undefined ? 'div' : 'label') as 'div'
   return (
-    <div
+    <Root
       data-slot="item"
       data-disabled={isDisabled || undefined}
       aria-disabled={isDisabled || undefined}
-      className={cn(itemVariants({ size, state: isDisabled ? 'disabled' : state }), className)}
+      className={cn(
+        itemVariants({ size, state: isDisabled ? 'disabled' : state }),
+        htmlFor !== undefined && 'cursor-pointer',
+        className,
+      )}
+      {...(htmlFor === undefined ? undefined : { htmlFor })}
       {...props}
     >
       <div className="flex items-center gap-2">
@@ -162,6 +175,6 @@ export function Item({
           className="absolute inset-x-0 bottom-0 border-b border-neutral-subtle group-data-disabled/item:border-disabled"
         />
       )}
-    </div>
+    </Root>
   )
 }

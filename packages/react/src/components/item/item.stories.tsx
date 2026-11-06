@@ -127,7 +127,7 @@ export const TitleOnly: Story = {
   ),
 }
 
-/** A checkbox or radio in the leading slot, a switch in the trailing slot. Name each control with `aria-label`. */
+/** A checkbox or radio in the leading slot, a switch in the trailing slot. Give the control an `id` and the row the same `htmlFor`: a click anywhere on the row toggles it. */
 export const WithControls: Story = {
   render: () => (
     <div className="flex w-80 flex-col gap-4">
@@ -136,13 +136,15 @@ export const WithControls: Story = {
           size="lg"
           label="Email me updates"
           description="Product news once a month."
-          leadingSlot={<Checkbox aria-label="Email me updates" />}
+          htmlFor="item-email-updates"
+          leadingSlot={<Checkbox id="item-email-updates" />}
         />
         <Item
           size="lg"
           label="Share usage data"
           description="Helps us find what to fix."
-          leadingSlot={<Checkbox aria-label="Share usage data" defaultChecked />}
+          htmlFor="item-usage-data"
+          leadingSlot={<Checkbox id="item-usage-data" defaultChecked />}
         />
       </div>
       <RadioGroup defaultValue="standard" className="gap-0">
@@ -151,21 +153,24 @@ export const WithControls: Story = {
           label="Standard delivery"
           description="3 to 5 days."
           metaLabel="Free"
-          leadingSlot={<Radio value="standard" aria-label="Standard delivery" />}
+          htmlFor="item-standard"
+          leadingSlot={<Radio id="item-standard" value="standard" />}
         />
         <Item
           size="lg"
           label="Express delivery"
           description="Next day."
           metaLabel="$9"
-          leadingSlot={<Radio value="express" aria-label="Express delivery" />}
+          htmlFor="item-express"
+          leadingSlot={<Radio id="item-express" value="express" />}
         />
       </RadioGroup>
       <Item
         size="lg"
         label="Dark mode"
         description="Follow the system setting."
-        trailingSlot={<Switch aria-label="Dark mode" defaultChecked />}
+        htmlFor="item-dark-mode"
+        trailingSlot={<Switch id="item-dark-mode" defaultChecked />}
       />
     </div>
   ),
