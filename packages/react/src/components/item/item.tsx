@@ -47,7 +47,7 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   label: ReactNode
   /** Secondary text under the title. Wraps to two lines, then is cut with an ellipsis. */
   description?: ReactNode
-  /** The danger message under the description. Wraps to two lines, then is cut. */
+  /** The danger message under the description. One line, cut with an ellipsis, so keep it short. */
   errorLabel?: ReactNode
   /** Short meta text on the right. It never shrinks, so keep it short: the title takes what is left. */
   metaLabel?: ReactNode
@@ -150,7 +150,7 @@ export function Item({
         <Indented leading={hasLeading} trailing={hasTrailing}>
           <p
             data-slot="item-error"
-            className={cn('line-clamp-2 text-danger group-data-disabled/item:text-disabled', roles.meta)}
+            className={cn('truncate text-danger group-data-disabled/item:text-disabled', roles.meta)}
           >
             {errorLabel}
           </p>

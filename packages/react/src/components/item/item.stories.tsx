@@ -187,7 +187,7 @@ export const WithError: Story = {
   ),
 }
 
-/** Long text is cut: the title to one line, the description and the error to two. */
+/** Long text is cut: the title and the error to one line, the description to two. */
 export const LongText: Story = {
   render: () => (
     <div className="w-80">
@@ -195,7 +195,7 @@ export const LongText: Story = {
         size="lg"
         label="A title that is much too long to fit in one line of the row"
         description="A description that runs past two lines is cut with an ellipsis, so the row never grows beyond its limit and the list keeps its rhythm."
-        errorLabel="An error message that runs past two lines is cut the same way, so a long validation text cannot push the next row far down the list."
+        errorLabel="An error message that is too long for one line is cut with an ellipsis."
         metaLabel="Meta"
         leadingSlot={<FileIcon />}
         divider
