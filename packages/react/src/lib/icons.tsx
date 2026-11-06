@@ -43,3 +43,9 @@ export const CloseIcon = (props: IconProps) => (
     <path d="M4 4l8 8M12 4l-8 8" />
   </Icon>
 )
+
+export const DashIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 8h8" />
+  </Icon>
+)
