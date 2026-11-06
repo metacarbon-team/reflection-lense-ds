@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
@@ -53,13 +53,16 @@ const checkboxVariants = cva(
   },
 )
 
-export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & VariantProps<typeof checkboxVariants>
+export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
+  /** `false`, `true` or `'indeterminate'`, for a parent whose children are only partly selected. */
+  checked?: boolean | 'indeterminate'
+  /** Freezes `hover` or `focus` for docs and tests. Error and disabled come from `aria-invalid` and `disabled`. */
+  state?: 'default' | 'hover' | 'focus' | 'error' | 'disabled'
+}
 
 /**
- * Checkbox: a 20×20 box with three values (`checked` false, true or `'indeterminate'`). Indeterminate
- * marks a parent whose children are only partly selected. Error comes from `aria-invalid` or a Field
- * with an `error`, disabled from `disabled`; the `state` prop only freezes `hover` and `focus` for docs.
- * Name it with a `<label htmlFor>` or `aria-label`.
+ * Checkbox: a 20×20 box with three values: unchecked, checked and indeterminate. Error comes from
+ * `aria-invalid` or a Field error. Name it with a `<label htmlFor>` or `aria-label`.
  */
 export function Checkbox({ state = 'default', className, ...props }: CheckboxProps) {
   const control = useFieldControl(props)
