@@ -145,10 +145,12 @@ function NotificationList({ mirror }: { mirror: boolean }) {
           checked={parent}
           onCheckedChange={(on) => setSelected(on === true ? notifications.map((n) => n.id) : [])}
         />
-        <label htmlFor={`${prefix}-parent`} className="text-label-large flex-1 text-neutral">
+        <label htmlFor={`${prefix}-parent`} className="text-label-large min-w-0 flex-1 truncate text-neutral">
           Email notifications
         </label>
-        <span className="text-body-small text-neutral-subtle">{selected.length} of 4 selected</span>
+        <span className="text-body-small shrink-0 whitespace-nowrap text-neutral-subtle">
+          {selected.length} of 4 selected
+        </span>
       </div>
       <div className="flex flex-col pl-8">
         {notifications.map((n) => (
@@ -177,7 +179,7 @@ function NotificationList({ mirror }: { mirror: boolean }) {
 export const Documentation: Story = {
   parameters: { layout: 'padded', controls: { disable: true } },
   render: () => (
-    <div className="flex max-w-240 flex-col gap-12 text-neutral">
+    <div className="flex max-w-320 flex-col gap-12 text-neutral">
       <header className="flex flex-col gap-2">
         <h1 className="text-heading-large">Checkbox</h1>
         <p className="text-body text-neutral-subtle">

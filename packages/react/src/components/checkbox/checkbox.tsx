@@ -56,22 +56,25 @@ const checkboxVariants = cva(
 export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
   /** `false`, `true` or `'indeterminate'`, for a parent whose children are only partly selected. */
   checked?: boolean | 'indeterminate'
-  /** Freezes `hover` or `focus` for docs and tests. Error and disabled come from `aria-invalid` and `disabled`. */
+  /** Freezes `hover` or `focus` for docs and tests; `'disabled'` disables like the `disabled` prop. Error comes from `aria-invalid`. */
   state?: 'default' | 'hover' | 'focus' | 'error' | 'disabled'
 }
 
 /**
- * Checkbox: a 20×20 box with three values: unchecked, checked and indeterminate. Error comes from
- * `aria-invalid` or a Field error. Name it with a `<label htmlFor>` or `aria-label`.
+ * Checkbox: a 20×20 box with three values: unchecked, checked and indeterminate. Use indeterminate
+ * only for a parent whose children are partly selected: all selected is checked, none is unchecked.
+ * Error comes from `aria-invalid` or a Field error. Name it with a `<label htmlFor>` or `aria-label`.
  */
 export function Checkbox({ state = 'default', className, ...props }: CheckboxProps) {
   const control = useFieldControl(props)
-  const resolved = control.disabled ? 'disabled' : control.invalid ? 'error' : state
+  const disabled = control.disabled || state === 'disabled'
+  const resolved = disabled ? 'disabled' : control.invalid ? 'error' : state
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       {...props}
       {...control.attributes}
+      disabled={disabled || undefined}
       className={cn(checkboxVariants({ state: resolved }), className)}
     >
       <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex size-4 items-center justify-center">

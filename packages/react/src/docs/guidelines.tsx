@@ -16,7 +16,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
 /** One card of a guideline: a Do or a Don't badge over a live example. */
 export function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
   return (
-    <div className="flex min-w-80 flex-1 flex-col gap-5 rounded-lg border border-neutral-subtle bg-card-neutral p-1">
+    <div className="flex min-w-0 flex-col gap-5 rounded-lg border border-neutral-subtle bg-card-neutral p-1">
       <span
         className={
           tone === 'do'
@@ -26,7 +26,7 @@ export function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: Re
       >
         {tone === 'do' ? 'Do' : 'Don’t'}
       </span>
-      <div className="flex justify-center px-6 pb-7">{children}</div>
+      <div className="flex justify-center px-3 pb-4">{children}</div>
     </div>
   )
 }
@@ -44,12 +44,12 @@ export function Guideline({
   dontExample: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap gap-10">
+    <div className="flex flex-wrap gap-x-10 gap-y-6">
       <div className="flex w-74 shrink-0 flex-col gap-2">
         <p className="text-label-large text-neutral">{rule}</p>
         <p className="text-body text-neutral-subtle">{comment}</p>
       </div>
-      <div className="flex min-w-80 flex-1 flex-wrap gap-3">
+      <div className="grid min-w-150 flex-1 grid-cols-2 gap-3">
         <Specimen tone="do">{doExample}</Specimen>
         <Specimen tone="dont">{dontExample}</Specimen>
       </div>
