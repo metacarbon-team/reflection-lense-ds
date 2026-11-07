@@ -75,9 +75,11 @@ export const toastVariants = cva(
       state: {
         default: '',
         stacked: [
-          'before:absolute before:inset-x-2 before:-top-3.5 before:h-3.5 before:rounded-t-xl before:border before:border-b-0',
+          // Layers are positioned from the padding box, which sits below the card's 1px top border. The
+          // 1px lift keeps them above that border instead of covering it.
+          'before:absolute before:inset-x-2 before:-top-3.5 before:h-3.5 before:-translate-y-px before:rounded-t-xl before:border before:border-b-0',
           'before:border-neutral-subtle before:bg-card-neutral-emphasized',
-          'after:absolute after:inset-x-5 after:-top-7 after:h-3.5 after:rounded-t-xl after:border after:border-b-0',
+          'after:absolute after:inset-x-5 after:-top-7 after:h-3.5 after:-translate-y-px after:rounded-t-xl after:border after:border-b-0',
           'after:border-neutral-subtle after:bg-card-neutral-emphasized',
         ],
         expanded: '',
