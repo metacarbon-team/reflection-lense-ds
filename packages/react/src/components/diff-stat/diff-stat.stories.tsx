@@ -4,7 +4,7 @@ import { DiffStat } from './diff-stat'
 const meta = {
   title: 'Components/Diff Stat',
   component: DiffStat,
-  args: { added: '+42', removed: '−8', showAdded: true, showRemoved: true },
+  args: { added: 42, removed: 8, showAdded: true, showRemoved: true },
 } satisfies Meta<typeof DiffStat>
 
 export default meta
@@ -34,8 +34,8 @@ export const WithFile: Story = {
   render: () => (
     <ul className="flex w-72 flex-col gap-2">
       {[
-        { name: 'button.tsx', added: '+120', removed: '−34' },
-        { name: 'theme.css', added: '+3', removed: '−17' },
+        { name: 'button.tsx', added: 120, removed: 34 },
+        { name: 'theme.css', added: 3, removed: 17 },
       ].map((file) => (
         <li key={file.name} className="flex items-center justify-between gap-4">
           <span className="text-body-small">{file.name}</span>
@@ -48,15 +48,15 @@ export const WithFile: Story = {
 
 /** A new file only adds lines. */
 export const OnlyAdded: Story = {
-  args: { added: '+86', showRemoved: false },
+  args: { added: 86, showRemoved: false },
 }
 
 /** A deleted file only removes lines. */
 export const OnlyRemoved: Story = {
-  args: { removed: '−212', showAdded: false },
+  args: { removed: 212, showAdded: false },
 }
 
-/** Write the full count: rounded values hide how big the change really is. */
+/** The full count with a thousands separator: rounded values hide how big the change really is. */
 export const ExactNumbers: Story = {
-  args: { added: '+1,204', removed: '−87' },
+  args: { added: 1204, removed: 87 },
 }
