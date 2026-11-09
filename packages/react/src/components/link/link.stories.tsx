@@ -1,0 +1,141 @@
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { Link } from './link'
+
+const ArrowRight = () => (
+  <svg
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M3 8h10M9 4l4 4-4 4" />
+  </svg>
+)
+
+const External = () => (
+  <svg
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M6 3H3v10h10v-3M9 3h4v4M13 3L7 9" />
+  </svg>
+)
+
+/** Icons offered by the Playground slot controls. */
+const slotIcons = { none: undefined, arrow: <ArrowRight />, external: <External /> }
+
+const meta = {
+  title: 'Components/Link',
+  component: Link,
+  args: {
+    children: 'Link',
+    href: '#',
+    type: 'inline',
+    size: 'md',
+    state: 'default',
+    disabled: false,
+    leadingSlot: 'none',
+    trailingSlot: 'none',
+  },
+  argTypes: {
+    type: { control: 'inline-radio', options: ['inline', 'standalone'] },
+    size: { control: 'inline-radio', options: ['sm', 'md'] },
+    state: { control: 'inline-radio', options: ['default', 'hover', 'pressed', 'focus'] },
+    leadingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
+    trailingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
+  },
+} satisfies Meta<typeof Link>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Playground: Story = {}
+
+/** Every type and size in each state, then disabled. */
+export const States: Story = {
+  render: (args) => (
+    <div className="inline-grid grid-cols-[auto_repeat(4,max-content)] items-center gap-x-8 gap-y-3">
+      {(['default', 'hover', 'pressed', 'focus', 'disabled'] as const).map((state) => (
+        <div key={state} className="contents">
+          <span className="text-caption text-neutral-subtle">{state}</span>
+          {(['inline', 'standalone'] as const).flatMap((type) =>
+            (['sm', 'md'] as const).map((size) => (
+              <Link
+                key={`${type}-${size}`}
+                {...args}
+                type={type}
+                size={size}
+                state={state === 'disabled' ? 'default' : state}
+                disabled={state === 'disabled'}
+                leadingSlot={<ArrowRight />}
+                trailingSlot={<ArrowRight />}
+              >
+                {type} {size}
+              </Link>
+            )),
+          )}
+        </div>
+      ))}
+    </div>
+  ),
+}
+
+/** An `inline` link sits inside the text and keeps its underline. */
+export const InText: Story = {
+  render: (args) => (
+    <p className="max-w-md text-body">
+      Read the <Link {...args}>token rules</Link> before adding a color, or open the{' '}
+      <Link {...args} trailingSlot={<External />}>
+        Figma file
+      </Link>
+      .
+    </p>
+  ),
+}
+
+/** A `standalone` link has no underline and stands on its own line. */
+export const Standalone: Story = {
+  render: (args) => (
+    <Link {...args} type="standalone" trailingSlot={<ArrowRight />}>
+      Read more
+    </Link>
+  ),
+}
+
+export const WithIcons: Story = {
+  render: (args) => (
+    <div className="flex items-center gap-6">
+      <Link {...args} leadingSlot={<ArrowRight />}>
+        Leading
+      </Link>
+      <Link {...args} trailingSlot={<External />}>
+        Trailing
+      </Link>
+      <Link {...args} leadingSlot={<ArrowRight />} trailingSlot={<External />}>
+        Both
+      </Link>
+    </div>
+  ),
+}
+
+/** A disabled link has no `href`, ignores clicks and is skipped by Tab. */
+export const Disabled: Story = {
+  args: { disabled: true },
+}
+
+/** `asChild` renders a router link with the link styles. */
+export const AsChild: Story = {
+  render: (args) => (
+    <Link {...args} asChild>
+      <a href="#docs">Read the docs</a>
+    </Link>
+  ),
+}
