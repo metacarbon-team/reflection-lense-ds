@@ -12,10 +12,14 @@ export const diffStatVariants = cva('whitespace-nowrap', {
 /** Always the exact count with thousands separators (`1,204`), never a rounded one. */
 const countFormat = new Intl.NumberFormat('en-US')
 
+/** The text of a count, or `null` when there is nothing to show: no number, `NaN` or `Infinity`. Fractions are cut off. */
+const formatCount = (count: number | undefined) =>
+  count !== undefined && Number.isFinite(count) ? countFormat.format(Math.trunc(Math.abs(count))) : null
+
 export type DiffStatProps = Omit<ComponentProps<'span'>, 'children'> & {
-  /** Number of added lines. The component writes it with a leading `+`. */
+  /** Number of added lines, a whole number. The component writes it with a leading `+`. A value that is not finite is not shown. */
   added?: number
-  /** Number of removed lines. The component writes it with a leading `−`; pass it without a sign. */
+  /** Number of removed lines, a whole number. The component writes it with a leading `−`; pass it without a sign. A value that is not finite is not shown. */
   removed?: number
   /** Shows the added count. Turn it off for a change that only removes lines. */
   showAdded?: boolean
@@ -29,18 +33,16 @@ export type DiffStatProps = Omit<ComponentProps<'span'>, 'children'> & {
  * meaning never depends on color alone.
  */
 export function DiffStat({ className, added, removed, showAdded = true, showRemoved = true, ...props }: DiffStatProps) {
+  const addedText = showAdded ? formatCount(added) : null
+  const removedText = showRemoved ? formatCount(removed) : null
   return (
     <span
       data-slot="diff-stat"
       className={cn('inline-flex items-center gap-1.5 text-caption tabular-nums', className)}
       {...props}
     >
-      {showAdded && added !== undefined ? (
-        <span className={diffStatVariants({ kind: 'added' })}>+{countFormat.format(Math.abs(added))}</span>
-      ) : null}
-      {showRemoved && removed !== undefined ? (
-        <span className={diffStatVariants({ kind: 'removed' })}>−{countFormat.format(Math.abs(removed))}</span>
-      ) : null}
+      {addedText !== null ? <span className={diffStatVariants({ kind: 'added' })}>+{addedText}</span> : null}
+      {removedText !== null ? <span className={diffStatVariants({ kind: 'removed' })}>−{removedText}</span> : null}
     </span>
   )
 }
