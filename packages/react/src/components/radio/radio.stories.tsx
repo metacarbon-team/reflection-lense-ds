@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { Field } from '../field/field'
 import { Radio, RadioGroup, type RadioProps } from './radio'
 
 type PlaygroundArgs = RadioProps & { checked: boolean }
@@ -120,5 +121,23 @@ export const Disabled: Story = {
         </div>
       ))}
     </RadioGroup>
+  ),
+}
+
+/** In a Field the error message marks the group invalid, wires `aria-describedby`, and every radio shows the error. */
+export const InvalidInField: Story = {
+  render: () => (
+    <Field label="Delivery method" error="Choose a delivery method to continue.">
+      <RadioGroup aria-label="Delivery method">
+        {delivery.map((option) => (
+          <div key={option.value} className="flex items-center gap-2">
+            <Radio id={`radio-field-${option.value}`} value={option.value} />
+            <label htmlFor={`radio-field-${option.value}`} className="text-body-small">
+              {option.label}
+            </label>
+          </div>
+        ))}
+      </RadioGroup>
+    </Field>
   ),
 }

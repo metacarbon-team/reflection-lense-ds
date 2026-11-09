@@ -1,7 +1,8 @@
 import { cva } from 'class-variance-authority'
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui'
-import type { ComponentProps } from 'react'
+import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { useFieldControl } from '../field/field'
 
 /**
  * Colors apply only while enabled, so the disabled look in the base always wins. Hover and
@@ -46,13 +47,25 @@ const radioVariants = cva(
 
 export type RadioGroupProps = ComponentProps<typeof RadioGroupPrimitive.Root>
 
+/** Carries the group's error state down to its radios. */
+const RadioGroupInvalidContext = createContext(false)
+
 /**
  * RadioGroup: holds a set of radios and lets exactly one be selected. Arrow keys move the
- * selection. Name the group with `aria-label` or `aria-labelledby`; `disabled` here disables every radio.
+ * selection. Name the group with `aria-label` or `aria-labelledby`; `disabled` here disables every
+ * radio. In a Field the group takes the id, description, error and disabled state, and every radio shows the error.
  */
 export function RadioGroup({ className, ...props }: RadioGroupProps) {
+  const control = useFieldControl(props)
   return (
-    <RadioGroupPrimitive.Root data-slot="radio-group" className={cn('flex flex-col gap-3', className)} {...props} />
+    <RadioGroupInvalidContext value={control.invalid}>
+      <RadioGroupPrimitive.Root
+        data-slot="radio-group"
+        className={cn('flex flex-col gap-3', className)}
+        {...props}
+        {...control.attributes}
+      />
+    </RadioGroupInvalidContext>
   )
 }
 
@@ -67,7 +80,8 @@ export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
  */
 export function Radio({ state = 'default', disabled, className, ...props }: RadioProps) {
   const ariaInvalid = props['aria-invalid']
-  const invalid = ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false'
+  const groupInvalid = useContext(RadioGroupInvalidContext)
+  const invalid = groupInvalid || (ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false')
   // `disabled` is styled by the base classes, so the variant only decides between error and the frozen states.
   const variant = state === 'disabled' ? 'default' : invalid ? 'error' : state
   return (
