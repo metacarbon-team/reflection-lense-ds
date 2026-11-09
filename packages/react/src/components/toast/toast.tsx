@@ -1,3 +1,4 @@
+import { cva } from 'class-variance-authority'
 import { Toast as ToastPrimitive } from 'radix-ui'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
@@ -7,6 +8,34 @@ import { Button } from '../button/button'
 import { IconButton } from '../icon-button/icon-button'
 
 const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
+
+const toastViewportVariants = cva('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none')
+
+const toastVariants = cva([
+  'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized',
+  'py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none focus-visible:shadow-focus-ring',
+])
+
+const toastLeadingVariants = cva('flex shrink-0 items-center justify-center [&_svg]:size-5')
+
+const toastContentVariants = cva('flex min-w-0 flex-1 flex-col')
+
+const toastTitleVariants = cva('truncate text-body-small-medium text-neutral')
+
+const toastDescriptionVariants = cva('truncate text-body-xsmall text-neutral-subtle')
+
+// A card in the Toaster's pile. `data-expanded` and `data-front` come from the Toaster.
+const toastLayerVariants = cva([
+  'absolute inset-x-0 bottom-0 origin-bottom transition-all duration-300 ease-out motion-reduce:transition-none',
+  'data-[swipe=move]:transition-none',
+  // A folded pile shows the newest card; the cards behind keep only their edge.
+  'data-[expanded=false]:data-[front=false]:pointer-events-none data-[expanded=false]:data-[front=false]:overflow-hidden',
+  // `invisible` also takes the controls out of the tab order and the accessibility tree; the fade still plays.
+  'data-[expanded=false]:data-[front=false]:*:invisible data-[expanded=false]:data-[front=false]:*:opacity-0',
+  '*:transition-all *:duration-300 motion-reduce:*:transition-none',
+])
+
+const toasterVariants = cva('transition-all duration-300 ease-out motion-reduce:transition-none')
 
 /**
  * Mounts the toast queue. `Toaster` already includes it; use it on its own only to place `Toast`s
@@ -24,11 +53,7 @@ export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport>
  */
 export function ToastViewport({ className, ...props }: ToastViewportProps) {
   return (
-    <ToastPrimitive.Viewport
-      data-slot="toast-viewport"
-      className={cn('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none', className)}
-      {...props}
-    />
+    <ToastPrimitive.Viewport data-slot="toast-viewport" className={cn(toastViewportVariants(), className)} {...props} />
   )
 }
 
@@ -61,29 +86,18 @@ export function Toast({
   ...props
 }: ToastProps) {
   return (
-    <ToastPrimitive.Root
-      data-slot="toast"
-      className={cn(
-        'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized',
-        'py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none focus-visible:shadow-focus-ring',
-        className,
-      )}
-      {...props}
-    >
+    <ToastPrimitive.Root data-slot="toast" className={cn(toastVariants(), className)} {...props}>
       {hasContent(leadingSlot) && (
-        <span data-slot="toast-leading" className="flex shrink-0 items-center justify-center [&_svg]:size-5">
+        <span data-slot="toast-leading" className={toastLeadingVariants()}>
           {leadingSlot}
         </span>
       )}
-      <div data-slot="toast-content" className="flex min-w-0 flex-1 flex-col">
-        <ToastPrimitive.Title data-slot="toast-title" className="truncate text-body-small-medium text-neutral">
+      <div data-slot="toast-content" className={toastContentVariants()}>
+        <ToastPrimitive.Title data-slot="toast-title" className={toastTitleVariants()}>
           {label}
         </ToastPrimitive.Title>
         {hasContent(description) && (
-          <ToastPrimitive.Description
-            data-slot="toast-description"
-            className="truncate text-body-xsmall text-neutral-subtle"
-          >
+          <ToastPrimitive.Description data-slot="toast-description" className={toastDescriptionVariants()}>
             {description}
           </ToastPrimitive.Description>
         )}
@@ -229,13 +243,7 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
       }}
       data-front={front}
       data-expanded={expanded}
-      className={cn(
-        'absolute inset-x-0 bottom-0 origin-bottom transition-all duration-300 ease-out motion-reduce:transition-none',
-        'data-[swipe=move]:transition-none',
-        // A folded pile shows the newest card; the cards behind keep only their edge.
-        'data-[expanded=false]:data-[front=false]:pointer-events-none data-[expanded=false]:data-[front=false]:overflow-hidden',
-        'data-[expanded=false]:data-[front=false]:*:opacity-0 *:transition-opacity *:duration-300',
-      )}
+      className={toastLayerVariants()}
       style={{
         transform: `translateY(${visible ? lift : lift + 24}px) scale(${scale})`,
         opacity: visible ? 1 : 0,
@@ -281,17 +289,26 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
   const [focused, setFocused] = useState(false)
   const viewportRef = useRef<HTMLOListElement>(null)
 
-  // Native listeners: the pile must open on every real pointer entry, whatever the input device.
+  // Native listeners: toasts render into the viewport by a portal, so React's onFocus and onMouseEnter on
+  // the viewport never see events from inside them. The pile opens on pointer entry and on focus.
   useEffect(() => {
     const element = viewportRef.current
     if (!element) return
     const enter = () => setHovered(true)
     const leave = () => setHovered(false)
+    const focusIn = () => setFocused(true)
+    const focusOut = (event: FocusEvent) => {
+      if (!element.contains(event.relatedTarget as Node | null)) setFocused(false)
+    }
     element.addEventListener('pointerenter', enter)
     element.addEventListener('pointerleave', leave)
+    element.addEventListener('focusin', focusIn)
+    element.addEventListener('focusout', focusOut)
     return () => {
       element.removeEventListener('pointerenter', enter)
       element.removeEventListener('pointerleave', leave)
+      element.removeEventListener('focusin', focusIn)
+      element.removeEventListener('focusout', focusOut)
     }
   }, [])
 
@@ -329,12 +346,8 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
       <ToastViewport
         ref={viewportRef}
         label={label}
-        className={cn('transition-all duration-300 ease-out motion-reduce:transition-none', className)}
+        className={cn(toasterVariants(), className)}
         style={{ height: expanded ? listHeight : frontHeight }}
-        onFocus={() => setFocused(true)}
-        onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
-        }}
       />
     </ToastProvider>
   )
