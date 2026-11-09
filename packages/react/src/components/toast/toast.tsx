@@ -1,6 +1,5 @@
-import { cva, type VariantProps } from 'class-variance-authority'
 import { Toast as ToastPrimitive } from 'radix-ui'
-import { useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { CloseIcon } from '../../lib/icons'
@@ -17,41 +16,17 @@ export const ToastProvider = (props: ComponentProps<typeof ToastPrimitive.Provid
   <ToastPrimitive.Provider {...props} />
 )
 
+export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport>
+
 /**
- * Where toasts appear, pinned to the bottom right. Toasts pile up with the newest in front and two
- * layers behind it; hovering or focusing the pile opens it into a list, 12px between cards, and it
- * folds again on leave. `expand` keeps the list open.
+ * Where toasts appear: a list pinned to the bottom right, 12px between cards. `Toaster` already
+ * includes it and stacks its toasts; use it on its own to place `Toast`s by hand.
  */
-export const toastViewportVariants = cva(
-  'fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none',
-  {
-    variants: {
-      expand: {
-        true: '',
-        false: [
-          'not-focus-within:not-hover:grid not-focus-within:not-hover:gap-0',
-          'not-focus-within:not-hover:*:col-start-1 not-focus-within:not-hover:*:row-start-1',
-          // Cards behind the newest keep only their top edge: the text is hidden, the card is moved up
-          // by one layer (14px) and narrowed by the side inset.
-          'not-focus-within:not-hover:[&>li:not(:last-child)>*]:invisible',
-          'not-focus-within:not-hover:[&>li:nth-last-child(2)]:mx-2 not-focus-within:not-hover:[&>li:nth-last-child(2)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(2)]:-translate-y-3.5',
-          'not-focus-within:not-hover:[&>li:nth-last-child(3)]:mx-5 not-focus-within:not-hover:[&>li:nth-last-child(3)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(3)]:-translate-y-7',
-          'not-focus-within:not-hover:[&>li:nth-last-child(n+4)]:hidden',
-        ],
-      },
-    },
-    defaultVariants: { expand: false },
-  },
-)
-
-export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport> &
-  VariantProps<typeof toastViewportVariants>
-
-export function ToastViewport({ className, expand, ...props }: ToastViewportProps) {
+export function ToastViewport({ className, ...props }: ToastViewportProps) {
   return (
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
-      className={cn(toastViewportVariants({ expand }), className)}
+      className={cn('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none', className)}
       {...props}
     />
   )
@@ -152,7 +127,16 @@ export type ToastOptions = {
   closeLabel?: string
 }
 
-type ToastRecord = ToastOptions & { id: string }
+type ToastRecord = ToastOptions & { id: string; closing?: boolean }
+
+/** How long a closing toast fades out before it leaves the list, in ms. */
+const EXIT_MS = 300
+// Geometry of the pile, in px. Cards are placed with inline styles because their offsets depend on the
+// measured height of every toast; the look (borders, colors, radius, transitions) stays in classes.
+const GAP = 12
+const PEEK = 14
+const SCALE = 0.05
+const LAYERS = 3
 
 let records: ToastRecord[] = []
 let counter = 0
@@ -179,7 +163,97 @@ export function toast(options: ToastOptions) {
   update([...records, { ...options, id }])
   return id
 }
-toast.dismiss = (id?: string) => update(id === undefined ? [] : records.filter((record) => record.id !== id))
+toast.dismiss = (id?: string) => {
+  const ids = id === undefined ? records.map((record) => record.id) : [id]
+  update(records.map((record) => (ids.includes(record.id) ? { ...record, closing: true } : record)))
+  setTimeout(() => update(records.filter((record) => !ids.includes(record.id))), EXIT_MS)
+}
+
+type ToasterItemProps = {
+  record: ToastRecord
+  /** 0 for the newest toast, 1 for the one behind it, and so on. */
+  index: number
+  /** Distance from the bottom edge when the pile is open: the heights of the newer toasts and the gaps. */
+  offset: number
+  expanded: boolean
+  /** Natural height of this toast and of the newest one, in px; 0 until measured. */
+  height: number
+  frontHeight: number
+  onHeight: (id: string, height: number) => void
+}
+
+function ToasterItem({ record, index, offset, expanded, height, frontHeight, onHeight }: ToasterItemProps) {
+  const { id, action, closing, ...options } = record
+  // A state, not a ref object: the card renders into the viewport and may appear after the first commit.
+  const [element, setElement] = useState<HTMLLIElement | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // The natural height: the card's padding and border plus its tallest part. It stays right while the
+  // card is stretched or clipped to the front card in a folded pile.
+  useLayoutEffect(() => {
+    if (!element) return
+    const measure = () => {
+      const style = getComputedStyle(element)
+      const chrome =
+        parseFloat(style.paddingTop) +
+        parseFloat(style.paddingBottom) +
+        parseFloat(style.borderTopWidth) +
+        parseFloat(style.borderBottomWidth)
+      const parts = Array.from(element.children, (child) => (child as HTMLElement).offsetHeight)
+      onHeight(id, chrome + Math.max(0, ...parts))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    Array.from(element.children).forEach((child) => observer.observe(child))
+    return () => observer.disconnect()
+  }, [id, element, onHeight])
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const front = index === 0
+  const folded = !expanded
+  const lift = expanded ? -offset : -index * PEEK
+  const scale = expanded ? 1 : 1 - index * SCALE
+  const visible = mounted && !closing && !(folded && index >= LAYERS)
+
+  return (
+    <Toast
+      ref={setElement}
+      {...options}
+      open
+      onOpenChange={(open) => {
+        if (!open) toast.dismiss(id)
+      }}
+      data-front={front}
+      data-expanded={expanded}
+      className={cn(
+        'absolute inset-x-0 bottom-0 origin-bottom transition-all duration-300 ease-out motion-reduce:transition-none',
+        'data-[swipe=move]:transition-none',
+        // A folded pile shows the newest card; the cards behind keep only their edge.
+        'data-[expanded=false]:data-[front=false]:pointer-events-none data-[expanded=false]:data-[front=false]:overflow-hidden',
+        'data-[expanded=false]:data-[front=false]:*:opacity-0 *:transition-opacity *:duration-300',
+      )}
+      style={{
+        transform: `translateY(${visible ? lift : lift + 24}px) scale(${scale})`,
+        opacity: visible ? 1 : 0,
+        // A folded pile gives every card the height of the front one, so the layers line up.
+        height: (folded ? frontHeight : height) || undefined,
+        // Follows the finger while swiping (Radix sets the variable) and flies out when released.
+        translate: 'var(--radix-toast-swipe-move-x, var(--radix-toast-swipe-end-x, 0px)) 0',
+      }}
+      action={
+        action && (
+          <ToastAction altText={action.altText} onClick={action.onClick}>
+            {action.label}
+          </ToastAction>
+        )
+      }
+    />
+  )
+}
 
 export type ToasterProps = {
   /** Default time a toast stays, in ms. A toast's own `duration` wins. */
@@ -195,31 +269,73 @@ export type ToasterProps = {
 }
 
 /**
- * Toaster: mount it once near the app root, then open toasts with `toast()`. New toasts pile up with
- * the newest in front, the pile opens into a list on hover or focus, and each toast closes by itself,
- * on its close button, on its action and on a swipe.
+ * Toaster: mount it once near the app root, then open toasts with `toast()`. Toasts pile up with the
+ * newest in front and the older ones peeking behind, smaller and lifted. The pile opens into a list on
+ * hover or focus, and every move is animated. A toast closes by itself, on its close button, on its
+ * action and on a swipe.
  */
-export function Toaster({ duration = 5000, limit = 3, expand, label, className }: ToasterProps) {
+export function Toaster({ duration = 5000, limit = 3, expand = false, label, className }: ToasterProps) {
   const all = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+  const [heights, setHeights] = useState<Record<string, number>>({})
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const viewportRef = useRef<HTMLOListElement>(null)
+
+  // Native listeners: the pile must open on every real pointer entry, whatever the input device.
+  useEffect(() => {
+    const element = viewportRef.current
+    if (!element) return
+    const enter = () => setHovered(true)
+    const leave = () => setHovered(false)
+    element.addEventListener('pointerenter', enter)
+    element.addEventListener('pointerleave', leave)
+    return () => {
+      element.removeEventListener('pointerenter', enter)
+      element.removeEventListener('pointerleave', leave)
+    }
+  }, [])
+
+  const onHeight = useCallback(
+    (id: string, height: number) =>
+      setHeights((current) => (current[id] === height ? current : { ...current, [id]: height })),
+    [],
+  )
+
+  const shown = all.slice(-limit)
+  const heightOf = (id: string) => heights[id] ?? 0
+  const expanded = expand || ((hovered || focused) && shown.length > 0)
+  const newest = shown.at(-1)
+  const frontHeight = newest ? heightOf(newest.id) : 0
+  const listHeight = shown.reduce((sum, record) => sum + heightOf(record.id), 0) + GAP * Math.max(shown.length - 1, 0)
+
   return (
     <ToastProvider duration={duration}>
-      {all.slice(-limit).map(({ id, action, ...options }) => (
-        <Toast
-          key={id}
-          {...options}
-          action={
-            action && (
-              <ToastAction altText={action.altText} onClick={action.onClick}>
-                {action.label}
-              </ToastAction>
-            )
-          }
-          onOpenChange={(open) => {
-            if (!open) toast.dismiss(id)
-          }}
-        />
-      ))}
-      <ToastViewport expand={expand} label={label} className={className} />
+      {shown.map((record, position) => {
+        const index = shown.length - 1 - position
+        const offset = shown.slice(position + 1).reduce((sum, newer) => sum + heightOf(newer.id), 0) + GAP * index
+        return (
+          <ToasterItem
+            key={record.id}
+            record={record}
+            index={index}
+            offset={offset}
+            expanded={expanded}
+            height={heightOf(record.id)}
+            frontHeight={frontHeight}
+            onHeight={onHeight}
+          />
+        )
+      })}
+      <ToastViewport
+        ref={viewportRef}
+        label={label}
+        className={cn('transition-all duration-300 ease-out motion-reduce:transition-none', className)}
+        style={{ height: expanded ? listHeight : frontHeight }}
+        onFocus={() => setFocused(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
+        }}
+      />
     </ToastProvider>
   )
 }

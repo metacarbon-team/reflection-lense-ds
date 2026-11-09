@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState, type ComponentProps, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { toast, Toast, ToastAction, ToastProvider, Toaster, ToastViewport } from './toast'
 
@@ -47,9 +47,9 @@ const DangerIcon = () => (
 )
 
 /** A provider and a viewport that sit in the page flow, so a story can show toasts in place. */
-const Stage = ({ children, expand, label }: { children: ReactNode; expand?: boolean; label?: string }) => (
+const Stage = ({ children, label }: { children: ReactNode; label?: string }) => (
   <ToastProvider duration={Infinity}>
-    <ToastViewport expand={expand} label={label} className="static w-100" />
+    <ToastViewport label={label} className="static w-100" />
     {children}
   </ToastProvider>
 )
@@ -142,7 +142,7 @@ export const Variants: Story = {
 /** The leading slot carries the meaning: a neutral bell, or an icon in a status color. */
 export const StatusIcons: Story = {
   render: () => (
-    <Stage expand>
+    <Stage>
       <Pinned {...copy} leadingSlot={<BellIcon />} action={undo} />
       <Pinned
         {...copy}
@@ -206,34 +206,35 @@ export const LongTitle: Story = {
   ),
 }
 
-const StackDemo = ({ expand }: { expand?: boolean }) => (
-  <div className="pt-8">
-    <Stage expand={expand}>
-      <Pinned
-        label="Event has been created"
-        description="Sunday, December 03 at 9:00 AM"
-        leadingSlot={<BellIcon />}
-        action={undo}
-      />
-      <Pinned
-        label="Event has been updated"
-        description="Monday, December 04 at 10:30 AM"
-        leadingSlot={<BellIcon />}
-        action={undo}
-      />
-      <Pinned
-        label="Event has been deleted"
-        description="Tuesday, December 05 at 4:15 PM"
-        leadingSlot={<BellIcon />}
-        action={undo}
-      />
-    </Stage>
-  </div>
-)
+const stackToasts = [
+  { label: 'Event has been created', description: 'Sunday, December 03 at 9:00 AM' },
+  { label: 'Event has been updated', description: 'Monday, December 04 at 10:30 AM' },
+  { label: 'Event has been deleted', description: 'Tuesday, December 05 at 4:15 PM' },
+]
+
+const StackDemo = ({ expand }: { expand?: boolean }) => {
+  useEffect(() => {
+    const ids = stackToasts.map((item) =>
+      toast({
+        ...item,
+        leadingSlot: <BellIcon />,
+        action: { label: 'Undo', altText: 'Undo the change' },
+        duration: Infinity,
+      }),
+    )
+    return () => ids.forEach((id) => toast.dismiss(id))
+  }, [])
+  return (
+    <div className="h-96">
+      <Toaster expand={expand} />
+    </div>
+  )
+}
 
 /**
- * Three toasts in one viewport. They pile up by themselves: the newest in front, two layers behind
- * it. Hover or focus the pile to open it into a list; leave to fold it. `expand` keeps it open.
+ * Three toasts in a real `Toaster`. They pile up by themselves: the newest in front, the older ones
+ * smaller and lifted behind it. Hover or focus the pile to open it into a list; leave to fold it.
+ * `expand` keeps it open.
  */
 export const Stack: StoryObj<{ expand: boolean }> = {
   args: { expand: false },
@@ -254,6 +255,9 @@ const TriggeredDemo = () => (
     >
       Create event
     </Button>
+    <Button variant="outline" onClick={() => toast({ label: 'Saved' })}>
+      Short toast
+    </Button>
     <Button variant="ghost" onClick={() => toast.dismiss()}>
       Dismiss all
     </Button>
@@ -262,7 +266,7 @@ const TriggeredDemo = () => (
 )
 
 /**
- * The real thing: a `Toaster` mounted once and `toast()` called from a button. Press the button a few
+ * The real thing: a `Toaster` mounted once and `toast()` called from a button. Press the buttons a few
  * times: toasts pile up (three at most), open on hover, and close after five seconds, on the action,
  * on the close button and on a swipe.
  */
