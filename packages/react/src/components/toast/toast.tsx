@@ -1,99 +1,63 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Toast as ToastPrimitive } from 'radix-ui'
+import { useSyncExternalStore } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { CloseIcon } from '../../lib/icons'
 import { Button } from '../button/button'
 import { IconButton } from '../icon-button/icon-button'
 
+const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
+
 /**
- * Mounts the toast queue once, near the app root. Every `Toast` renders into the `ToastViewport` of
- * the closest provider. `duration` (ms) sets how long a toast stays before it closes itself.
+ * Mounts the toast queue. `Toaster` already includes it; use it on its own only to place `Toast`s
+ * by hand. `duration` (ms) sets how long a toast stays before it closes itself.
  */
 export const ToastProvider = (props: ComponentProps<typeof ToastPrimitive.Provider>) => (
   <ToastPrimitive.Provider {...props} />
 )
 
 /**
- * Where toasts appear: a list pinned to the bottom right. `expanded` lists every toast as a full card,
- * 12px apart. `stacked` collapses them into a pile: the newest card in front and two layers behind it,
- * older ones hidden. Hovering or focusing the pile expands it, and it collapses again on leave.
+ * Where toasts appear, pinned to the bottom right. Toasts pile up with the newest in front and two
+ * layers behind it; hovering or focusing the pile opens it into a list, 12px between cards, and it
+ * folds again on leave. `expand` keeps the list open.
  */
 export const toastViewportVariants = cva(
   'fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none',
   {
     variants: {
-      state: {
-        expanded: '',
-        stacked: [
+      expand: {
+        true: '',
+        false: [
           'not-focus-within:not-hover:grid not-focus-within:not-hover:gap-0',
           'not-focus-within:not-hover:*:col-start-1 not-focus-within:not-hover:*:row-start-1',
           // Cards behind the newest keep only their top edge: the text is hidden, the card is moved up
           // by one layer (14px) and narrowed by the side inset.
           'not-focus-within:not-hover:[&>li:not(:last-child)>*]:invisible',
-          'not-focus-within:not-hover:[&>li:nth-last-child(2)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(2)]:mx-2 not-focus-within:not-hover:[&>li:nth-last-child(2)]:-translate-y-3.5',
-          'not-focus-within:not-hover:[&>li:nth-last-child(3)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(3)]:mx-5 not-focus-within:not-hover:[&>li:nth-last-child(3)]:-translate-y-7',
+          'not-focus-within:not-hover:[&>li:nth-last-child(2)]:mx-2 not-focus-within:not-hover:[&>li:nth-last-child(2)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(2)]:-translate-y-3.5',
+          'not-focus-within:not-hover:[&>li:nth-last-child(3)]:mx-5 not-focus-within:not-hover:[&>li:nth-last-child(3)]:w-auto not-focus-within:not-hover:[&>li:nth-last-child(3)]:-translate-y-7',
           'not-focus-within:not-hover:[&>li:nth-last-child(n+4)]:hidden',
         ],
       },
     },
-    defaultVariants: { state: 'expanded' },
+    defaultVariants: { expand: false },
   },
 )
 
-export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport> & {
-  /** `expanded` is a list of full cards; `stacked` is a pile that opens on hover or focus. */
-  state?: NonNullable<VariantProps<typeof toastViewportVariants>['state']>
-}
+export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport> &
+  VariantProps<typeof toastViewportVariants>
 
-/** Where toasts appear, pinned to the bottom right. Move it with `className`; `state` sets the layout. */
-export function ToastViewport({ className, state, ...props }: ToastViewportProps) {
+export function ToastViewport({ className, expand, ...props }: ToastViewportProps) {
   return (
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
-      data-stack={state ?? 'expanded'}
-      className={cn(toastViewportVariants({ state }), className)}
+      className={cn(toastViewportVariants({ expand }), className)}
       {...props}
     />
   )
 }
 
-/**
- * Toast surface: a card with a border and a medium shadow. `stacked` draws two narrower layers above
- * the card, as when more toasts wait behind it; leave about 28px of room above it. `default` and
- * `expanded` are the plain card. To show several toasts as a pile or as a list, set `state` on the
- * `ToastViewport`, which lays the real toasts out.
- */
-export const toastVariants = cva(
-  [
-    'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized',
-    'py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none',
-    'focus-visible:shadow-focus-ring',
-  ],
-  {
-    variants: {
-      state: {
-        default: '',
-        stacked: [
-          // Layers are positioned from the padding box, which sits below the card's 1px top border. The
-          // 1px lift keeps them above that border instead of covering it.
-          'before:absolute before:inset-x-2 before:-top-3.5 before:h-3.5 before:-translate-y-px before:rounded-t-xl before:border before:border-b-0',
-          'before:border-neutral-subtle before:bg-card-neutral-emphasized',
-          'after:absolute after:inset-x-5 after:-top-7 after:h-3.5 after:-translate-y-px after:rounded-t-xl after:border after:border-b-0',
-          'after:border-neutral-subtle after:bg-card-neutral-emphasized',
-        ],
-        expanded: '',
-      },
-    },
-    defaultVariants: { state: 'default' },
-  },
-)
-
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
-
 export type ToastProps = Omit<ComponentProps<typeof ToastPrimitive.Root>, 'children' | 'title'> & {
-  /** Stack layout: `stacked` shows two layers behind the card; `default` and `expanded` are a single card. */
-  state?: NonNullable<VariantProps<typeof toastVariants>['state']>
   /** The message itself, a few words. One line, cut with an ellipsis when it does not fit. */
   label: ReactNode
   /** A second line of detail, such as a time or a name. The toast shows the line when it is set. */
@@ -108,12 +72,12 @@ export type ToastProps = Omit<ComponentProps<typeof ToastPrimitive.Root>, 'child
 
 /**
  * Toast: a short, temporary message that confirms an action or reports a status without interrupting
- * the user. It closes itself after `duration`, on the close button and on a swipe. Render it inside a
- * `ToastProvider` with a `ToastViewport`.
+ * the user. A card with a border and a medium shadow; it closes itself after `duration`, on the close
+ * button and on a swipe. Most code opens toasts with `toast()` and a `Toaster`; use this component to
+ * place one by hand inside a `ToastProvider` and a `ToastViewport`.
  */
 export function Toast({
   className,
-  state,
   label,
   description,
   leadingSlot,
@@ -124,8 +88,11 @@ export function Toast({
   return (
     <ToastPrimitive.Root
       data-slot="toast"
-      data-stack={state ?? 'default'}
-      className={cn(toastVariants({ state }), className)}
+      className={cn(
+        'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized',
+        'py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none focus-visible:shadow-focus-ring',
+        className,
+      )}
       {...props}
     >
       {hasContent(leadingSlot) && (
@@ -167,5 +134,92 @@ export function ToastAction({ className, children, ...props }: ComponentProps<ty
         {children}
       </Button>
     </ToastPrimitive.Action>
+  )
+}
+
+export type ToastOptions = {
+  /** The message itself. See `Toast`. */
+  label: ReactNode
+  /** A second line of detail. */
+  description?: ReactNode
+  /** Content before the text, usually an icon. */
+  leadingSlot?: ReactNode
+  /** One action, such as Undo. `altText` says what it does for screen reader users; the toast closes on click. */
+  action?: { label: ReactNode; altText: string; onClick?: () => void }
+  /** How long the toast stays, in ms. Defaults to the `Toaster` duration. */
+  duration?: number
+  /** Accessible name of the close button. */
+  closeLabel?: string
+}
+
+type ToastRecord = ToastOptions & { id: string }
+
+let records: ToastRecord[] = []
+let counter = 0
+const listeners = new Set<() => void>()
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+const getSnapshot = () => records
+const update = (next: ToastRecord[]) => {
+  records = next
+  listeners.forEach((listener) => listener())
+}
+
+/**
+ * Opens a toast in the `Toaster` and returns its id. Call it from anywhere, such as an event handler
+ * or a data callback. `toast.dismiss(id)` closes one toast, `toast.dismiss()` closes all of them.
+ */
+export function toast(options: ToastOptions) {
+  const id = String(++counter)
+  update([...records, { ...options, id }])
+  return id
+}
+toast.dismiss = (id?: string) => update(id === undefined ? [] : records.filter((record) => record.id !== id))
+
+export type ToasterProps = {
+  /** Default time a toast stays, in ms. A toast's own `duration` wins. */
+  duration?: number
+  /** How many toasts show at once; the newest first. Older ones wait and return as newer ones close. */
+  limit?: number
+  /** Keeps the pile opened into a list instead of opening it on hover. */
+  expand?: boolean
+  /** Name of the notification region for screen reader users. `{hotkey}` stands for the key that focuses it (F8). */
+  label?: string
+  /** Classes for the viewport, to move or resize the list. */
+  className?: string
+}
+
+/**
+ * Toaster: mount it once near the app root, then open toasts with `toast()`. New toasts pile up with
+ * the newest in front, the pile opens into a list on hover or focus, and each toast closes by itself,
+ * on its close button, on its action and on a swipe.
+ */
+export function Toaster({ duration = 5000, limit = 3, expand, label, className }: ToasterProps) {
+  const all = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+  return (
+    <ToastProvider duration={duration}>
+      {all.slice(-limit).map(({ id, action, ...options }) => (
+        <Toast
+          key={id}
+          {...options}
+          action={
+            action && (
+              <ToastAction altText={action.altText} onClick={action.onClick}>
+                {action.label}
+              </ToastAction>
+            )
+          }
+          onOpenChange={(open) => {
+            if (!open) toast.dismiss(id)
+          }}
+        />
+      ))}
+      <ToastViewport expand={expand} label={label} className={className} />
+    </ToastProvider>
   )
 }
