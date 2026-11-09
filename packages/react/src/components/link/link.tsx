@@ -39,7 +39,8 @@ export const linkVariants = cva(
 
 const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
-export type LinkProps = ComponentProps<'a'> &
+// `type` is the link's own variant here, so the native `type` attribute of `a` is left out.
+export type LinkProps = Omit<ComponentProps<'a'>, 'type'> &
   Omit<VariantProps<typeof linkVariants>, 'state' | 'type' | 'size'> & {
     /** `inline` is underlined and sits inside running text; `standalone` has no underline and stands on its own. */
     type?: 'inline' | 'standalone'
@@ -82,7 +83,8 @@ export function Link({
     className: cn(linkVariants({ type, size, state: resolved }), className),
     ...props,
     ...disabledAttrs(disabled, false),
-    ...(disabled ? { tabIndex: -1 } : {}),
+    // Without `href` an `a` loses its link role, so a disabled link keeps it explicitly.
+    ...(disabled ? { role: 'link', tabIndex: -1 } : {}),
   }
 
   const withSlots = (label: ReactNode) => (
@@ -102,8 +104,10 @@ export function Link({
   )
 
   if (asChild && isValidElement(children)) {
-    const child = children as ReactElement<{ children?: ReactNode }>
-    return <Slot.Root {...rootProps}>{cloneElement(child, undefined, withSlots(child.props.children))}</Slot.Root>
+    const child = children as ReactElement<{ children?: ReactNode; href?: string }>
+    // A disabled link must not navigate, so the child's own `href` is dropped too.
+    const childProps = disabled ? { href: undefined } : undefined
+    return <Slot.Root {...rootProps}>{cloneElement(child, childProps, withSlots(child.props.children))}</Slot.Root>
   }
   return (
     <a href={disabled ? undefined : href} {...rootProps}>

@@ -4,6 +4,7 @@ import { cloneElement, isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { ChevronDownIcon, ChevronRightIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'
+import { disabledAttrs } from '../../lib/disabled'
 
 /**
  * Nav Item: a 32px row of the sidebar. Hover and focus-visible come from the browser in `default`; the
@@ -13,6 +14,7 @@ import { cn } from '../../lib/cn'
 const navItemVariants = cva(
   [
     'flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-label text-neutral outline-none select-none',
+    'data-disabled:pointer-events-none data-disabled:text-disabled',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
@@ -22,7 +24,6 @@ const navItemVariants = cva(
         hover: 'bg-ghost-neutral-hover',
         active: 'bg-neutral focus-visible:shadow-focus-ring',
         focus: 'shadow-focus-ring',
-        disabled: 'pointer-events-none text-disabled',
       },
     },
     defaultVariants: { state: 'default' },
@@ -36,11 +37,11 @@ export type NavItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   label: ReactNode
   /** Root rows sit at the left edge. Nested rows add an indent and go under a group row. */
   level?: 'root' | 'nested'
-  /** Freezes `hover` or `focus` for docs and tests. `active` marks the current page; `disabled` blocks the row. */
-  state?: 'default' | 'hover' | 'active' | 'focus' | 'disabled'
+  /** Freezes `hover` or `focus` for docs and tests. `active` marks the current page. */
+  state?: 'default' | 'hover' | 'active' | 'focus'
   /** Marks the current page. Same as `state="active"`. Mark one row only. */
   active?: boolean
-  /** Blocks the row and dims it. Same as `state="disabled"`. */
+  /** Blocks the row and dims it. */
   disabled?: boolean
   /** Shows the chevron of a group row. */
   chevron?: boolean
@@ -76,9 +77,10 @@ export function NavItem({
   children,
   ...props
 }: NavItemProps) {
-  const isDisabled = disabled || state === 'disabled'
+  const isDisabled = disabled
   const isActive = !isDisabled && (active || state === 'active')
-  const resolved = isDisabled ? 'disabled' : isActive ? 'active' : state
+  // A disabled row drops the frozen states; its look comes from `data-disabled`.
+  const resolved = isDisabled ? 'default' : isActive ? 'active' : state
   const Chevron = expanded ? ChevronDownIcon : ChevronRightIcon
 
   const content = (
@@ -104,19 +106,28 @@ export function NavItem({
   const rootProps = {
     'data-slot': 'nav-item',
     'data-level': level,
-    'data-disabled': isDisabled || undefined,
     'aria-current': isActive ? ('page' as const) : undefined,
     'aria-expanded': chevron ? expanded : undefined,
-    'aria-disabled': isDisabled || undefined,
     className: cn(navItemVariants({ state: resolved }), className),
-    ...props,
   }
 
   if (asChild && isValidElement(children)) {
-    return <Slot.Root {...rootProps}>{cloneElement(children, undefined, content)}</Slot.Root>
+    // A link cannot be disabled: a disabled one becomes a plain `span` with the link role and no `href`.
+    if (isDisabled) {
+      return (
+        <span role="link" {...rootProps} {...disabledAttrs(true, false)}>
+          {content}
+        </span>
+      )
+    }
+    return (
+      <Slot.Root {...rootProps} {...props}>
+        {cloneElement(children, undefined, content)}
+      </Slot.Root>
+    )
   }
   return (
-    <button type={type ?? 'button'} disabled={isDisabled} {...rootProps}>
+    <button type={type ?? 'button'} {...rootProps} {...props} {...disabledAttrs(isDisabled, true)}>
       {content}
     </button>
   )

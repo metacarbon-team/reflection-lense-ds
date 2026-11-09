@@ -180,7 +180,7 @@ function DocsPage() {
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
       {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
+        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-2!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
           <div className="row-span-3 grid grid-rows-subgrid">
             <Description of={Do} />
             <Canvas of={Do} />

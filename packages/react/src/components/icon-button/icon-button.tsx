@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { disabledAttrs } from '../../lib/disabled'
 
 /**
  * IconButton: the Button axes on a circle of 32/40/48px with a 16/24/32px icon. Unlike Button, the
@@ -11,15 +12,15 @@ export const iconButtonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center rounded-full border border-transparent outline-none select-none',
     'focus-visible:border-transparent focus-visible:shadow-focus-ring',
-    'disabled:pointer-events-none disabled:text-disabled disabled:shadow-none',
+    'data-disabled:pointer-events-none data-disabled:text-disabled data-disabled:shadow-none',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
   ],
   {
     variants: {
       tone: { default: '', accent: '', danger: '' },
       variant: {
-        solid: 'shadow-sm disabled:border-disabled disabled:bg-disabled',
-        outline: 'bg-transparent disabled:border-disabled disabled:bg-disabled',
+        solid: 'shadow-sm data-disabled:border-disabled data-disabled:bg-disabled',
+        outline: 'bg-transparent data-disabled:border-disabled data-disabled:bg-disabled',
         ghost: 'bg-transparent',
       },
       size: {
@@ -77,7 +78,16 @@ export type IconButtonProps = Omit<ComponentProps<'button'>, 'aria-label'> &
     asChild?: boolean
   }
 
-export function IconButton({ className, tone, variant, size, asChild = false, type, ...props }: IconButtonProps) {
+export function IconButton({
+  className,
+  tone,
+  variant,
+  size,
+  asChild = false,
+  type,
+  disabled,
+  ...props
+}: IconButtonProps) {
   const Comp = asChild ? Slot.Root : 'button'
   return (
     <Comp
@@ -85,6 +95,7 @@ export function IconButton({ className, tone, variant, size, asChild = false, ty
       type={asChild ? undefined : (type ?? 'button')}
       className={cn(iconButtonVariants({ tone, variant, size }), className)}
       {...props}
+      {...disabledAttrs(disabled, !asChild)}
     />
   )
 }

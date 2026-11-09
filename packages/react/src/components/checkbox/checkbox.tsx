@@ -11,7 +11,7 @@ import { useFieldControl } from '../field/field'
  * browser in `default`; the `hover` and `focus` variants freeze them for docs and tests.
  */
 const checkboxVariants = cva(
-  'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border outline-none',
+  'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border align-middle outline-none',
   {
     variants: {
       state: {
@@ -56,8 +56,8 @@ const checkboxVariants = cva(
 export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
   /** `false`, `true` or `'indeterminate'`, for a parent whose children are only partly selected. */
   checked?: boolean | 'indeterminate'
-  /** Freezes `hover` or `focus` for docs and tests; `'disabled'` disables like the `disabled` prop. Error comes from `aria-invalid`. */
-  state?: 'default' | 'hover' | 'focus' | 'error' | 'disabled'
+  /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
+  state?: 'default' | 'hover' | 'focus' | 'error'
 }
 
 /**
@@ -67,7 +67,7 @@ export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
  */
 export function Checkbox({ state = 'default', className, ...props }: CheckboxProps) {
   const control = useFieldControl(props)
-  const disabled = control.disabled || state === 'disabled'
+  const disabled = control.disabled
   const resolved = disabled ? 'disabled' : control.invalid ? 'error' : state
   return (
     <CheckboxPrimitive.Root

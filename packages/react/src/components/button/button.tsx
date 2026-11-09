@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { disabledAttrs } from '../../lib/disabled'
 
 /**
  * Button: tone × variant × size. Solid fills with the tone's emphasized background; outline and ghost
@@ -13,15 +14,15 @@ export const buttonVariants = cva(
     'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap',
     'rounded-md border border-transparent outline-none select-none',
     'focus-visible:border-transparent focus-visible:shadow-focus-ring',
-    'disabled:pointer-events-none disabled:text-disabled disabled:shadow-none',
+    'data-disabled:pointer-events-none data-disabled:text-disabled data-disabled:shadow-none',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
       tone: { default: '', accent: '', danger: '' },
       variant: {
-        solid: 'shadow-sm disabled:border-disabled disabled:bg-transparent',
-        outline: 'bg-transparent disabled:border-disabled',
+        solid: 'shadow-sm data-disabled:border-disabled data-disabled:bg-transparent',
+        outline: 'bg-transparent data-disabled:border-disabled',
         ghost: 'bg-transparent',
       },
       size: {
@@ -78,7 +79,7 @@ export type ButtonProps = ComponentProps<'button'> &
     asChild?: boolean
   }
 
-export function Button({ className, tone, variant, size, asChild = false, type, ...props }: ButtonProps) {
+export function Button({ className, tone, variant, size, asChild = false, type, disabled, ...props }: ButtonProps) {
   const Comp = asChild ? Slot.Root : 'button'
   return (
     <Comp
@@ -86,6 +87,7 @@ export function Button({ className, tone, variant, size, asChild = false, type, 
       type={asChild ? undefined : (type ?? 'button')}
       className={cn(buttonVariants({ tone, variant, size }), className)}
       {...props}
+      {...disabledAttrs(disabled, !asChild)}
     />
   )
 }

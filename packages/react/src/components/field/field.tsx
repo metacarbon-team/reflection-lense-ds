@@ -1,5 +1,27 @@
+import { cva } from 'class-variance-authority'
 import { createContext, useContext, useId, type AriaAttributes, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+
+const fieldVariants = cva('flex min-w-0 flex-col gap-1.5')
+
+const fieldLabelVariants = cva('text-label text-neutral', {
+  variants: { disabled: { true: 'text-disabled', false: '' } },
+  defaultVariants: { disabled: false },
+})
+
+// `disabled` comes after `invalid`, so a disabled caption stays gray even when the field is invalid.
+const fieldCaptionVariants = cva('min-w-0 flex-1 text-neutral-subtle', {
+  variants: {
+    invalid: { true: 'text-danger', false: '' },
+    disabled: { true: 'text-disabled', false: '' },
+  },
+  defaultVariants: { invalid: false, disabled: false },
+})
+
+const fieldCounterVariants = cva('ml-auto text-neutral-subtle tabular-nums', {
+  variants: { disabled: { true: 'text-disabled', false: '' } },
+  defaultVariants: { disabled: false },
+})
 
 interface FieldState {
   controlId: string
@@ -72,32 +94,21 @@ export function Field({ label, caption, error, counter, disabled = false, classN
         data-slot="field"
         data-invalid={invalid || undefined}
         data-disabled={disabled || undefined}
-        className={cn('flex min-w-0 flex-col gap-1.5', className)}
+        className={cn(fieldVariants(), className)}
         {...props}
       >
-        <label htmlFor={state.controlId} className={cn('text-label text-neutral', disabled && 'text-disabled')}>
+        <label htmlFor={state.controlId} className={cn(fieldLabelVariants({ disabled }))}>
           {label}
         </label>
         {children}
         {(message || counter) && (
           <div className="flex gap-2 text-caption">
             {message && (
-              <p
-                id={state.captionId}
-                className={cn(
-                  'min-w-0 flex-1 text-neutral-subtle',
-                  invalid && 'text-danger',
-                  disabled && 'text-disabled',
-                )}
-              >
+              <p id={state.captionId} className={cn(fieldCaptionVariants({ invalid, disabled }))}>
                 {message}
               </p>
             )}
-            {counter && (
-              <span className={cn('ml-auto text-neutral-subtle tabular-nums', disabled && 'text-disabled')}>
-                {counter}
-              </span>
-            )}
+            {counter && <span className={cn(fieldCounterVariants({ disabled }))}>{counter}</span>}
           </div>
         )}
       </div>

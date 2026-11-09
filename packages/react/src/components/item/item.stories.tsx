@@ -58,7 +58,7 @@ const meta = {
     trailingSlot: { control: 'select', options: Object.keys(trailingSlots), mapping: trailingSlots },
     divider: { control: 'boolean' },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
-    state: { control: 'select', options: ['default', 'hover', 'pressed', 'active', 'focus', 'disabled'] },
+    state: { control: 'select', options: ['default', 'hover', 'pressed', 'active', 'focus'] },
     disabled: { control: 'boolean' },
   },
 } satisfies Meta<typeof Item>
@@ -83,7 +83,7 @@ const stateRows: { name: string; props: Partial<ComponentProps<typeof Item>> }[]
   { name: 'pressed', props: { state: 'pressed' } },
   { name: 'active', props: { state: 'active' } },
   { name: 'focus', props: { state: 'focus' } },
-  { name: 'disabled', props: { state: 'disabled' } },
+  { name: 'disabled', props: { disabled: true } },
 ]
 
 /** Every state at each size, plus the divider and the error label. Hover, pressed and focus are frozen with `state`. */

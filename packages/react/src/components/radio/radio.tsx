@@ -12,32 +12,34 @@ import { useFieldControl } from '../field/field'
 const radioVariants = cva(
   [
     'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
-    'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
-    'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
+    'data-disabled:pointer-events-none data-disabled:data-[state=unchecked]:border-disabled data-disabled:data-[state=unchecked]:bg-disabled',
+    'data-disabled:data-[state=checked]:border-transparent data-disabled:data-[state=checked]:bg-disabled data-disabled:data-[state=checked]:text-disabled',
   ],
   {
     variants: {
       state: {
         default: [
-          'enabled:data-[state=unchecked]:border-neutral enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-xs',
-          'enabled:data-[state=unchecked]:hover:border-neutral-emphasized enabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
-          'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
-          'enabled:focus-visible:shadow-focus-ring enabled:data-[state=unchecked]:focus-visible:border-transparent',
+          'not-data-disabled:data-[state=unchecked]:border-neutral not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-xs',
+          'not-data-disabled:data-[state=unchecked]:hover:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
+          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
+          'not-data-disabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
+          // The ring is repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
+          'not-data-disabled:data-[state=unchecked]:focus-visible:border-transparent not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
+          'not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral-hover enabled:data-[state=unchecked]:shadow-xs',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
+          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral-hover not-data-disabled:data-[state=unchecked]:shadow-xs',
+          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized-hover not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
         ],
         focus: [
-          'enabled:border-transparent enabled:shadow-focus-ring',
-          'enabled:data-[state=unchecked]:bg-form-neutral',
-          'enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized',
+          'not-data-disabled:border-transparent not-data-disabled:shadow-focus-ring',
+          'not-data-disabled:data-[state=unchecked]:bg-form-neutral',
+          'not-data-disabled:data-[state=checked]:bg-neutral-emphasized not-data-disabled:data-[state=checked]:text-neutral-on-emphasized',
         ],
         error: [
-          'enabled:data-[state=unchecked]:border-danger-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-sm',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-danger-emphasized enabled:data-[state=checked]:text-danger-on-emphasized enabled:data-[state=checked]:shadow-sm',
-          'enabled:focus-visible:shadow-focus-ring',
+          'not-data-disabled:data-[state=unchecked]:border-danger-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-sm',
+          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-danger-emphasized not-data-disabled:data-[state=checked]:text-danger-on-emphasized not-data-disabled:data-[state=checked]:shadow-sm',
+          'not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
       },
     },
@@ -71,7 +73,7 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 
 export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
   /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
-  state?: 'default' | 'hover' | 'focus' | 'error' | 'disabled'
+  state?: 'default' | 'hover' | 'focus' | 'error'
 }
 
 /**
@@ -83,11 +85,11 @@ export function Radio({ state = 'default', disabled, className, ...props }: Radi
   const groupInvalid = useContext(RadioGroupInvalidContext)
   const invalid = groupInvalid || (ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false')
   // `disabled` is styled by the base classes, so the variant only decides between error and the frozen states.
-  const variant = state === 'disabled' ? 'default' : invalid ? 'error' : state
+  const variant = invalid ? 'error' : state
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio"
-      disabled={disabled || state === 'disabled' || undefined}
+      disabled={disabled || undefined}
       className={cn(radioVariants({ state: variant }), className)}
       {...props}
     >

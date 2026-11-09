@@ -1,5 +1,6 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState, type ReactNode } from 'react'
+import { useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { InlineAlert } from './inline-alert'
 
@@ -67,6 +68,13 @@ const copy: Record<Tone, { title: string; description: string }> = {
 
 const noop = () => {}
 
+/** The icon for `leadingSlot: 'auto'`: the one that matches the current tone. */
+const withToneIcon = ({ tone, leadingSlot, ...rest }: ComponentProps<typeof InlineAlert>) => ({
+  tone,
+  leadingSlot: leadingSlot === 'auto' ? icons[tone ?? 'default'] : leadingSlot,
+  ...rest,
+})
+
 const meta = {
   title: 'Components/Inline Alert',
   component: InlineAlert,
@@ -74,7 +82,8 @@ const meta = {
     tone: 'default',
     title: copy.default.title,
     description: copy.default.description,
-    leadingSlot: icons.default,
+    // 'auto' follows the tone, as the icon does in Figma; pick another option to pin an icon or hide it.
+    leadingSlot: 'auto',
     onDismiss: noop,
   },
   argTypes: {
@@ -84,12 +93,14 @@ const meta = {
     // The icon and the close button are shown when they are set; the controls switch them on and off.
     leadingSlot: {
       control: 'select',
-      options: ['none', ...tones],
-      mapping: { none: undefined, ...icons },
+      options: ['auto', 'none', ...tones],
+      mapping: { auto: 'auto', none: undefined, ...icons },
     },
     onDismiss: { control: 'boolean', mapping: { true: noop, false: undefined } },
     dismissLabel: { control: 'text' },
   },
+  parameters: { docs: { page: DocsPage } },
+  render: (args) => <InlineAlert {...withToneIcon(args)} />,
   // The alert fills its container, so single examples sit in a 400px column.
   decorators: [
     (Story, { parameters }) =>
@@ -159,7 +170,7 @@ export const Dismissible: Story = {
   render: (args) => {
     const [open, setOpen] = useState(true)
     return open ? (
-      <InlineAlert {...args} onDismiss={() => setOpen(false)} />
+      <InlineAlert {...withToneIcon(args)} onDismiss={() => setOpen(false)} />
     ) : (
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
         Show alert again
@@ -168,66 +179,130 @@ export const Dismissible: Story = {
   },
 }
 
-/** A Do and a Don't side by side. */
-const Pair = ({ doExample, dontExample }: { doExample: ReactNode; dontExample: ReactNode }) => (
-  <div className="grid w-full max-w-3xl grid-cols-2 gap-4">
-    {[
-      { label: 'Do', className: 'text-success', example: doExample },
-      { label: "Don't", className: 'text-danger', example: dontExample },
-    ].map(({ label, className, example }) => (
-      <div key={label} className="flex min-w-0 flex-col gap-2">
-        <span className={`text-label-small ${className}`}>{label}</span>
-        {example}
+/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <span
+        className={
+          tone === 'do'
+            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
+            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
+        }
+      >
+        {tone === 'do' ? 'Do' : 'Don’t'}
+      </span>
+      <div className="flex justify-center px-6 pb-6">
+        <div className="w-full max-w-104">{children}</div>
       </div>
-    ))}
-  </div>
-)
+    </div>
+  )
+}
 
-/** The tone and its icon carry the meaning. A success alert on an error sends the wrong signal. */
-export const MatchTheToneToTheMessage: Story = {
-  parameters: { wide: true },
+const guideline: Pick<Story, 'tags' | 'parameters'> = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', wide: true, controls: { disable: true } },
+}
+
+/** Match the tone to the message. The tone and its icon carry the meaning. A success alert on an error sends the wrong signal. */
+export const GuidelineMatchTheToneToTheMessageDo: Story = {
+  ...guideline,
   render: () => (
-    <Pair
-      doExample={<InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />}
-      dontExample={<InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />}
-    />
+    <Specimen tone="do">
+      <InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />
+    </Specimen>
   ),
 }
 
-/** The title is read at a glance. A long title is cut off with an ellipsis and hides the point; move the detail to the description. */
-export const KeepTheTitleShort: Story = {
-  parameters: { wide: true },
+export const GuidelineMatchTheToneToTheMessageDont: Story = {
+  ...guideline,
   render: () => (
-    <Pair
-      doExample={<InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />}
-      dontExample={
-        <InlineAlert
-          tone="success"
-          leadingSlot={icons.success}
-          onDismiss={noop}
-          title="Your profile changes have been saved successfully to your account"
-          description={copy.success.description}
-        />
-      }
-    />
+    <Specimen tone="dont">
+      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />
+    </Specimen>
   ),
 }
 
-/** The description adds new detail: what happened or what to do next. Repeating the title only makes the alert longer. */
-export const DoNotRepeatTheTitle: Story = {
-  parameters: { wide: true },
+/** Keep the title short. The title is read at a glance. A long title is cut off with an ellipsis and hides the point. Move the detail to the description. */
+export const GuidelineKeepTheTitleShortDo: Story = {
+  ...guideline,
   render: () => (
-    <Pair
-      doExample={<InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />}
-      dontExample={
-        <InlineAlert
-          tone="info"
-          leadingSlot={icons.info}
-          onDismiss={noop}
-          title="New version available"
-          description="A new version is available."
-        />
-      }
-    />
+    <Specimen tone="do">
+      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />
+    </Specimen>
   ),
+}
+
+export const GuidelineKeepTheTitleShortDont: Story = {
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <InlineAlert
+        tone="success"
+        leadingSlot={icons.success}
+        onDismiss={noop}
+        title="Your profile changes have been saved successfully to your account"
+        description={copy.success.description}
+      />
+    </Specimen>
+  ),
+}
+
+/** Do not repeat the title. The description adds new detail: what happened or what to do next. Repeating the title only makes the alert longer. */
+export const GuidelineDoNotRepeatTheTitleDo: Story = {
+  ...guideline,
+  render: () => (
+    <Specimen tone="do">
+      <InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineDoNotRepeatTheTitleDont: Story = {
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <InlineAlert
+        tone="info"
+        leadingSlot={icons.info}
+        onDismiss={noop}
+        title="New version available"
+        description="A new version is available."
+      />
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then each Do and Don't pair side by side. */
+function DocsPage() {
+  const rules = [
+    [GuidelineMatchTheToneToTheMessageDo, GuidelineMatchTheToneToTheMessageDont],
+    [GuidelineKeepTheTitleShortDo, GuidelineKeepTheTitleShortDont],
+    [GuidelineDoNotRepeatTheTitleDo, GuidelineDoNotRepeatTheTitleDont],
+  ] as const
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      {rules.map(([Do, Dont], index) => (
+        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
+          <div className="row-span-3 grid grid-rows-subgrid">
+            <Description of={Do} />
+            <Canvas of={Do} />
+          </div>
+          <div className="row-span-3 grid grid-rows-subgrid">
+            {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
+            <div>
+              <Description of={Dont} />
+            </div>
+            <Canvas of={Dont} />
+          </div>
+        </div>
+      ))}
+    </>
+  )
 }

@@ -1,11 +1,50 @@
+import { cva } from 'class-variance-authority'
 import { Select as SelectPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 import { CheckIcon, ChevronDownIcon } from '../../lib/icons'
-import { menuItemClassName, MenuSurfaceContext } from '../../lib/menu'
+import { menuItemVariants, menuSeparatorVariants, MenuSurfaceContext } from '../../lib/menu'
 import { buttonVariants } from '../button/button'
 import { useFieldControl } from '../field/field'
-import { controlFrame } from '../input/input'
+import { controlFrameVariants } from '../input/input'
+
+/**
+ * The trigger. `input` is the control frame of Input, for forms; `button` is a small outline Button,
+ * for toolbars. Open shows the focus ring in both.
+ */
+const selectTriggerVariants = cva([], {
+  variants: {
+    appearance: {
+      input: [controlFrameVariants(), 'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left'],
+      button: buttonVariants({ variant: 'outline', size: 'sm' }),
+    },
+  },
+  compoundVariants: [
+    {
+      appearance: ['input', 'button'],
+      class: [
+        'outline-none focus-visible:shadow-focus-ring data-[state=open]:shadow-focus-ring',
+        'data-placeholder:text-neutral-subtle *:data-[slot=select-value]:truncate',
+        '[&_svg]:size-4 [&_svg]:shrink-0',
+      ],
+    },
+  ],
+  defaultVariants: { appearance: 'input' },
+})
+
+const selectIconVariants = cva('', {
+  variants: { appearance: { input: 'text-neutral-subtle', button: '' } },
+  defaultVariants: { appearance: 'input' },
+})
+
+const selectContentVariants = cva([
+  'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden',
+  'rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
+])
+
+const selectViewportVariants = cva('flex flex-col gap-0.5 p-1')
+
+const selectIndicatorVariants = cva('ml-auto flex items-center')
 
 export const Select = (props: ComponentProps<typeof SelectPrimitive.Root>) => (
   <SelectPrimitive.Root data-slot="select" {...props} />
@@ -34,19 +73,11 @@ export function SelectTrigger({ appearance = 'input', className, children, ...pr
       data-disabled={control.disabled || undefined}
       {...props}
       {...control.attributes}
-      className={cn(
-        appearance === 'input'
-          ? [controlFrame, 'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left']
-          : buttonVariants({ variant: 'outline', size: 'sm' }),
-        'outline-none focus-visible:shadow-focus-ring data-[state=open]:shadow-focus-ring',
-        'data-placeholder:text-neutral-subtle *:data-[slot=select-value]:truncate',
-        '[&_svg]:size-4 [&_svg]:shrink-0',
-        className,
-      )}
+      className={cn(selectTriggerVariants({ appearance }), className)}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className={appearance === 'input' ? 'text-neutral-subtle' : undefined} />
+        <ChevronDownIcon className={selectIconVariants({ appearance }) || undefined} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -66,14 +97,10 @@ export function SelectContent({
         data-slot="select-content"
         position={position}
         sideOffset={sideOffset}
-        className={cn(
-          'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden',
-          'rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
-          className,
-        )}
+        className={cn(selectContentVariants(), className)}
         {...props}
       >
-        <SelectPrimitive.Viewport className="flex flex-col gap-0.5 p-1">
+        <SelectPrimitive.Viewport className={selectViewportVariants()}>
           <MenuSurfaceContext value="select">{children}</MenuSurfaceContext>
         </SelectPrimitive.Viewport>
       </SelectPrimitive.Content>
@@ -84,9 +111,9 @@ export function SelectContent({
 /** One option, an Item sm: label on the left, a check on the right when selected. */
 export function SelectItem({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
-    <SelectPrimitive.Item data-slot="select-item" className={cn(menuItemClassName, className)} {...props}>
+    <SelectPrimitive.Item data-slot="select-item" className={cn(menuItemVariants(), className)} {...props}>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator className="ml-auto flex items-center">
+      <SelectPrimitive.ItemIndicator className={selectIndicatorVariants()}>
         <CheckIcon />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
@@ -97,7 +124,7 @@ export function SelectSeparator({ className, ...props }: ComponentProps<typeof S
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn('mx-1 my-1 border-t border-neutral-subtle', className)}
+      className={cn(menuSeparatorVariants(), className)}
       {...props}
     />
   )

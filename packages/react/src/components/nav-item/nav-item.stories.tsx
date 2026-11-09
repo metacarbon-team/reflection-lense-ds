@@ -59,7 +59,7 @@ const meta = {
   argTypes: {
     label: { control: 'text' },
     level: { control: 'inline-radio', options: ['root', 'nested'] },
-    state: { control: 'select', options: ['default', 'hover', 'active', 'focus', 'disabled'] },
+    state: { control: 'select', options: ['default', 'hover', 'active', 'focus'] },
     active: { control: 'boolean' },
     disabled: { control: 'boolean' },
     chevron: { control: 'boolean' },
@@ -90,7 +90,10 @@ const columns: { name: string; props: Partial<ComponentProps<typeof NavItem>> }[
   { name: 'group, expanded', props: { level: 'root', chevron: true, expanded: true } },
 ]
 
-/** Both levels in every state, and a root group row closed and expanded. Hover and focus are frozen with `state`. */
+/**
+ * Both levels in every state, and a root group row closed and expanded. Hover and focus are frozen
+ * with `state`; the disabled row uses `disabled`.
+ */
 export const Variants: Story = {
   render: (args) => (
     <div className="inline-grid grid-cols-[auto_repeat(4,15rem)] items-center gap-x-3 gap-y-2">
@@ -108,10 +111,10 @@ export const Variants: Story = {
               key={name}
               {...args}
               active={false}
-              disabled={false}
+              disabled={state === 'disabled'}
               leadingSlot={leadingSlots.icon}
               trailingSlot={null}
-              state={state}
+              state={state === 'disabled' ? 'default' : state}
               {...props}
             />
           ))}
@@ -163,11 +166,19 @@ export const LongLabel: Story = {
   args: { label: 'A label that is much too long to fit in one line of the row' },
 }
 
-/** `asChild` renders a link with the row's styles. */
+/**
+ * `asChild` renders a link with the row's styles. A disabled link cannot keep its `href`, so it
+ * becomes a `span` with the link role, marked `aria-disabled` and `data-disabled`.
+ */
 export const AsLink: Story = {
   render: () => (
-    <NavItem asChild label="Read the docs" leadingSlot={<HomeIcon />}>
-      <a href="#docs" />
-    </NavItem>
+    <div className="flex flex-col gap-1">
+      <NavItem asChild label="Read the docs" leadingSlot={<HomeIcon />}>
+        <a href="#docs" />
+      </NavItem>
+      <NavItem asChild disabled label="Read the docs" leadingSlot={<HomeIcon />}>
+        <a href="#docs" />
+      </NavItem>
+    </div>
   ),
 }

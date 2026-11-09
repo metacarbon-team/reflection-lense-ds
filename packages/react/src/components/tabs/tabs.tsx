@@ -30,7 +30,7 @@ export const tabsTriggerVariants = cva(
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
-    'disabled:pointer-events-none disabled:text-disabled',
+    'data-disabled:pointer-events-none data-disabled:text-disabled',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {

@@ -1,4 +1,6 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { ReactNode } from 'react'
 import { Link } from './link'
 
 const ArrowRight = () => (
@@ -52,6 +54,7 @@ const meta = {
     leadingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
     trailingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Link>
 
 export default meta
@@ -138,4 +141,96 @@ export const AsChild: Story = {
       <a href="#docs">Read the docs</a>
     </Link>
   ),
+}
+
+/** A disabled `asChild` link loses the child's `href` too, so it cannot navigate. */
+export const DisabledAsChild: Story = {
+  render: (args) => (
+    <Link {...args} asChild disabled>
+      <a href="#docs">Read the docs</a>
+    </Link>
+  ),
+}
+
+/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <span
+        className={
+          tone === 'do'
+            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
+            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
+        }
+      >
+        {tone === 'do' ? 'Do' : 'Don’t'}
+      </span>
+      <div className="flex justify-center px-6 pb-6">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Keep one size within a group of links. Links placed next to each other use the same size, so the
+ * group reads as one set.
+ */
+export const GuidelineDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <div className="flex items-center gap-4">
+        <Link type="standalone" size="sm" href="#">
+          Terms
+        </Link>
+        <Link type="standalone" size="sm" href="#">
+          Privacy
+        </Link>
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-4">
+        <Link type="standalone" size="sm" href="#">
+          Terms
+        </Link>
+        <Link type="standalone" size="md" href="#">
+          Privacy
+        </Link>
+      </div>
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side. */
+function DocsPage() {
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      <div className="-mt-2! grid grid-cols-2 gap-x-6 [&_p]:mb-0!">
+        <div className="row-span-3 grid grid-rows-subgrid">
+          <Description of={GuidelineDo} />
+          <Canvas of={GuidelineDo} />
+        </div>
+        <div className="row-span-3 grid grid-rows-subgrid">
+          {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
+          <div>
+            <Description of={GuidelineDont} />
+          </div>
+          <Canvas of={GuidelineDont} />
+        </div>
+      </div>
+    </>
+  )
 }

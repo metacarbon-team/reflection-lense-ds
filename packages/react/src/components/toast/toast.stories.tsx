@@ -1,3 +1,4 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
@@ -86,6 +87,7 @@ const meta = {
     leadingSlot: { control: 'boolean' },
     action: { control: 'boolean' },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Toast>
 
 export default meta
@@ -277,4 +279,195 @@ export const Triggered: Story = {
       <TriggeredDemo />
     </div>
   ),
+}
+
+/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <span
+        className={
+          tone === 'do'
+            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
+            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
+        }
+      >
+        {tone === 'do' ? 'Do' : 'Don’t'}
+      </span>
+      <div className="flex justify-center px-6 pb-6">{children}</div>
+    </div>
+  )
+}
+
+const successIcon = (
+  <span className="text-success">
+    <SuccessIcon />
+  </span>
+)
+const dangerIcon = (
+  <span className="text-danger">
+    <DangerIcon />
+  </span>
+)
+const date = 'Sunday, December 03 at 9:00 AM'
+
+/**
+ * Keep the title short. A toast disappears in a few seconds, so the title must read in one glance. A
+ * long title is cut off with an ellipsis. Move the detail to the description.
+ */
+export const GuidelineKeepTheTitleShortDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <Stage label="Notifications: Do, keep the title short">
+        <Pinned label="Event created" description={date} leadingSlot={successIcon} />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+export const GuidelineKeepTheTitleShortDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <Stage label="Notifications: Don’t, keep the title short">
+        <Pinned
+          label="Your event has been successfully created and added to the shared team calendar"
+          description={date}
+          leadingSlot={successIcon}
+        />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+/**
+ * Match the type to the meaning. The icon and its color carry the meaning. A Success icon on an error
+ * message sends the wrong signal.
+ */
+export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <Stage label="Notifications: Do, match the type to the meaning">
+        <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={dangerIcon} />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <Stage label="Notifications: Don’t, match the type to the meaning">
+        <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={successIcon} />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+/**
+ * Do not repeat the title. The description adds new detail: who, when or what changed. Repeating the
+ * title only makes the toast longer.
+ */
+export const GuidelineDoNotRepeatTheTitleDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <Stage label="Notifications: Do, do not repeat the title">
+        <Pinned label="Event has been created" description={date} leadingSlot={successIcon} />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+export const GuidelineDoNotRepeatTheTitleDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <Stage label="Notifications: Don’t, do not repeat the title">
+        <Pinned label="Event has been created" description="Your event has been created" leadingSlot={successIcon} />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+/**
+ * Use the action to undo or view. The action reverses the change or opens the result. A toast closes
+ * by itself, so an OK button adds nothing.
+ */
+export const GuidelineUseTheActionToUndoOrViewDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <Stage label="Notifications: Do, use the action to undo or view">
+        <Pinned
+          label="Event deleted"
+          description={date}
+          leadingSlot={<BellIcon />}
+          action={<ToastAction altText="Undo the deletion">Undo</ToastAction>}
+        />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+export const GuidelineUseTheActionToUndoOrViewDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <Stage label="Notifications: Don’t, use the action to undo or view">
+        <Pinned
+          label="Event deleted"
+          description={date}
+          leadingSlot={<BellIcon />}
+          action={<ToastAction altText="Close the notification">OK</ToastAction>}
+        />
+      </Stage>
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side, one pair per rule. */
+function DocsPage() {
+  const rules = [
+    [GuidelineKeepTheTitleShortDo, GuidelineKeepTheTitleShortDont],
+    [GuidelineMatchTheTypeToTheMeaningDo, GuidelineMatchTheTypeToTheMeaningDont],
+    [GuidelineDoNotRepeatTheTitleDo, GuidelineDoNotRepeatTheTitleDont],
+    [GuidelineUseTheActionToUndoOrViewDo, GuidelineUseTheActionToUndoOrViewDont],
+  ] as const
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      {rules.map(([Do, Dont], index) => (
+        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
+          <div className="row-span-3 grid grid-rows-subgrid">
+            <Description of={Do} />
+            <Canvas of={Do} />
+          </div>
+          <div className="row-span-3 grid grid-rows-subgrid">
+            {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
+            <div>
+              <Description of={Dont} />
+            </div>
+            <Canvas of={Dont} />
+          </div>
+        </div>
+      ))}
+    </>
+  )
 }

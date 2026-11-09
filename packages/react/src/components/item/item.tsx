@@ -1,31 +1,34 @@
 import { cva } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { disabledAttrs } from '../../lib/disabled'
 
 /**
  * Size sets the row padding and the text roles of its parts. Hover, pressed and focus-visible come
  * from the browser in `default`; the `hover`, `pressed` and `focus` states freeze them for docs and
- * tests. `active` marks the current row. Colors of a disabled row come from `group-data-disabled`
- * on each part.
+ * tests. `active` marks the current row. A disabled row is marked with `data-disabled`: the row
+ * ignores the pointer, and each part takes its colors from `group-data-disabled`.
  */
-const itemVariants = cva('group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none', {
-  variants: {
-    size: {
-      sm: 'px-3 py-1',
-      md: 'px-4 py-1.5',
-      lg: 'px-4 py-3',
+const itemVariants = cva(
+  'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
+  {
+    variants: {
+      size: {
+        sm: 'px-3 py-1',
+        md: 'px-4 py-1.5',
+        lg: 'px-4 py-3',
+      },
+      state: {
+        default: 'hover:bg-ghost-neutral-hover active:bg-ghost-neutral-pressed focus-visible:shadow-focus-ring',
+        hover: 'bg-ghost-neutral-hover',
+        pressed: 'bg-ghost-neutral-pressed',
+        active: 'bg-neutral',
+        focus: 'shadow-focus-ring',
+      },
     },
-    state: {
-      default: 'hover:bg-ghost-neutral-hover active:bg-ghost-neutral-pressed focus-visible:shadow-focus-ring',
-      hover: 'bg-ghost-neutral-hover',
-      pressed: 'bg-ghost-neutral-pressed',
-      active: 'bg-neutral',
-      focus: 'shadow-focus-ring',
-      disabled: 'pointer-events-none',
-    },
+    defaultVariants: { size: 'md', state: 'default' },
   },
-  defaultVariants: { size: 'md', state: 'default' },
-})
+)
 
 /** Text role of each part per size. The error label uses the meta role. */
 const textRoles = {
@@ -59,9 +62,12 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   divider?: boolean
   /** L fits a title with a description. M is tighter and fits one-line rows. S is the densest. */
   size?: 'sm' | 'md' | 'lg'
-  /** Freezes `hover`, `pressed` or `focus` for docs and tests. `active` marks the current row; `disabled` blocks it. */
-  state?: 'default' | 'hover' | 'pressed' | 'active' | 'focus' | 'disabled'
-  /** Blocks the row and dims its text. Same as `state="disabled"`. */
+  /** Freezes `hover`, `pressed` or `focus` for docs and tests. `active` marks the current row. */
+  state?: 'default' | 'hover' | 'pressed' | 'active' | 'focus'
+  /**
+   * Blocks the row and dims its text. With `htmlFor`, also disable the control in the slot: the row
+   * only takes the disabled look, the control itself is what must be blocked.
+   */
   disabled?: boolean
   /**
    * The `id` of the checkbox, radio or switch in a slot. The row becomes a `label` for it, so a click
@@ -101,7 +107,10 @@ export function Item({
   className,
   ...props
 }: ItemProps) {
-  const isDisabled = disabled || state === 'disabled'
+  const isDisabled = disabled
+  // `aria-disabled` only means something on an element with a role. A plain row, or a label tied to a
+  // control by `htmlFor`, gets just `data-disabled`.
+  const { 'aria-disabled': ariaDisabled, ...disabledProps } = disabledAttrs(isDisabled, false)
   const roles = textRoles[size]
   const hasLeading = hasContent(leadingSlot)
   const hasTrailing = hasContent(trailingSlot)
@@ -110,15 +119,16 @@ export function Item({
   return (
     <Root
       data-slot="item"
-      data-disabled={isDisabled || undefined}
-      aria-disabled={isDisabled || undefined}
       className={cn(
-        itemVariants({ size, state: isDisabled ? 'disabled' : state }),
+        // A disabled row drops the frozen states; its look comes from `data-disabled`.
+        itemVariants({ size, state: isDisabled ? 'default' : state }),
         htmlFor !== undefined && 'cursor-pointer',
         className,
       )}
       {...(htmlFor === undefined ? undefined : { htmlFor })}
       {...props}
+      {...disabledProps}
+      {...(props.role && ariaDisabled ? { 'aria-disabled': ariaDisabled } : undefined)}
     >
       <div className="flex items-center gap-2">
         {hasLeading && (

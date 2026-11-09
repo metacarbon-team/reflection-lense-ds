@@ -1,7 +1,7 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { useArgs } from 'storybook/preview-api'
-import { Guideline, Section } from '../../docs/guidelines'
 import { Field } from '../field/field'
 import { Checkbox } from './checkbox'
 
@@ -11,8 +11,9 @@ const meta = {
   args: { 'aria-label': 'Subscribe', checked: false, state: 'default', disabled: false },
   argTypes: {
     checked: { control: 'inline-radio', options: [false, true, 'indeterminate'] },
-    state: { control: 'inline-radio', options: ['default', 'hover', 'focus', 'error', 'disabled'] },
+    state: { control: 'inline-radio', options: ['default', 'hover', 'focus', 'error'] },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Checkbox>
 
 export default meta
@@ -30,7 +31,7 @@ const selections = ['unchecked', 'checked', 'indeterminate'] as const
 const checkedOf = { unchecked: false, checked: true, indeterminate: 'indeterminate' } as const
 const states = ['default', 'hover', 'focus', 'error', 'disabled'] as const
 
-/** Every selection in every state. Hover and focus are frozen with `state`. */
+/** Every selection in every state. Hover and focus are frozen with `state`; the disabled row uses `disabled`. */
 export const Variants: Story = {
   render: (args) => (
     <div className="inline-grid grid-cols-[auto_repeat(3,max-content)] items-center gap-x-8 gap-y-4">
@@ -49,7 +50,8 @@ export const Variants: Story = {
               {...args}
               aria-label={`${selection}, ${state}`}
               checked={checkedOf[selection]}
-              state={state}
+              state={state === 'disabled' ? 'default' : state}
+              disabled={args.disabled || state === 'disabled'}
             />
           ))}
         </div>
@@ -138,8 +140,8 @@ function NotificationList({ mirror }: { mirror: boolean }) {
         : 'indeterminate'
     : true
   return (
-    <div className="flex w-full max-w-104 flex-col rounded-xl border border-neutral-subtle bg-card-neutral-emphasized p-4 shadow-sm">
-      <div className="flex items-center gap-2 px-4 py-3">
+    <div className="flex w-full max-w-104 flex-col">
+      <div className="flex items-center gap-2 py-3">
         <Checkbox
           id={`${prefix}-parent`}
           checked={parent}
@@ -154,7 +156,7 @@ function NotificationList({ mirror }: { mirror: boolean }) {
       </div>
       <div className="flex flex-col pl-8">
         {notifications.map((n) => (
-          <div key={n.id} className="flex flex-col px-4 py-3">
+          <div key={n.id} className="flex flex-col py-3">
             <div className="flex items-center gap-2">
               <Checkbox
                 id={`${prefix}-${n.id}`}
@@ -175,25 +177,69 @@ function NotificationList({ mirror }: { mirror: boolean }) {
   )
 }
 
-/** Usage rules for the Checkbox, from the Figma page "07. Checkbox". */
-export const Documentation: Story = {
-  parameters: { layout: 'padded', controls: { disable: true } },
-  render: () => (
-    <div className="flex max-w-320 flex-col gap-12 text-neutral">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-heading-large">Checkbox</h1>
-        <p className="text-body text-neutral-subtle">
-          A single boolean control with a value (unchecked, checked, indeterminate) and a state.
-        </p>
-      </header>
-      <Section title="Guidelines">
-        <Guideline
-          rule="Use indeterminate only for a partly selected group."
-          comment="Indeterminate marks a parent whose children are only partly selected. If all children are selected the parent is checked; if none, unchecked."
-          doExample={<NotificationList mirror />}
-          dontExample={<NotificationList mirror={false} />}
-        />
-      </Section>
+/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <span
+        className={
+          tone === 'do'
+            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
+            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
+        }
+      >
+        {tone === 'do' ? 'Do' : 'Don’t'}
+      </span>
+      <div className="flex justify-center px-6 pb-6">{children}</div>
     </div>
+  )
+}
+
+/**
+ * Use indeterminate only for a partly selected group. Indeterminate marks a parent whose children are
+ * only partly selected. If all children are selected the parent is checked; if none, unchecked.
+ */
+export const GuidelineDo: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <NotificationList mirror />
+    </Specimen>
   ),
+}
+
+/** The parent is checked while only 2 of 4 children are selected. */
+export const GuidelineDont: Story = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <NotificationList mirror={false} />
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side. */
+function DocsPage() {
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      <div className="-mt-2! grid grid-cols-2 gap-x-6 [&_p]:mb-0!">
+        <div className="row-span-3 grid grid-rows-subgrid">
+          <Description of={GuidelineDo} />
+          <Canvas of={GuidelineDo} />
+        </div>
+        <div className="row-span-3 grid grid-rows-subgrid">
+          <Description of={GuidelineDont} />
+          <Canvas of={GuidelineDont} />
+        </div>
+      </div>
+    </>
+  )
 }

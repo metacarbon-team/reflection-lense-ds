@@ -61,7 +61,8 @@ export function InlineAlert({
   dismissLabel = 'Dismiss',
   ...props
 }: InlineAlertProps) {
-  const hasDescription = description !== undefined && description !== null && description !== false && description !== ''
+  const hasDescription =
+    description !== undefined && description !== null && description !== false && description !== ''
   return (
     <Card
       data-slot="inline-alert"
