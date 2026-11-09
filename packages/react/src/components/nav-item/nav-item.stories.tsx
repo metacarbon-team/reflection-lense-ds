@@ -52,6 +52,7 @@ const meta = {
     active: false,
     disabled: false,
     chevron: false,
+    expanded: false,
     leadingSlot: 'icon',
     trailingSlot: 'none',
   },
@@ -62,6 +63,7 @@ const meta = {
     active: { control: 'boolean' },
     disabled: { control: 'boolean' },
     chevron: { control: 'boolean' },
+    expanded: { control: 'boolean' },
     leadingSlot: { control: 'select', options: Object.keys(leadingSlots), mapping: leadingSlots },
     trailingSlot: { control: 'select', options: Object.keys(trailingSlots), mapping: trailingSlots },
   },
@@ -84,13 +86,14 @@ const states = ['default', 'hover', 'active', 'focus', 'disabled'] as const
 const columns: { name: string; props: Partial<ComponentProps<typeof NavItem>> }[] = [
   { name: 'root', props: { level: 'root' } },
   { name: 'nested', props: { level: 'nested' } },
-  { name: 'root + chevron', props: { level: 'root', chevron: true } },
+  { name: 'group, closed', props: { level: 'root', chevron: true } },
+  { name: 'group, expanded', props: { level: 'root', chevron: true, expanded: true } },
 ]
 
-/** Both levels in every state, and a root group row with a chevron. Hover and focus are frozen with `state`. */
+/** Both levels in every state, and a root group row closed and expanded. Hover and focus are frozen with `state`. */
 export const Variants: Story = {
   render: (args) => (
-    <div className="inline-grid grid-cols-[auto_repeat(3,15rem)] items-center gap-x-3 gap-y-2">
+    <div className="inline-grid grid-cols-[auto_repeat(4,15rem)] items-center gap-x-3 gap-y-2">
       <span />
       {columns.map(({ name }) => (
         <span key={name} className="text-caption text-neutral-subtle">
@@ -123,11 +126,11 @@ export const LabelOnly: Story = {
   args: { leadingSlot: 'none' },
 }
 
-/** A group row with its children. The group is the current page, so its chevron points down; the children are nested. */
+/** An expanded group row with its children. `expanded` turns the chevron down and sets `aria-expanded`; the children are nested. */
 export const Group: Story = {
   render: () => (
     <nav aria-label="Sidebar" className="flex flex-col gap-0.5">
-      <NavItem label="Home" leadingSlot={<HomeIcon />} chevron active />
+      <NavItem label="Home" leadingSlot={<HomeIcon />} chevron expanded />
       <NavItem label="Inbox" level="nested" leadingSlot={<InboxIcon />} />
       <NavItem label="Projects" level="nested" leadingSlot={<FolderIcon />} />
     </nav>

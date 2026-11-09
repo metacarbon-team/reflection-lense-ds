@@ -42,8 +42,10 @@ export type NavItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   active?: boolean
   /** Blocks the row and dims it. Same as `state="disabled"`. */
   disabled?: boolean
-  /** Shows the chevron of a group row. It points right, and down while the row is active. */
+  /** Shows the chevron of a group row. */
   chevron?: boolean
+  /** Whether the group is open. The chevron points down when open and right when closed, and the row sets `aria-expanded`. Needs `chevron`. */
+  expanded?: boolean
   /** Content before the label, 16 × 16: usually an icon. The row shows the slot when it is set. */
   leadingSlot?: ReactNode
   /** Content after the label, 16 × 16. The row shows the slot when it is set. */
@@ -65,6 +67,7 @@ export function NavItem({
   active = false,
   disabled = false,
   chevron = false,
+  expanded = false,
   leadingSlot,
   trailingSlot,
   asChild = false,
@@ -76,7 +79,7 @@ export function NavItem({
   const isDisabled = disabled || state === 'disabled'
   const isActive = !isDisabled && (active || state === 'active')
   const resolved = isDisabled ? 'disabled' : isActive ? 'active' : state
-  const Chevron = isActive ? ChevronDownIcon : ChevronRightIcon
+  const Chevron = expanded ? ChevronDownIcon : ChevronRightIcon
 
   const content = (
     <>
@@ -103,6 +106,7 @@ export function NavItem({
     'data-level': level,
     'data-disabled': isDisabled || undefined,
     'aria-current': isActive ? ('page' as const) : undefined,
+    'aria-expanded': chevron ? expanded : undefined,
     'aria-disabled': isDisabled || undefined,
     className: cn(navItemVariants({ state: resolved }), className),
     ...props,
