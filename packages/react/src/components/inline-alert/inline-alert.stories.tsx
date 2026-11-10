@@ -200,6 +200,7 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
  * The tone and its icon carry the meaning. A success alert on an error sends the wrong signal.
  */
 export const GuidelineMatchTheToneToTheMessage: Story = {
+  name: 'Guideline 1',
   ...guideline,
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -219,6 +220,7 @@ export const GuidelineMatchTheToneToTheMessage: Story = {
  * detail to the description.
  */
 export const GuidelineKeepTheTitleShort: Story = {
+  name: 'Guideline 2',
   ...guideline,
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -244,6 +246,7 @@ export const GuidelineKeepTheTitleShort: Story = {
  * alert longer.
  */
 export const GuidelineDoNotRepeatTheTitle: Story = {
+  name: 'Guideline 3',
   ...guideline,
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">

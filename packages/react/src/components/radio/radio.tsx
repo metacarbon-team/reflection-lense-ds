@@ -11,7 +11,7 @@ import { useFieldControl } from '../field/field'
  */
 const radioVariants = cva(
   [
-    'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
+    'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
     'data-disabled:pointer-events-none data-disabled:data-[state=unchecked]:border-disabled data-disabled:data-[state=unchecked]:bg-disabled',
     'data-disabled:data-[state=checked]:border-transparent data-disabled:data-[state=checked]:bg-disabled data-disabled:data-[state=checked]:text-disabled',
   ],
@@ -19,8 +19,8 @@ const radioVariants = cva(
     variants: {
       state: {
         default: [
-          'not-data-disabled:data-[state=unchecked]:border-neutral not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-xs',
-          'not-data-disabled:data-[state=unchecked]:hover:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
+          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-xs',
+          'not-data-disabled:data-[state=unchecked]:hover:bg-neutral-hover',
           'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
           'not-data-disabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
           // The ring is repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
@@ -28,7 +28,7 @@ const radioVariants = cva(
           'not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral-hover not-data-disabled:data-[state=unchecked]:shadow-xs',
+          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-neutral-hover not-data-disabled:data-[state=unchecked]:shadow-xs',
           'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized-hover not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
         ],
         focus: [
@@ -72,24 +72,26 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 }
 
 export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
-  /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
+  /** Freezes `hover` or `focus` for docs and tests. `error` also sets `aria-invalid`; disabled comes from `disabled`. */
   state?: 'default' | 'hover' | 'focus' | 'error'
 }
 
 /**
  * Radio: a 20×20 circle that shows an 8 px dot when selected. Use it inside a `RadioGroup`; once
- * selected it changes only by choosing another option. Name it with a `<label htmlFor>` or `aria-label`.
+ * selected it changes only by choosing another option. Error comes from `aria-invalid`, a Field error
+ * on the group or `state="error"`. Name it with a `<label htmlFor>` or `aria-label`.
  */
-export function Radio({ state = 'default', disabled, className, ...props }: RadioProps) {
+export function Radio({ state = 'default', className, ...props }: RadioProps) {
   const ariaInvalid = props['aria-invalid']
   const groupInvalid = useContext(RadioGroupInvalidContext)
-  const invalid = groupInvalid || (ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false')
+  const invalid =
+    groupInvalid || state === 'error' || (ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false')
   // `disabled` is styled by the base classes, so the variant only decides between error and the frozen states.
   const variant = invalid ? 'error' : state
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio"
-      disabled={disabled || undefined}
+      aria-invalid={state === 'error' || undefined}
       className={cn(radioVariants({ state: variant }), className)}
       {...props}
     >

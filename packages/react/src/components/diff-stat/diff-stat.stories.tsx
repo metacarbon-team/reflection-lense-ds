@@ -105,6 +105,7 @@ function WrongStat({ added, removed, swapped }: { added: string; removed: string
  * Numbers start with + or −, so the meaning never depends on color alone.
  */
 export const GuidelineAlwaysShowTheSign: Story = {
+  name: 'Guideline 1',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -124,6 +125,7 @@ export const GuidelineAlwaysShowTheSign: Story = {
  * Write the full count. Rounded values hide how big the change really is, and a reviewer needs the exact size.
  */
 export const GuidelineShowExactNumbers: Story = {
+  name: 'Guideline 2',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -143,6 +145,7 @@ export const GuidelineShowExactNumbers: Story = {
  * Keep the colors the same everywhere. Swapped colors make a deletion look like a good thing.
  */
 export const GuidelineGreenForAddedRedForRemoved: Story = {
+  name: 'Guideline 3',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (

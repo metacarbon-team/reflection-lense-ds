@@ -194,6 +194,7 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
  * with Neutral or Ghost. Best practice: one main action per page.
  */
 export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
+  name: 'Guideline 1',
   ...guideline,
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -226,6 +227,7 @@ export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
  * Preserve the 8 px gap consistently across button groups.
  */
 export const GuidelineUse8PxGapBetweenButtonsInGroups: Story = {
+  name: 'Guideline 2',
   ...guideline,
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">

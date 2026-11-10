@@ -229,10 +229,7 @@ function DeliveryDont() {
   )
 }
 
-/**
- * Select only one radio in a group. Inside a group only one option can be selected at a time. Once
- * selected, a radio changes only by choosing another option.
- */
+/** Select only one radio in a group. Inside a group only one option can be selected at a time. */
 export const GuidelineDo: Story = {
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },

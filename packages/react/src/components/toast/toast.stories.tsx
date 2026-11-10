@@ -318,6 +318,7 @@ const date = 'Sunday, December 03 at 9:00 AM'
  * long title is cut off with an ellipsis. Move the detail to the description.
  */
 export const GuidelineKeepTheTitleShortDo: Story = {
+  name: 'Guideline 1 Do',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -330,6 +331,7 @@ export const GuidelineKeepTheTitleShortDo: Story = {
 }
 
 export const GuidelineKeepTheTitleShortDont: Story = {
+  name: 'Guideline 1 Don’t',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -350,6 +352,7 @@ export const GuidelineKeepTheTitleShortDont: Story = {
  * message sends the wrong signal.
  */
 export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
+  name: 'Guideline 2 Do',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -362,6 +365,7 @@ export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
 }
 
 export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
+  name: 'Guideline 2 Don’t',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -378,6 +382,7 @@ export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
  * title only makes the toast longer.
  */
 export const GuidelineDoNotRepeatTheTitleDo: Story = {
+  name: 'Guideline 3 Do',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -390,6 +395,7 @@ export const GuidelineDoNotRepeatTheTitleDo: Story = {
 }
 
 export const GuidelineDoNotRepeatTheTitleDont: Story = {
+  name: 'Guideline 3 Don’t',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -406,6 +412,7 @@ export const GuidelineDoNotRepeatTheTitleDont: Story = {
  * by itself, so an OK button adds nothing.
  */
 export const GuidelineUseTheActionToUndoOrViewDo: Story = {
+  name: 'Guideline 4 Do',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -423,6 +430,7 @@ export const GuidelineUseTheActionToUndoOrViewDo: Story = {
 }
 
 export const GuidelineUseTheActionToUndoOrViewDont: Story = {
+  name: 'Guideline 4 Don’t',
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (

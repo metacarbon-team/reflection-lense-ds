@@ -1,4 +1,3 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useId, useState, type ReactNode } from 'react'
 import { useArgs } from 'storybook/preview-api'
@@ -13,7 +12,6 @@ const meta = {
     checked: { control: 'inline-radio', options: [false, true, 'indeterminate'] },
     state: { control: 'inline-radio', options: ['default', 'hover', 'focus', 'error'] },
   },
-  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Checkbox>
 
 export default meta
@@ -177,10 +175,10 @@ function NotificationList({ mirror }: { mirror: boolean }) {
   )
 }
 
-/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+/** One side of the guideline: a Do or Don't badge attached to the top, over the live example. */
 function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <span
         className={
           tone === 'do'
@@ -196,50 +194,20 @@ function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode
 }
 
 /**
- * Use indeterminate only for a partly selected group. Indeterminate marks a parent whose children are
- * only partly selected. If all children are selected the parent is checked; if none, unchecked.
+ * **Use indeterminate only for a partly selected group.**  
+ * Indeterminate marks a parent whose children are only partly selected. If all children are selected
+ * the parent is checked; if none, unchecked.
  */
-export const GuidelineDo: Story = {
-  tags: ['!autodocs'],
+export const Guidelines: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <Specimen tone="do">
-      <NotificationList mirror />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <NotificationList mirror />
+      </Specimen>
+      <Specimen tone="dont">
+        <NotificationList mirror={false} />
+      </Specimen>
+    </div>
   ),
-}
-
-/** The parent is checked while only 2 of 4 children are selected. */
-export const GuidelineDont: Story = {
-  tags: ['!autodocs'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="dont">
-      <NotificationList mirror={false} />
-    </Specimen>
-  ),
-}
-
-/** The Docs tab: the usual blocks, then the Do and Don't examples side by side. */
-function DocsPage() {
-  return (
-    <>
-      <Title />
-      <Description />
-      <Primary />
-      <Controls />
-      <Stories includePrimary={false} />
-      <Subheading>Guidelines</Subheading>
-      <div className="-mt-2! grid grid-cols-2 gap-x-6 [&_p]:mb-0!">
-        <div className="row-span-3 grid grid-rows-subgrid">
-          <Description of={GuidelineDo} />
-          <Canvas of={GuidelineDo} />
-        </div>
-        <div className="row-span-3 grid grid-rows-subgrid">
-          <Description of={GuidelineDont} />
-          <Canvas of={GuidelineDont} />
-        </div>
-      </div>
-    </>
-  )
 }
