@@ -240,8 +240,9 @@ export const Triggered: Story = {
 const date = 'Sunday, December 03 at 9:00 AM'
 
 /**
- * Keep the title short. A toast disappears in a few seconds, so the title must read in one glance. A
- * long title is cut off with an ellipsis. Move the detail to the description.
+ * **Keep the title short**  
+ * A toast disappears in a few seconds, so the title must read in one glance. A long title is cut off
+ * with an ellipsis. Move the detail to the description.
  */
 export const GuidelineKeepTheTitleShortDo: Story = {
   name: 'Guideline 1 Do',
@@ -274,8 +275,8 @@ export const GuidelineKeepTheTitleShortDont: Story = {
 }
 
 /**
- * Match the icon to the meaning. The icon and its color carry the meaning. A Success icon on an error
- * message sends the wrong signal.
+ * **Match the icon to the meaning**  
+ * The icon and its color carry the meaning. A Success icon on an error message sends the wrong signal.
  */
 export const GuidelineMatchTheIconToTheMeaningDo: Story = {
   name: 'Guideline 2 Do',
@@ -304,8 +305,9 @@ export const GuidelineMatchTheIconToTheMeaningDont: Story = {
 }
 
 /**
- * Do not repeat the title. The description adds new detail: who, when or what changed. Repeating the
- * title only makes the toast longer.
+ * **Do not repeat the title**  
+ * The description adds new detail: who, when or what changed. Repeating the title only makes the toast
+ * longer.
  */
 export const GuidelineDoNotRepeatTheTitleDo: Story = {
   name: 'Guideline 3 Do',
@@ -334,8 +336,9 @@ export const GuidelineDoNotRepeatTheTitleDont: Story = {
 }
 
 /**
- * Use the action to undo or view. The action reverses the change or opens the result. A toast closes
- * by itself, so an OK button adds nothing.
+ * **Use the action to undo or view**  
+ * The action reverses the change or opens the result. A toast closes by itself, so an OK button adds
+ * nothing.
  */
 export const GuidelineUseTheActionToUndoOrViewDo: Story = {
   name: 'Guideline 4 Do',
