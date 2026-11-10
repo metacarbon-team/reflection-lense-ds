@@ -1,3 +1,4 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { DiffStat, diffStatVariants } from './diff-stat'
@@ -6,6 +7,7 @@ const meta = {
   title: 'Components/Diff Stat',
   component: DiffStat,
   args: { added: 42, removed: 8, showAdded: true, showRemoved: true },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof DiffStat>
 
 export default meta
@@ -103,6 +105,7 @@ function WrongStat({ added, removed, swapped }: { added: string; removed: string
  * Numbers start with + or −, so the meaning never depends on color alone.
  */
 export const GuidelineAlwaysShowTheSign: Story = {
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -121,6 +124,7 @@ export const GuidelineAlwaysShowTheSign: Story = {
  * Write the full count. Rounded values hide how big the change really is, and a reviewer needs the exact size.
  */
 export const GuidelineShowExactNumbers: Story = {
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -139,6 +143,7 @@ export const GuidelineShowExactNumbers: Story = {
  * Keep the colors the same everywhere. Swapped colors make a deletion look like a good thing.
  */
 export const GuidelineGreenForAddedRedForRemoved: Story = {
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
@@ -150,4 +155,25 @@ export const GuidelineGreenForAddedRedForRemoved: Story = {
       </Specimen>
     </div>
   ),
+}
+
+/** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
+function DocsPage() {
+  const rules = [GuidelineAlwaysShowTheSign, GuidelineShowExactNumbers, GuidelineGreenForAddedRedForRemoved]
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      {rules.map((rule, index) => (
+        <div key={index}>
+          <Description of={rule} />
+          <Canvas of={rule} />
+        </div>
+      ))}
+    </>
+  )
 }
