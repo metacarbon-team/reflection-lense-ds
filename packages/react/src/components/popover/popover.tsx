@@ -1,6 +1,7 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 
 /** Popover: a small floating panel that opens from a trigger. Compose it from PopoverTrigger and PopoverContent. */
 export const Popover = (props: ComponentProps<typeof PopoverPrimitive.Root>) => (
@@ -73,7 +74,7 @@ export function PopoverPanel({
           <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
             {label}
           </p>
-          {description && (
+          {hasContent(description) && (
             <p id={descriptionId} data-slot="popover-description" className="text-body-small text-neutral-subtle">
               {description}
             </p>
@@ -121,7 +122,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className="z-50 origin-(--radix-popover-content-transform-origin) outline-none data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none"
+        className="z-50 outline-none"
         {...props}
       >
         <PopoverPanel

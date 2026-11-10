@@ -1,6 +1,8 @@
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { controlFrameClass } from '../../lib/control-frame'
+import { disabledAttrs } from '../../lib/disabled'
 import { useFieldControl } from '../field/field'
 
 export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
@@ -12,10 +14,8 @@ export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
   inputClassName?: string
 }
 
-// `has-disabled:` repeats the disabled look for an input disabled by a `<fieldset disabled>`, which
-// leaves the frame without `data-disabled`.
-const addonClass =
-  'flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled group-has-disabled:text-disabled'
+// The addons dim with the input: the frame is a `group`, and the input inside it is disabled.
+const addonClass = 'flex shrink-0 items-center text-neutral-subtle group-has-disabled:text-disabled'
 
 /**
  * Input: one line of text in the control frame, with optional leading and trailing slots. Props go
@@ -27,14 +27,13 @@ export function Input({ leadingSlot, trailingSlot, className, inputClassName, ..
     <span
       data-slot="input"
       data-invalid={control.invalid || undefined}
-      data-disabled={control.disabled || undefined}
       className={cn(
         controlFrameClass,
-        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring has-disabled:pointer-events-none has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-disabled:shadow-none [&_svg]:size-4 [&_svg]:shrink-0',
+        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
         className,
       )}
     >
-      {leadingSlot && (
+      {hasContent(leadingSlot) && (
         <span data-slot="input-addon" className={addonClass}>
           {leadingSlot}
         </span>
@@ -42,14 +41,15 @@ export function Input({ leadingSlot, trailingSlot, className, inputClassName, ..
       <input
         {...props}
         {...control.attributes}
+        {...disabledAttrs(control.disabled, true)}
         className={cn(
-          'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled group-data-disabled:placeholder:text-disabled',
+          'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled',
           // `type="search"` draws its own clear button in Chrome and Safari; clearing is the trailing slot's job.
           '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none',
           inputClassName,
         )}
       />
-      {trailingSlot && (
+      {hasContent(trailingSlot) && (
         <span data-slot="input-addon" className={addonClass}>
           {trailingSlot}
         </span>

@@ -9,13 +9,11 @@ import { IconButton } from '../icon-button/icon-button'
 
 // A card in the Toaster's pile. `data-expanded` and `data-front` come from the Toaster.
 const toastLayerClass = [
-  'absolute inset-x-0 bottom-0 origin-bottom transition-all motion-reduce:transition-none',
-  'data-[swipe=move]:transition-none',
+  'absolute inset-x-0 bottom-0 origin-bottom',
   // A folded pile shows the newest card; the cards behind keep only their edge.
   'data-[expanded=false]:data-[front=false]:pointer-events-none data-[expanded=false]:data-[front=false]:overflow-hidden',
-  // `invisible` also takes the controls out of the tab order and the accessibility tree; the fade still plays.
-  'data-[expanded=false]:data-[front=false]:*:invisible data-[expanded=false]:data-[front=false]:*:opacity-0',
-  '*:transition-all *:duration-300 motion-reduce:*:transition-none',
+  // `invisible` also takes the controls out of the tab order and the accessibility tree.
+  'data-[expanded=false]:data-[front=false]:*:invisible',
 ]
 
 /**
@@ -141,17 +139,10 @@ export type ToastOptions = {
   closeLabel?: string
 }
 
-type ToastRecord = ToastOptions & { id: string; closing?: boolean }
+type ToastRecord = ToastOptions & { id: string }
 
-/** How long a closing toast fades out before it leaves the list, in ms. Leaving is faster than arriving. */
-const EXIT_MS = 300
-const ENTER_MS = 300
-/** A strong ease-out: the card moves at once and settles gently. The built-in `ease-out` is too weak. */
-const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)'
-/** Leaving: an even ease, so the card fades out over its whole time instead of vanishing in the first moments. */
-const EASE_EXIT = 'cubic-bezier(0.4, 0, 0.2, 1)'
 // Geometry of the pile, in px. Cards are placed with inline styles because their offsets depend on the
-// measured height of every toast; the look (borders, colors, radius, transitions) stays in classes.
+// measured height of every toast; the look (borders, colors, radius) stays in classes.
 const GAP = 12
 // Figma: each layer behind the newest card shows a 14px strip and is 9px (then 19px) narrower per side.
 const PEEK = 14
@@ -184,9 +175,7 @@ export function toast(options: ToastOptions) {
   return id
 }
 toast.dismiss = (id?: string) => {
-  const ids = id === undefined ? records.map((record) => record.id) : [id]
-  update(records.map((record) => (ids.includes(record.id) ? { ...record, closing: true } : record)))
-  setTimeout(() => update(records.filter((record) => !ids.includes(record.id))), EXIT_MS)
+  update(id === undefined ? [] : records.filter((record) => record.id !== id))
 }
 
 type ToasterItemProps = {
@@ -204,10 +193,9 @@ type ToasterItemProps = {
 }
 
 function ToasterItem({ record, index, offset, expanded, height, frontHeight, onHeight }: ToasterItemProps) {
-  const { id, action, closing, ...options } = record
+  const { id, action, ...options } = record
   // A state, not a ref object: the card renders into the viewport and may appear after the first commit.
   const [element, setElement] = useState<HTMLLIElement | null>(null)
-  const [mounted, setMounted] = useState(false)
 
   // The natural height: the card's padding and border plus its tallest part. It stays right while the
   // card is stretched or clipped to the front card in a folded pile.
@@ -232,17 +220,13 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
   // An older toast pushed out by `limit` is measured again when it comes back.
   useLayoutEffect(() => () => onHeight(id, null), [id, onHeight])
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(frame)
-  }, [])
-
   const front = index === 0
   const folded = !expanded
   // A scaled card shrinks toward its bottom edge, so each layer is lifted by the strip plus the height it lost.
   const lift = expanded ? -offset : -index * (PEEK + frontHeight * SCALE)
   const scale = expanded ? 1 : 1 - index * SCALE
-  const visible = mounted && !closing && !(folded && index >= LAYERS)
+  // A folded pile shows the newest cards up to LAYERS; the rest wait out of sight.
+  const visible = !(folded && index >= LAYERS)
 
   return (
     <Toast
@@ -257,14 +241,12 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
       data-expanded={expanded}
       className={cn(toastLayerClass)}
       style={{
-        transform: `translateY(${visible ? lift : lift + 24}px) scale(${closing ? scale * 0.96 : scale})`,
+        transform: `translateY(${lift}px) scale(${scale})`,
         opacity: visible ? 1 : 0,
-        transitionDuration: `${closing ? EXIT_MS : ENTER_MS}ms`,
-        transitionTimingFunction: closing ? EASE_EXIT : EASE_OUT,
         // A folded pile gives every card the height of the front one, so the layers line up.
         height: (folded ? frontHeight : height) || undefined,
-        // Follows the finger while swiping (Radix sets the variable) and flies out when released.
-        translate: 'var(--radix-toast-swipe-move-x, var(--radix-toast-swipe-end-x, 0px)) 0',
+        // Follows the finger while swiping; Radix sets the variable.
+        translate: 'var(--radix-toast-swipe-move-x, 0px) 0',
       }}
       action={
         action && (
@@ -293,8 +275,7 @@ export type ToasterProps = {
 /**
  * Toaster: mount it once near the app root, then open toasts with `toast()`. Toasts pile up with the
  * newest in front and the older ones peeking behind, smaller and lifted. The pile opens into a list on
- * hover or focus, and every move is animated. A toast closes by itself, on its close button, on its
- * action and on a swipe.
+ * hover or focus. A toast closes by itself, on its close button, on its action and on a swipe.
  */
 export function Toaster({ duration = 5000, limit = 3, expand = false, label, className }: ToasterProps) {
   const all = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
@@ -372,12 +353,8 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
       <ToastViewport
         ref={viewportRef}
         label={label}
-        className={cn('transition-all motion-reduce:transition-none', className)}
-        style={{
-          height: expanded ? listHeight : frontHeight,
-          transitionDuration: `${ENTER_MS}ms`,
-          transitionTimingFunction: EASE_OUT,
-        }}
+        className={className}
+        style={{ height: expanded ? listHeight : frontHeight }}
       />
     </ToastProvider>
   )

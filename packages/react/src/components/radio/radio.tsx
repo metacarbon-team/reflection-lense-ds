@@ -5,15 +5,19 @@ import { cn } from '../../lib/cn'
 import { useFieldControl } from '../field/field'
 
 /**
- * Colors apply only while enabled, so the disabled look in the base always wins. Hover and
- * focus-visible come from the browser in `default`; the `hover` and `focus` variants freeze them
- * for docs and tests. The selection (`data-state`) picks the colors inside each variant.
+ * Colors apply only while enabled, so the disabled look in the base always wins. The error look keys
+ * on `aria-invalid` in CSS and outranks every other state, as in Checkbox. Hover and focus-visible
+ * come from the browser in `default`; the `hover` and `focus` variants freeze them for docs and tests.
+ * The selection (`data-state`) picks the colors inside each variant.
  */
 const radioVariants = cva(
   [
-    'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none transition duration-200 ease-out-strong motion-reduce:transition-none',
+    'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
     'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
     'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
+    'enabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized enabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',
+    'enabled:aria-invalid:data-[state=checked]:bg-danger-emphasized enabled:aria-invalid:data-[state=checked]:text-danger-on-emphasized',
+    'enabled:aria-invalid:data-[state=checked]:hover:bg-danger-emphasized-hover',
   ],
   {
     variants: {
@@ -35,11 +39,6 @@ const radioVariants = cva(
           'enabled:border-transparent enabled:shadow-focus-ring',
           'enabled:data-[state=unchecked]:bg-form-neutral',
           'enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized',
-        ],
-        error: [
-          'enabled:data-[state=unchecked]:border-danger-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-sm',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-danger-emphasized enabled:data-[state=checked]:text-danger-on-emphasized enabled:data-[state=checked]:shadow-sm',
-          'enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring enabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
       },
     },
@@ -90,23 +89,16 @@ export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
  * on the group or `state="error"`. Name it with a `<label htmlFor>` or `aria-label`.
  */
 export function Radio({ state = 'default', className, ...props }: RadioProps) {
-  const ariaInvalid = props['aria-invalid']
+  // The group's error reaches every radio as `aria-invalid`; the radio's own prop wins.
   const groupInvalid = useContext(RadioGroupInvalidContext)
-  const invalid =
-    groupInvalid || state === 'error' || (ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false')
-  // `disabled` is styled by the base classes, so the variant only decides between error and the frozen states.
-  const variant = invalid ? 'error' : state
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio"
-      aria-invalid={state === 'error' || undefined}
-      className={cn(radioVariants({ state: variant }), className)}
+      aria-invalid={state === 'error' || groupInvalid || undefined}
+      className={cn(radioVariants({ state: state === 'error' ? 'default' : state }), className)}
       {...props}
     >
-      <RadioGroupPrimitive.Indicator
-        data-slot="radio-indicator"
-        className="block size-2 animate-mark-in rounded-full bg-current motion-reduce:animate-none"
-      />
+      <RadioGroupPrimitive.Indicator data-slot="radio-indicator" className="block size-2 rounded-full bg-current" />
     </RadioGroupPrimitive.Item>
   )
 }

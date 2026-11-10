@@ -209,8 +209,6 @@ function themeCss({ allTokens }: Dictionary, source: string): string {
     '',
     block('@theme inline reference', theme),
     '',
-    MOTION,
-    '',
     block(
       '@layer theme',
       [
@@ -225,62 +223,6 @@ function themeCss({ allTokens }: Dictionary, source: string): string {
     ...utilities.flatMap((u) => [u, '']),
   ].join('\n')
 }
-
-/**
- * Motion shared by every component: one strong ease-out and the keyframes of overlays and
- * messages. Not a token export, so it is written here. Tailwind emits only what the sources use.
- * Entering is slower than leaving: the system answers fast, the user watches the arrival.
- */
-const MOTION = `@theme {
-  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
-  --animate-fade-in: fade-in 200ms var(--ease-out-strong);
-  --animate-fade-out: fade-out 150ms var(--ease-out-strong);
-  --animate-pop-in: pop-in 150ms var(--ease-out-strong);
-  --animate-pop-out: pop-out 100ms var(--ease-out-strong);
-  --animate-mark-in: mark-in 200ms var(--ease-out-strong);
-  --animate-rise-in: rise-in 250ms var(--ease-out-strong);
-  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes fade-out {
-    to {
-      opacity: 0;
-    }
-  }
-  @keyframes pop-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-  @keyframes pop-out {
-    to {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-  @keyframes mark-in {
-    from {
-      opacity: 0;
-      transform: scale(0.5);
-    }
-  }
-  @keyframes rise-in {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-  }
-  @keyframes shimmer {
-    50% {
-      opacity: 0.5;
-    }
-  }
-}`
 
 function twMergeJs({ allTokens }: Dictionary): string {
   const roles = textRoles(allTokens).map((r) => r.name)

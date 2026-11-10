@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority'
 import { createContext, useContext, useId, type AriaAttributes, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 
 const fieldLabelVariants = cva('text-label text-neutral', {
   variants: { disabled: { true: 'text-disabled', false: '' } },
@@ -77,16 +78,16 @@ export type FieldProps = Omit<ComponentProps<'div'>, 'children'> & {
   children: ReactNode
 }
 
-/** Field: a label, one control (Input, Textarea, Select, RadioGroup) and a caption row, wired for assistive tech. */
+/** Field: a label, one control (Input, Textarea, Select, Checkbox, Switch, RadioGroup) and a caption row, wired for assistive tech. */
 export function Field({ label, caption, error, counter, disabled = false, className, children, ...props }: FieldProps) {
   const id = useId()
-  const invalid = error !== undefined && error !== null && error !== false
+  const invalid = hasContent(error)
   const message = invalid ? error : caption
   const state: FieldState = {
     controlId: `${id}-control`,
     labelId: `${id}-label`,
     captionId: `${id}-caption`,
-    hasCaption: Boolean(message),
+    hasCaption: hasContent(message),
     invalid,
     disabled,
   }
@@ -95,7 +96,6 @@ export function Field({ label, caption, error, counter, disabled = false, classN
       <div
         data-slot="field"
         data-invalid={invalid || undefined}
-        data-disabled={disabled || undefined}
         className={cn('flex min-w-0 flex-col gap-1.5', className)}
         {...props}
       >
@@ -103,14 +103,14 @@ export function Field({ label, caption, error, counter, disabled = false, classN
           {label}
         </label>
         {children}
-        {(message || counter) && (
+        {(hasContent(message) || hasContent(counter)) && (
           <div className="flex gap-2 text-caption">
-            {message && (
+            {hasContent(message) && (
               <p id={state.captionId} className={cn(fieldCaptionVariants({ invalid, disabled }))}>
                 {message}
               </p>
             )}
-            {counter && <span className={cn(fieldCounterVariants({ disabled }))}>{counter}</span>}
+            {hasContent(counter) && <span className={cn(fieldCounterVariants({ disabled }))}>{counter}</span>}
           </div>
         )}
       </div>

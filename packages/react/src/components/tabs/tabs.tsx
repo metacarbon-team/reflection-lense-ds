@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Tabs as TabsPrimitive } from 'radix-ui'
-import { createContext, useContext, useLayoutEffect, useRef, useState, type ComponentProps } from 'react'
+import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
 type TabsStyle = {
@@ -21,7 +21,7 @@ export const Tabs = ({ className, ...props }: ComponentProps<typeof TabsPrimitiv
  * `line`: tabs on the page with an underline under the active one, for navigation.
  * `pill`: a muted track with a raised active tab, for switching views of the same content.
  */
-export const tabsListVariants = cva('relative inline-flex items-center', {
+export const tabsListVariants = cva('inline-flex items-center', {
   variants: {
     variant: {
       line: '',
@@ -35,7 +35,6 @@ export const tabsListVariants = cva('relative inline-flex items-center', {
 export const tabsTriggerVariants = cva(
   [
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
-    'transition duration-150 ease-out-strong motion-reduce:transition-none',
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
     'disabled:pointer-events-none disabled:text-disabled',
@@ -44,8 +43,17 @@ export const tabsTriggerVariants = cva(
   {
     variants: {
       variant: {
-        line: ['h-10 gap-1.5 px-3 text-label focus-visible:rounded-xs'],
-        pill: ['gap-1 border border-transparent', 'focus-visible:bg-neutral-subtle'],
+        // The active tab is marked in CSS from Radix's `data-state`: an underline, or the raised pill.
+        line: [
+          'h-10 gap-1.5 px-3 text-label focus-visible:rounded-xs',
+          'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-t-lg after:bg-current',
+          'after:opacity-0 data-[state=active]:after:opacity-100',
+        ],
+        pill: [
+          'gap-1 border border-transparent',
+          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle data-[state=active]:shadow-sm',
+          'focus-visible:bg-neutral-subtle',
+        ],
       },
       size: { sm: '', lg: '' },
       // Freezes hover or focus for docs and tests; in `default` the browser decides.
@@ -71,88 +79,7 @@ export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> & {
   size?: TabsStyle['size']
 }
 
-type Box = { x: number; y: number; width: number; height: number }
-
-const sameBox = (a: Box | null, b: Box | null) =>
-  a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height)
-
-/**
- * The moving mark under or behind the active tab: the line (an underline) or the pill (the filled
- * frame). It slides to the active trigger and resizes to it. The first placement does not animate.
- */
-function TabsIndicator({ variant, size }: TabsStyle) {
-  const self = useRef<HTMLSpanElement>(null)
-  const [box, setBox] = useState<Box | null>(null)
-  const [ready, setReady] = useState(false)
-
-  useLayoutEffect(() => {
-    const list = self.current?.parentElement
-    if (!list) return
-    const watched = new Set<Element>()
-    // Border box, so a change of padding or border moves the mark too.
-    const resize = new ResizeObserver(() => measure())
-    const measure = () => {
-      const triggers = list.querySelectorAll<HTMLElement>('[data-slot=tabs-trigger]')
-      // Tabs added later are watched too; removed ones drop out of the observer on their own.
-      triggers.forEach((trigger) => {
-        if (!watched.has(trigger)) {
-          watched.add(trigger)
-          resize.observe(trigger, { box: 'border-box' })
-        }
-      })
-      const active = list.querySelector<HTMLElement>('[data-slot=tabs-trigger][data-state=active]')
-      const next = active && {
-        x: active.offsetLeft,
-        y: active.offsetTop,
-        width: active.offsetWidth,
-        height: active.offsetHeight,
-      }
-      setBox((prev) => (sameBox(prev, next) ? prev : next))
-    }
-    measure()
-    // A tab becoming active, and tabs coming or going.
-    const mutations = new MutationObserver(measure)
-    mutations.observe(list, { attributes: true, attributeFilter: ['data-state'], childList: true, subtree: true })
-    resize.observe(list, { box: 'border-box' })
-    // A web font that arrives after the first paint changes every tab's width.
-    document.fonts?.addEventListener('loadingdone', measure)
-    const frame = requestAnimationFrame(() => setReady(true))
-    return () => {
-      mutations.disconnect()
-      resize.disconnect()
-      document.fonts?.removeEventListener('loadingdone', measure)
-      cancelAnimationFrame(frame)
-    }
-  }, [])
-
-  // The line is the bottom 2px of the active trigger; the pill fills all of it.
-  const line = variant === 'line'
-  const height = box ? (line ? 2 : box.height) : 0
-  const y = box ? (line ? box.y + box.height - 2 : box.y) : 0
-  return (
-    <span
-      ref={self}
-      data-slot="tabs-indicator"
-      aria-hidden="true"
-      className={cn(
-        'pointer-events-none absolute top-0 left-0',
-        // Nothing animates until the first placement is done; reduced motion never animates.
-        ready ? 'transition-all duration-250 ease-out-strong motion-reduce:transition-none' : 'transition-none',
-        line
-          ? 'rounded-t-lg bg-current text-neutral'
-          : cn('border border-neutral bg-neutral-subtle shadow-sm', size === 'lg' ? 'rounded-lg' : 'rounded-md'),
-      )}
-      style={{
-        opacity: box ? 1 : 0,
-        width: box?.width ?? 0,
-        height,
-        transform: `translate(${box?.x ?? 0}px, ${y}px)`,
-      }}
-    />
-  )
-}
-
-export function TabsList({ className, variant = 'line', size = 'sm', children, ...props }: TabsListProps) {
+export function TabsList({ className, variant = 'line', size = 'sm', ...props }: TabsListProps) {
   return (
     <TabsStyleContext value={{ variant, size }}>
       <TabsPrimitive.List
@@ -160,10 +87,7 @@ export function TabsList({ className, variant = 'line', size = 'sm', children, .
         data-variant={variant}
         className={cn(tabsListVariants({ variant }), className)}
         {...props}
-      >
-        <TabsIndicator variant={variant} size={size} />
-        {children}
-      </TabsPrimitive.List>
+      />
     </TabsStyleContext>
   )
 }

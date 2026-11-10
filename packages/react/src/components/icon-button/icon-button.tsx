@@ -14,8 +14,7 @@ import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 export const iconButtonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center rounded-full border border-transparent outline-none select-none',
-    // Press feedback: the control sinks a little, so it feels like it heard the click.
-    'transition duration-150 ease-out-strong motion-reduce:transition-none enabled:active:scale-97',
+    // A popup trigger (`aria-expanded`: menu, Select, popover, dialog) keeps the pressed fill while open.
     'focus-visible:border-transparent focus-visible:shadow-focus-ring',
     'disabled:pointer-events-none data-disabled:pointer-events-none disabled:text-disabled data-disabled:text-disabled disabled:shadow-none data-disabled:shadow-none',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
@@ -47,19 +46,19 @@ export const iconButtonVariants = cva(
         variant: 'solid',
         tone: 'default',
         className:
-          'border-neutral bg-form-neutral text-neutral hover:bg-form-neutral-hover active:bg-form-neutral-pressed',
+          'border-neutral bg-form-neutral text-neutral hover:bg-form-neutral-hover active:bg-form-neutral-pressed aria-expanded:bg-form-neutral-pressed',
       },
       {
         variant: 'solid',
         tone: 'accent',
         className:
-          'border-accent bg-accent-emphasized text-accent-on-emphasized hover:bg-accent-emphasized-hover active:bg-accent-emphasized-pressed',
+          'border-accent bg-accent-emphasized text-accent-on-emphasized hover:bg-accent-emphasized-hover active:bg-accent-emphasized-pressed aria-expanded:bg-accent-emphasized-pressed',
       },
       {
         variant: 'solid',
         tone: 'danger',
         className:
-          'border-danger bg-danger-emphasized text-danger-on-emphasized hover:bg-danger-emphasized-hover active:bg-danger-emphasized-pressed',
+          'border-danger bg-danger-emphasized text-danger-on-emphasized hover:bg-danger-emphasized-hover active:bg-danger-emphasized-pressed aria-expanded:bg-danger-emphasized-pressed',
       },
       { variant: 'outline', tone: 'default', className: 'border-neutral' },
       { variant: 'outline', tone: 'accent', className: 'border-accent' },
@@ -67,17 +66,20 @@ export const iconButtonVariants = cva(
       {
         variant: ['outline', 'ghost'],
         tone: 'default',
-        className: 'text-neutral hover:bg-ghost-neutral-hover active:bg-ghost-neutral-pressed',
+        className:
+          'text-neutral hover:bg-ghost-neutral-hover active:bg-ghost-neutral-pressed aria-expanded:bg-ghost-neutral-pressed',
       },
       {
         variant: ['outline', 'ghost'],
         tone: 'accent',
-        className: 'text-accent hover:bg-ghost-accent-hover active:bg-ghost-accent-pressed',
+        className:
+          'text-accent hover:bg-ghost-accent-hover active:bg-ghost-accent-pressed aria-expanded:bg-ghost-accent-pressed',
       },
       {
         variant: ['outline', 'ghost'],
         tone: 'danger',
-        className: 'text-danger hover:bg-ghost-danger-hover active:bg-ghost-danger-pressed',
+        className:
+          'text-danger hover:bg-ghost-danger-hover active:bg-ghost-danger-pressed aria-expanded:bg-ghost-danger-pressed',
       },
       // Frozen hover and pressed: the same background the browser state would give.
       { state: 'hover', variant: 'solid', tone: 'default', className: 'bg-form-neutral-hover' },

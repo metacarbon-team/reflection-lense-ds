@@ -66,7 +66,7 @@ export function InlineAlert({
       padding="md"
       // Warnings and errors interrupt a screen reader; the rest wait for a pause.
       role={tone === 'warning' || tone === 'danger' ? 'alert' : 'status'}
-      className={cn('w-full min-w-0 animate-rise-in gap-0 motion-reduce:animate-none', className)}
+      className={cn('w-full min-w-0 gap-0', className)}
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">

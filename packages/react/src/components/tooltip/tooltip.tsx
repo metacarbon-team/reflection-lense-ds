@@ -1,40 +1,30 @@
-import { cva } from 'class-variance-authority'
 import { Tooltip as TooltipPrimitive } from 'radix-ui'
 import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   type ComponentProps,
   type ReactNode,
   type RefObject,
 } from 'react'
 import { cn } from '../../lib/cn'
+import { composeRefs } from '../../lib/compose-refs'
 import { hasContent } from '../../lib/has-content'
 
 /**
  * The bubble: 28px high, the emphasized card surface, one line of caption text. Width hugs the label
- * and the visible slots up to 200px; a longer label is cut with an ellipsis. `arrow` off hides the
- * pointer. The arrow is a rotated square that sits on the edge facing the trigger, picked by the
- * `data-side` of the bubble, so it follows Radix when the tooltip flips near the screen edge.
+ * and the visible slots up to 200px; a longer label is cut with an ellipsis.
  */
-const tooltipVariants = cva(
-  [
-    'group/tooltip relative z-50 flex h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
-    'bg-card-neutral-emphasized text-caption text-neutral select-none',
-    'origin-(--radix-tooltip-content-transform-origin) data-[state=delayed-open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-  ],
-  {
-    variants: {
-      arrow: {
-        true: '',
-        false: '[&>[data-slot=tooltip-arrow]]:hidden',
-      },
-    },
-    defaultVariants: { arrow: true },
-  },
-)
+const tooltipClass = [
+  'relative z-50 flex h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
+  'bg-card-neutral-emphasized text-caption text-neutral select-none',
+  '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+]
+
+/** The arrow: a square of the bubble surface, turned 45° and centered on the edge that faces the trigger. */
+const arrowClass = 'pointer-events-none block size-2 rotate-45 bg-card-neutral-emphasized'
 
 const slotClass = 'flex shrink-0 items-center justify-center overflow-clip'
 
@@ -49,7 +39,7 @@ type TooltipOwnProps = {
   arrow?: boolean
 }
 
-function TooltipParts({ label, leadingSlot, trailingSlot }: TooltipOwnProps) {
+function TooltipParts({ label, leadingSlot, trailingSlot }: Omit<TooltipOwnProps, 'arrow'>) {
   return (
     <>
       {hasContent(leadingSlot) && (
@@ -65,17 +55,6 @@ function TooltipParts({ label, leadingSlot, trailingSlot }: TooltipOwnProps) {
           {trailingSlot}
         </span>
       )}
-      <span
-        data-slot="tooltip-arrow"
-        aria-hidden="true"
-        className={cn(
-          'pointer-events-none absolute size-2 rotate-45 bg-card-neutral-emphasized',
-          'group-data-[side=top]/tooltip:bottom-0 group-data-[side=top]/tooltip:left-1/2 group-data-[side=top]/tooltip:-translate-x-1/2 group-data-[side=top]/tooltip:translate-y-1/2',
-          'group-data-[side=bottom]/tooltip:top-0 group-data-[side=bottom]/tooltip:left-1/2 group-data-[side=bottom]/tooltip:-translate-x-1/2 group-data-[side=bottom]/tooltip:-translate-y-1/2',
-          'group-data-[side=left]/tooltip:right-0 group-data-[side=left]/tooltip:top-1/2 group-data-[side=left]/tooltip:-translate-y-1/2 group-data-[side=left]/tooltip:translate-x-1/2',
-          'group-data-[side=right]/tooltip:left-0 group-data-[side=right]/tooltip:top-1/2 group-data-[side=right]/tooltip:-translate-y-1/2 group-data-[side=right]/tooltip:-translate-x-1/2',
-        )}
-      />
     </>
   )
 }
@@ -117,15 +96,11 @@ export const Tooltip = (props: ComponentProps<typeof TooltipPrimitive.Root>) => 
 }
 
 /** The element the tooltip describes. It opens on hover and on keyboard focus. Use `asChild` to use your own element. */
-export function TooltipTrigger(props: Omit<ComponentProps<typeof TooltipPrimitive.Trigger>, 'ref'>) {
-  const triggerRef = useContext(TriggerContext)
-  const ref = useCallback(
-    (node: HTMLButtonElement | null) => {
-      if (triggerRef) triggerRef.current = node
-    },
-    [triggerRef],
-  )
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={ref} {...props} />
+export function TooltipTrigger({ ref, ...props }: ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  const triggerRef = useContext(TriggerContext) as RefObject<HTMLButtonElement | null> | null
+  // The tooltip reads the trigger to pick its color mode; the caller's own ref is kept too.
+  const composed = useMemo(() => composeRefs(triggerRef ?? undefined, ref), [triggerRef, ref])
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={composed} {...props} />
 }
 
 export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children' | 'ref'> &
@@ -157,14 +132,29 @@ export function TooltipContent({
         data-slot="tooltip-content"
         side={side}
         sideOffset={sideOffset}
-        className={cn(tooltipVariants({ arrow }), className)}
+        className={cn(tooltipClass, className)}
         {...props}
       >
         <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />
+        {arrow && (
+          // Radix puts the arrow on the edge that faces the trigger and keeps it over the trigger when the
+          // bubble shifts at the screen edge. Its box is one square high; the square overlaps the bubble by half.
+          <TooltipPrimitive.Arrow asChild width={8} height={8}>
+            <span data-slot="tooltip-arrow" aria-hidden="true" className={cn(arrowClass, '-translate-y-1/2')} />
+          </TooltipPrimitive.Arrow>
+        )}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )
 }
+
+/** Where the panel's arrow sits for each side the bubble points from. */
+const panelArrow = {
+  top: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2',
+  bottom: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2',
+  left: 'top-1/2 right-0 translate-x-1/2 -translate-y-1/2',
+  right: 'top-1/2 left-0 -translate-x-1/2 -translate-y-1/2',
+} as const
 
 export type TooltipPanelProps = Omit<ComponentProps<'div'>, 'children'> &
   TooltipOwnProps & {
@@ -187,14 +177,12 @@ export function TooltipPanel({
 }: TooltipPanelProps) {
   const ref = useCallback((node: HTMLDivElement | null) => (node ? swapMode(node, node.parentElement) : undefined), [])
   return (
-    <div
-      ref={ref}
-      data-slot="tooltip-panel"
-      data-side={side}
-      className={cn(tooltipVariants({ arrow }), className)}
-      {...props}
-    >
+    <div ref={ref} data-slot="tooltip-panel" data-side={side} className={cn(tooltipClass, className)} {...props}>
       <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />
+      {arrow && (
+        // No trigger to measure here: the arrow is centered on the edge that `side` faces.
+        <span data-slot="tooltip-arrow" aria-hidden="true" className={cn(arrowClass, 'absolute', panelArrow[side])} />
+      )}
     </div>
   )
 }

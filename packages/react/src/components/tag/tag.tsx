@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 
 /**
  * Tag: a small read-only label for categories, statuses and metadata. A raised tag on the form surface;
@@ -58,13 +59,13 @@ export function Tag({ className, tone, size, leadingSlot, trailingSlot, children
   return (
     <span data-slot="tag" className={cn(tagVariants({ size }), className)} {...props}>
       <span data-slot="tag-dot" aria-hidden="true" className={dotVariants({ tone })} />
-      {leadingSlot ? (
+      {hasContent(leadingSlot) ? (
         <span data-slot="leading-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
           {leadingSlot}
         </span>
       ) : null}
       {children}
-      {trailingSlot ? (
+      {hasContent(trailingSlot) ? (
         <span data-slot="trailing-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
           {trailingSlot}
         </span>

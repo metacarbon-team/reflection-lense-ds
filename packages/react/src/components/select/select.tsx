@@ -9,19 +9,23 @@ import { buttonVariants } from '../button/button'
 import { useFieldControl } from '../field/field'
 
 /**
- * The trigger. `input` is the control frame of Input, for forms; `button` is a small outline Button,
- * for toolbars. Open shows the focus ring in both.
+ * The trigger. `input` is the control frame of Input, for forms: open shows the focus ring, as the open
+ * Select Input does in Figma. `button` is a small outline Button, for toolbars: open shows the pressed
+ * fill, like every popup trigger built on Button.
  */
 const selectTriggerVariants = cva(
   [
-    'outline-none focus-visible:shadow-focus-ring data-[state=open]:shadow-focus-ring',
+    'outline-none focus-visible:shadow-focus-ring',
     'data-placeholder:text-neutral-subtle *:data-[slot=select-value]:truncate',
     '[&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
       appearance: {
-        input: [controlFrameClass, 'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left'],
+        input: [
+          controlFrameClass,
+          'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left data-[state=open]:shadow-focus-ring',
+        ],
         button: buttonVariants({ tone: 'default', variant: 'outline', size: 'sm' }),
       },
     },
@@ -58,7 +62,6 @@ export function SelectTrigger({ appearance = 'input', className, children, ...pr
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-invalid={control.invalid || undefined}
-      data-disabled={control.disabled || undefined}
       {...props}
       {...control.attributes}
       className={cn(selectTriggerVariants({ appearance }), className)}
@@ -86,7 +89,7 @@ export function SelectContent({
         position={position}
         sideOffset={sideOffset}
         className={cn(
-          'relative z-50 origin-(--radix-select-content-transform-origin) max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none',
+          'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
           className,
         )}
         {...props}
