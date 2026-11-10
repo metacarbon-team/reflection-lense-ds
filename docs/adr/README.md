@@ -36,6 +36,7 @@ One architectural decision per file, numbered in order. An accepted ADR is not r
 | [0030](0030-type-scale-and-text-roles.md) | Tailwind v4 type scale and text roles with viewport modes | Accepted |
 | [0031](0031-tailwind-tracking.md) | Tracking on Tailwind v4 steps | Accepted |
 | [0032](0032-tailwind-components.md) | Components styled with Tailwind v4 on a Style Dictionary theme | Accepted |
+| [0033](0033-ghost-state-ladder.md) | Ghost state ladder and the active state | Accepted |
 
 Statuses: `Proposed` → `Accepted` → (`Superseded by NNNN` | `Deprecated`).
 

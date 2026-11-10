@@ -23,7 +23,7 @@ const navItemVariants = cva(
       state: {
         default: 'hover:bg-ghost-neutral-hover focus-visible:shadow-focus-ring',
         hover: 'bg-ghost-neutral-hover',
-        active: 'bg-neutral focus-visible:shadow-focus-ring',
+        active: 'bg-ghost-neutral-active focus-visible:shadow-focus-ring',
         focus: 'shadow-focus-ring',
       },
     },

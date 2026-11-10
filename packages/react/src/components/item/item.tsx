@@ -24,7 +24,7 @@ const itemVariants = cva(
         default: 'hover:bg-ghost-neutral-hover active:bg-ghost-neutral-pressed focus-visible:shadow-focus-ring',
         hover: 'bg-ghost-neutral-hover',
         pressed: 'bg-ghost-neutral-pressed',
-        active: 'bg-neutral',
+        active: 'bg-ghost-neutral-active',
         focus: 'shadow-focus-ring',
       },
       clickable: { true: 'cursor-pointer', false: '' },
