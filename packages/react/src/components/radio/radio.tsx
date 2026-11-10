@@ -1,4 +1,4 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
@@ -77,7 +77,7 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 
 export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
   /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
-  state?: 'default' | 'hover' | 'focus' | 'error'
+  state?: VariantProps<typeof radioVariants>['state']
 }
 
 /**

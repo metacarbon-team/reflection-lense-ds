@@ -1,4 +1,3 @@
-import { cva } from 'class-variance-authority'
 import { Toast as ToastPrimitive } from 'radix-ui'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
@@ -8,23 +7,8 @@ import { CloseIcon } from '../../lib/icons'
 import { Button } from '../button/button'
 import { IconButton } from '../icon-button/icon-button'
 
-const toastViewportVariants = cva('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none')
-
-const toastVariants = cva([
-  'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized',
-  'py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none focus-visible:shadow-focus-ring',
-])
-
-const toastLeadingVariants = cva('flex shrink-0 items-center justify-center [&_svg]:size-5')
-
-const toastContentVariants = cva('flex min-w-0 flex-1 flex-col')
-
-const toastTitleVariants = cva('truncate text-body-small-medium text-neutral')
-
-const toastDescriptionVariants = cva('truncate text-body-xsmall text-neutral-subtle')
-
 // A card in the Toaster's pile. `data-expanded` and `data-front` come from the Toaster.
-const toastLayerVariants = cva([
+const toastLayerClass = [
   'absolute inset-x-0 bottom-0 origin-bottom transition-all duration-300 ease-out motion-reduce:transition-none',
   'data-[swipe=move]:transition-none',
   // A folded pile shows the newest card; the cards behind keep only their edge.
@@ -32,9 +16,7 @@ const toastLayerVariants = cva([
   // `invisible` also takes the controls out of the tab order and the accessibility tree; the fade still plays.
   'data-[expanded=false]:data-[front=false]:*:invisible data-[expanded=false]:data-[front=false]:*:opacity-0',
   '*:transition-all *:duration-300 motion-reduce:*:transition-none',
-])
-
-const toasterVariants = cva('transition-all duration-300 ease-out motion-reduce:transition-none')
+]
 
 /**
  * Mounts the toast queue. `Toaster` already includes it; use it on its own only to place `Toast`s
@@ -52,7 +34,11 @@ export type ToastViewportProps = ComponentProps<typeof ToastPrimitive.Viewport>
  */
 export function ToastViewport({ className, ...props }: ToastViewportProps) {
   return (
-    <ToastPrimitive.Viewport data-slot="toast-viewport" className={cn(toastViewportVariants(), className)} {...props} />
+    <ToastPrimitive.Viewport
+      data-slot="toast-viewport"
+      className={cn('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none', className)}
+      {...props}
+    />
   )
 }
 
@@ -85,18 +71,28 @@ export function Toast({
   ...props
 }: ToastProps) {
   return (
-    <ToastPrimitive.Root data-slot="toast" className={cn(toastVariants(), className)} {...props}>
+    <ToastPrimitive.Root
+      data-slot="toast"
+      className={cn(
+        'relative flex w-full min-w-0 items-center gap-3 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized py-2.5 pr-2 pl-4 text-neutral shadow-md outline-none focus-visible:shadow-focus-ring',
+        className,
+      )}
+      {...props}
+    >
       {hasContent(leadingSlot) && (
-        <span data-slot="toast-leading" className={toastLeadingVariants()}>
+        <span data-slot="toast-leading" className="flex shrink-0 items-center justify-center [&_svg]:size-5">
           {leadingSlot}
         </span>
       )}
-      <div data-slot="toast-content" className={toastContentVariants()}>
-        <ToastPrimitive.Title data-slot="toast-title" className={toastTitleVariants()}>
+      <div data-slot="toast-content" className="flex min-w-0 flex-1 flex-col">
+        <ToastPrimitive.Title data-slot="toast-title" className="truncate text-body-small-medium text-neutral">
           {label}
         </ToastPrimitive.Title>
         {hasContent(description) && (
-          <ToastPrimitive.Description data-slot="toast-description" className={toastDescriptionVariants()}>
+          <ToastPrimitive.Description
+            data-slot="toast-description"
+            className="truncate text-body-xsmall text-neutral-subtle"
+          >
             {description}
           </ToastPrimitive.Description>
         )}
@@ -246,7 +242,7 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
       }}
       data-front={front}
       data-expanded={expanded}
-      className={toastLayerVariants()}
+      className={cn(toastLayerClass)}
       style={{
         transform: `translateY(${visible ? lift : lift + 24}px) scale(${scale})`,
         opacity: visible ? 1 : 0,
@@ -361,7 +357,7 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
       <ToastViewport
         ref={viewportRef}
         label={label}
-        className={cn(toasterVariants(), className)}
+        className={cn('transition-all duration-300 ease-out motion-reduce:transition-none', className)}
         style={{ height: expanded ? listHeight : frontHeight }}
       />
     </ToastProvider>

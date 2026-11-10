@@ -6,20 +6,8 @@ import { CloseIcon } from '../../lib/icons'
 import { Card } from '../card/card'
 import { IconButton } from '../icon-button/icon-button'
 
-export const inlineAlertVariants = cva('w-full min-w-0 gap-0', {
-  variants: {
-    tone: {
-      default: '',
-      success: '',
-      warning: '',
-      danger: '',
-      info: '',
-    },
-  },
-  defaultVariants: { tone: 'default' },
-})
-
-// The leading icon takes the tone color; the box is one title line high, so the icon centers on it.
+// The tint and the stroke come from Card; the leading icon takes the tone color here. The box is one
+// title line high, so the icon centers on it.
 const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-center [&_svg]:size-4', {
   variants: {
     tone: {
@@ -34,7 +22,7 @@ const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-c
 })
 
 export type InlineAlertProps = Omit<ComponentProps<'div'>, 'title'> &
-  VariantProps<typeof inlineAlertVariants> & {
+  VariantProps<typeof inlineAlertLeadingVariants> & {
     /** One short line that makes sense even if nothing else is read. A long title is cut off with an ellipsis. */
     title: ReactNode
     /** One or two lines of detail or the next step. Leave it out when the title says everything. */
@@ -69,7 +57,7 @@ export function InlineAlert({
       padding="md"
       // Warnings and errors interrupt a screen reader; the rest wait for a pause.
       role={tone === 'warning' || tone === 'danger' ? 'alert' : 'status'}
-      className={cn(inlineAlertVariants({ tone }), className)}
+      className={cn('w-full min-w-0 gap-0', className)}
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">

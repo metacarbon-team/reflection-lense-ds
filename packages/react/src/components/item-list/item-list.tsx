@@ -1,4 +1,4 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
@@ -15,7 +15,7 @@ const itemListVariants = cva('flex w-full min-w-0 flex-col', {
 
 export type ItemListProps = ComponentProps<'div'> & {
   /** Plain is the bare list on the background it sits on. Card puts the list on its own surface with a border and radius. */
-  variant?: 'plain' | 'card'
+  variant?: VariantProps<typeof itemListVariants>['variant']
 }
 
 /**

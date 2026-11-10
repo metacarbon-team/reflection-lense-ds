@@ -1,28 +1,7 @@
-import { cva } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlFrameClass } from '../../lib/control-frame'
 import { useFieldControl } from '../field/field'
-
-/**
- * Frame shared by Input, Textarea and the Select trigger: form surface, neutral stroke, small shadow;
- * stronger stroke on hover, focus ring on focus, danger stroke when invalid, disabled fill.
- */
-export const controlFrameVariants = cva([
-  'rounded-md border border-neutral bg-form-neutral text-body-small text-neutral shadow-sm',
-  'hover:border-neutral-emphasized',
-  'data-invalid:border-danger-emphasized',
-  'data-disabled:pointer-events-none data-disabled:border-disabled data-disabled:bg-disabled data-disabled:text-disabled data-disabled:shadow-none',
-])
-
-const inputVariants = cva(
-  'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
-)
-
-const inputControlVariants = cva(
-  'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled group-data-disabled:placeholder:text-disabled',
-)
-
-const addonVariants = cva('flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled')
 
 export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
   /** Content before the value: an icon, a country picker, a prefix. */
@@ -44,16 +23,33 @@ export function Input({ leading, trailing, className, inputClassName, ...props }
       data-slot="input"
       data-invalid={control.invalid || undefined}
       data-disabled={control.disabled || undefined}
-      className={cn(controlFrameVariants(), inputVariants(), className)}
+      className={cn(
+        controlFrameClass,
+        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
+        className,
+      )}
     >
       {leading && (
-        <span data-slot="input-addon" className={addonVariants()}>
+        <span
+          data-slot="input-addon"
+          className="flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled"
+        >
           {leading}
         </span>
       )}
-      <input {...props} {...control.attributes} className={cn(inputControlVariants(), inputClassName)} />
+      <input
+        {...props}
+        {...control.attributes}
+        className={cn(
+          'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled group-data-disabled:placeholder:text-disabled',
+          inputClassName,
+        )}
+      />
       {trailing && (
-        <span data-slot="input-addon" className={addonVariants()}>
+        <span
+          data-slot="input-addon"
+          className="flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled"
+        >
           {trailing}
         </span>
       )}

@@ -1,4 +1,4 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import { cloneElement, isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
@@ -37,7 +37,7 @@ export type NavItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   /** Root rows sit at the left edge. Nested rows add an indent and go under a group row. */
   level?: 'root' | 'nested'
   /** Freezes `hover` or `focus` for docs and tests. `active` marks the current page. */
-  state?: 'default' | 'hover' | 'active' | 'focus'
+  state?: VariantProps<typeof navItemVariants>['state']
   /** Marks the current page. Same as `state="active"`. Mark one row only. */
   active?: boolean
   /** Blocks the row and dims it. */

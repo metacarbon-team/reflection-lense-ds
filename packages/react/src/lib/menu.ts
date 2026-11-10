@@ -30,4 +30,4 @@ export const menuItemVariants = cva(
 )
 
 /** The thin line between groups of rows, shared by the Select Menu and the Context Menu. */
-export const menuSeparatorVariants = cva('mx-1 my-1 border-t border-neutral-subtle')
+export const menuSeparatorClass = 'mx-1 my-1 border-t border-neutral-subtle'

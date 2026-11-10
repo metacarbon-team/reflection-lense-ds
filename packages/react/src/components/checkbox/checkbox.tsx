@@ -1,4 +1,4 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
@@ -57,7 +57,7 @@ export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
   /** `false`, `true` or `'indeterminate'`, for a parent whose children are only partly selected. */
   checked?: boolean | 'indeterminate'
   /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
-  state?: 'default' | 'hover' | 'focus' | 'error'
+  state?: Exclude<VariantProps<typeof checkboxVariants>['state'], 'disabled'>
 }
 
 /**

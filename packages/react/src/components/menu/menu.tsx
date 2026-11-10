@@ -3,7 +3,7 @@ import { DropdownMenu as MenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
-import { menuItemVariants, menuSeparatorVariants } from '../../lib/menu'
+import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
 
 // Context Menu: a list of actions opened from a trigger, with icons, shortcuts, checkable items,
 // groups and submenus. Keyboard: arrows move, Enter or Space selects, Escape closes, typing jumps.
@@ -41,10 +41,6 @@ const menuSurfaceVariants = cva(
     defaultVariants: { kind: 'content' },
   },
 )
-
-const menuShortcutVariants = cva('ml-auto text-overline text-neutral-subtle')
-
-const menuIndicatorVariants = cva('ml-auto flex items-center')
 
 export function MenuContent({
   className,
@@ -90,7 +86,7 @@ export function MenuCheckboxItem({ className, children, ...props }: ComponentPro
   return (
     <MenuPrimitive.CheckboxItem data-slot="menu-checkbox-item" className={cn(item(), className)} {...props}>
       {children}
-      <MenuPrimitive.ItemIndicator className={menuIndicatorVariants()}>
+      <MenuPrimitive.ItemIndicator className="ml-auto flex items-center">
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>
     </MenuPrimitive.CheckboxItem>
@@ -101,7 +97,7 @@ export function MenuRadioItem({ className, children, ...props }: ComponentProps<
   return (
     <MenuPrimitive.RadioItem data-slot="menu-radio-item" className={cn(item(), className)} {...props}>
       {children}
-      <MenuPrimitive.ItemIndicator className={menuIndicatorVariants()}>
+      <MenuPrimitive.ItemIndicator className="ml-auto flex items-center">
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>
     </MenuPrimitive.RadioItem>
@@ -118,12 +114,12 @@ export function MenuSubTrigger({ className, children, ...props }: ComponentProps
 }
 
 export function MenuSeparator({ className, ...props }: ComponentProps<typeof MenuPrimitive.Separator>) {
-  return (
-    <MenuPrimitive.Separator data-slot="menu-separator" className={cn(menuSeparatorVariants(), className)} {...props} />
-  )
+  return <MenuPrimitive.Separator data-slot="menu-separator" className={cn(menuSeparatorClass, className)} {...props} />
 }
 
 /** Keyboard shortcut at the end of an item. */
 export function MenuShortcut({ className, ...props }: ComponentProps<'kbd'>) {
-  return <kbd data-slot="menu-shortcut" className={cn(menuShortcutVariants(), className)} {...props} />
+  return (
+    <kbd data-slot="menu-shortcut" className={cn('ml-auto text-overline text-neutral-subtle', className)} {...props} />
+  )
 }

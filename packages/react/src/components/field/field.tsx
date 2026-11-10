@@ -2,8 +2,6 @@ import { cva } from 'class-variance-authority'
 import { createContext, useContext, useId, type AriaAttributes, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-const fieldVariants = cva('flex min-w-0 flex-col gap-1.5')
-
 const fieldLabelVariants = cva('text-label text-neutral', {
   variants: { disabled: { true: 'text-disabled', false: '' } },
   defaultVariants: { disabled: false },
@@ -98,7 +96,7 @@ export function Field({ label, caption, error, counter, disabled = false, classN
         data-slot="field"
         data-invalid={invalid || undefined}
         data-disabled={disabled || undefined}
-        className={cn(fieldVariants(), className)}
+        className={cn('flex min-w-0 flex-col gap-1.5', className)}
         {...props}
       >
         <label id={state.labelId} htmlFor={state.controlId} className={cn(fieldLabelVariants({ disabled }))}>

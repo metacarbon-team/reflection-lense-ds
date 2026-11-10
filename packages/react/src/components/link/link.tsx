@@ -53,23 +53,22 @@ const linkSlotVariants = cva('shrink-0 items-center justify-center', {
 })
 
 // `type` is the link's own variant here, so the native `type` attribute of `a` is left out.
-export type LinkProps = Omit<ComponentProps<'a'>, 'type'> &
-  Omit<VariantProps<typeof linkVariants>, 'state' | 'type' | 'size'> & {
-    /** `inline` is underlined and sits inside running text; `standalone` has no underline and stands on its own. */
-    type?: 'inline' | 'standalone'
-    /** `sm` is 14px text, `md` is 16px. */
-    size?: 'sm' | 'md'
-    /** Freezes `hover`, `pressed` or `focus` for docs and tests. Real interaction needs no value. */
-    state?: 'default' | 'hover' | 'pressed' | 'focus'
-    /** Blocks the link and dims it. A disabled link has no `href` and is skipped by the keyboard. */
-    disabled?: boolean
-    /** Content before the label, 16 × 16: usually an icon. The link shows the slot when it is set. */
-    leadingSlot?: ReactNode
-    /** Content after the label, 16 × 16. The link shows the slot when it is set. */
-    trailingSlot?: ReactNode
-    /** Render the only child (a router link) with the link's styles. Its own text becomes the label. */
-    asChild?: boolean
-  }
+export type LinkProps = Omit<ComponentProps<'a'>, 'type'> & {
+  /** `inline` is underlined and sits inside running text; `standalone` has no underline and stands on its own. */
+  type?: VariantProps<typeof linkVariants>['type']
+  /** `sm` is 14px text, `md` is 16px. */
+  size?: VariantProps<typeof linkVariants>['size']
+  /** Freezes `hover`, `pressed` or `focus` for docs and tests. Real interaction needs no value. */
+  state?: VariantProps<typeof linkVariants>['state']
+  /** Blocks the link and dims it. A disabled link has no `href` and is skipped by the keyboard. */
+  disabled?: boolean
+  /** Content before the label, 16 × 16: usually an icon. The link shows the slot when it is set. */
+  leadingSlot?: ReactNode
+  /** Content after the label, 16 × 16. The link shows the slot when it is set. */
+  trailingSlot?: ReactNode
+  /** Render the only child (a router link) with the link's styles. Its own text becomes the label. */
+  asChild?: boolean
+}
 
 /**
  * Link: text that goes somewhere. It renders an `a`; with `asChild` it takes the place of a router
