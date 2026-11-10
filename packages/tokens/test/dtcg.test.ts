@@ -30,6 +30,26 @@ function flatten(group: DtcgGroup, prefix = ''): Record<string, DtcgToken> {
   )
 }
 
+type Color = { colorSpace: string; components: [number, number, number]; alpha: number }
+
+/** A color through the palette of its document: an alias, or components by JSON Pointer `$ref` (ADR 0034). */
+function resolveColor(tokens: Record<string, DtcgToken>, value: unknown): Color {
+  if (typeof value === 'string') {
+    const target = tokens[value.slice(1, -1).replaceAll('.', '/')]
+    expect(target, value).toBeDefined()
+    return resolveColor(tokens, target!.$value)
+  }
+  const v = value as { colorSpace: string; components: unknown; alpha: number }
+  const pointer = (v.components as { $ref?: string }).$ref
+  if (!pointer) return v as Color
+  expect(pointer.startsWith('#/') && pointer.endsWith('/$value/components'), pointer).toBe(true)
+  const step = tokens[pointer.slice(2, -'/$value/components'.length)]
+  expect(step, pointer).toBeDefined()
+  return { ...resolveColor(tokens, step!.$value), alpha: v.alpha }
+}
+const resolved = (tokens: Record<string, DtcgToken>, token: DtcgToken) =>
+  token.$type === 'color' ? { ...token, $value: resolveColor(tokens, token.$value) } : token
+
 describe('DTCG export', () => {
   it('includes every mode without overwriting colors or duplicating shared font families', () => {
     const options = {
@@ -51,8 +71,11 @@ describe('DTCG export', () => {
             ? name
             : name.startsWith('typography/')
               ? `typography/${viewport}/${name.slice(11)}`
-              : `${mode}/${name}`
-          expect(all[target], target).toEqual(token)
+              : name.startsWith('palette/')
+                ? `palette/${mode}/${name.slice(8)}`
+                : `${mode}/${name}`
+          expect(all[target], target).toBeDefined()
+          expect(resolved(all, all[target]!), target).toEqual(resolved(single, token))
         }
       }
     }
@@ -70,7 +93,7 @@ describe('DTCG export', () => {
       for (const source of Object.values(theme[mode].tokens)) {
         const token = tokens[source.name]!
         expect(token.$type).toBe('color')
-        const value = token.$value as { colorSpace: string; components: [number, number, number]; alpha: number }
+        const value = resolveColor(tokens, token.$value)
         expect(value.colorSpace).toBe('srgb')
         const [r, g, b] = value.components
         expect(hexToRgba(rgbaToHex({ r, g, b, a: value.alpha }))).toEqual(hexToRgba(source.value))
@@ -102,8 +125,25 @@ describe('DTCG export', () => {
       [1, 0],
       [4, 0],
     ])
-    expect(layers[0]!.color).toEqual(tokens['focus/accent']!.$value)
-    expect(layers[1]!.color).toEqual(tokens['focus/accent/subtle']!.$value)
+    expect(layers[0]!.color).toEqual(resolveColor(tokens, tokens['focus/accent']!.$value))
+    expect(layers[1]!.color).toEqual(resolveColor(tokens, tokens['focus/accent/subtle']!.$value))
+  })
+
+  it.each(['light', 'dark'] as const)('aliases every %s semantic color to an opaque palette step', (mode) => {
+    const tokens = flatten(toDtcg(theme[mode]))
+    const steps = Object.keys(tokens).filter((name) => name.startsWith('palette/'))
+    expect(steps.length).toBeGreaterThan(0)
+    for (const name of steps) expect((tokens[name]!.$value as Color).alpha, name).toBe(1)
+    for (const source of Object.values(theme[mode].tokens)) {
+      const value = tokens[source.name]!.$value
+      if (hexToRgba(source.value).a === 1) expect(value, source.name).toMatch(/^\{palette\.[a-z]+\.\d+\}$/)
+      else
+        expect(value, source.name).toMatchObject({
+          colorSpace: 'srgb',
+          components: { $ref: expect.stringMatching(/^#\/palette\/[a-z]+\/\d+\/\$value\/components$/) },
+          alpha: hexToRgba(source.value).a,
+        })
+    }
   })
 
   it('exports one type scale and composite styles that reference it, per viewport', () => {

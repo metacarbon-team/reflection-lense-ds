@@ -5,6 +5,8 @@
 //
 // Variables keep the canonical token names (`bg/accent/hover` → `--bg-accent-hover`), so runtime themes
 // set the same variables. Tailwind namespaces only reference them (`@theme inline reference`).
+// Semantic colors keep their palette aliases (ADR 0034): `--bg-accent: var(--palette-light-accent-650)`,
+// and a translucent color mixes its step with transparent at its own alpha.
 
 import StyleDictionary from 'style-dictionary'
 import type { Dictionary, TransformedToken } from 'style-dictionary/types'
@@ -68,11 +70,22 @@ function color(c: Color): string {
 const shadow = (layers: ShadowLayer[]) =>
   layers.map((l) => [l.offsetX, l.offsetY, l.blur, l.spread].map(dimension).join(' ') + ` ${color(l.color)}`).join(', ')
 
+/** Alpha as a percentage for `color-mix`, exact to the 8-bit value it came from. */
+const percent = (alpha: number) => `${Math.round(alpha * 1e6) / 1e4}%`
+
+function colorValue(token: TransformedToken): string {
+  const original = token.original.$value as unknown
+  if (typeof original === 'string' && original.startsWith('{palette.')) return ref(original)
+  const palette = (token.original.$extensions?.[EXTENSION] as { palette?: string } | undefined)?.palette
+  if (palette) return `color-mix(in srgb, ${ref(palette)} ${percent((token.$value as Color).alpha ?? 1)}, transparent)`
+  return color(token.$value as Color)
+}
+
 function value(token: TransformedToken): string {
   const v = token.$value as unknown
   switch (token.$type) {
     case 'color':
-      return color(v as Color)
+      return colorValue(token)
     case 'dimension':
       return dimension(v as Dimension)
     case 'shadow':
@@ -306,10 +319,56 @@ export declare const twMergeConfig: {
 
 const SOURCE = 'tokens/reflection.tokens.json'
 
+type Json = { [key: string]: unknown }
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v)
+
+/**
+ * Style Dictionary does not resolve DTCG 2025.10 JSON Pointer references. A translucent color takes its
+ * components from a palette step by `$ref` (ADR 0034): resolve the pointer, and keep the step as an
+ * alias in `$extensions` so the CSS can reference the palette variable.
+ */
+function resolvePointers(root: Json): Json {
+  const at = (pointer: string): { value: unknown; path: string[] } => {
+    if (!pointer.startsWith('#/')) throw new Error(`Unsupported $ref: ${pointer}`)
+    const path = pointer
+      .slice(2)
+      .split('/')
+      .map((p) => p.replaceAll('~1', '/').replaceAll('~0', '~'))
+    const value = path.reduce<unknown>((node, key) => (isObject(node) ? node[key] : undefined), root)
+    if (value === undefined) throw new Error(`Unresolved $ref: ${pointer}`)
+    return { value, path }
+  }
+  const walk = (node: Json) => {
+    if (!('$value' in node)) {
+      for (const child of Object.values(node)) if (isObject(child)) walk(child)
+      return
+    }
+    const v = node.$value
+    if (!isObject(v)) return
+    for (const [key, part] of Object.entries(v)) {
+      if (!isObject(part) || !('$ref' in part)) continue
+      const target = at(part.$ref as string)
+      v[key] = structuredClone(target.value)
+      const valueAt = target.path.indexOf('$value')
+      if (node.$type === 'color' && key === 'components' && valueAt > 0) {
+        const extensions = (node.$extensions ??= {}) as Json
+        const own = (extensions[EXTENSION] ??= {}) as Json
+        own.palette = `{${target.path.slice(0, valueAt).join('.')}}`
+      }
+    }
+  }
+  walk(root)
+  return root
+}
+
 const sd = new StyleDictionary({
   source: [SOURCE],
   log: { verbosity: 'default' },
+  preprocessors: ['reflection/json-pointer'],
   hooks: {
+    preprocessors: {
+      'reflection/json-pointer': (dictionary) => resolvePointers(dictionary as Json) as typeof dictionary,
+    },
     formats: {
       'reflection/tailwind-theme': ({ dictionary }) => themeCss(dictionary, SOURCE),
       'reflection/tw-merge': ({ dictionary }) => twMergeJs(dictionary),

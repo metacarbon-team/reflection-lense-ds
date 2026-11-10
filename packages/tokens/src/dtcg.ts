@@ -1,5 +1,6 @@
-import { hexToRgba } from './color'
+import { hexToRgba, rgbaToHex } from './color'
 import { dimensionTokens, px, rem } from './dimensions'
+import { generateRolePalette, type ModePalette } from './palette'
 import { generateModeShadows, generateShadows, type ShadowParams } from './shadow'
 import {
   DEFAULT_TYPE_SCALE,
@@ -9,7 +10,7 @@ import {
   type TypeScaleParams,
   type Viewport,
 } from './typescale'
-import { FOCUS, FOCUS_HALO, type ModeTheme, type Theme } from './types'
+import { FOCUS, FOCUS_HALO, type Mode, type ModeTheme, type Theme } from './types'
 
 export interface DtcgToken {
   $type: 'color' | 'dimension' | 'number' | 'shadow' | 'fontFamily' | 'fontWeight' | 'typography'
@@ -47,15 +48,56 @@ function insert(group: DtcgGroup, path: string[], token: DtcgToken): void {
   insert(child, rest, token)
 }
 
-/** One resolved color mode and type viewport per file; no proprietary modes extension. */
-export function toDtcg(
-  theme: ModeTheme,
-  options: { shadows?: ShadowParams; typeScale?: TypeScaleParams; viewport?: Viewport } = {},
-): DtcgGroup {
+export interface DtcgOptions {
+  shadows?: ShadowParams
+  typeScale?: TypeScaleParams
+  viewport?: Viewport
+  /** Role palette the colors alias; generated from the theme when left out (ADR 0013). */
+  palette?: ModePalette
+  /** Where the palette group sits in the document; `palette` in a single-mode file (ADR 0034). */
+  palettePath?: string[]
+}
+
+/**
+ * The palette group and the semantic colors that alias it (ADR 0034). An opaque color is a DTCG alias
+ * of its step; a translucent one takes the step's components by a JSON Pointer `$ref` and keeps its
+ * own alpha, since an alias cannot change alpha.
+ */
+function putColors(result: DtcgGroup, theme: ModeTheme, palette: ModePalette, root: string[]): void {
+  const steps = new Map<string, string>()
+  for (const ramp of palette.ramps)
+    for (const step of ramp.steps) {
+      const path = [...root, ramp.family, String(step.step)]
+      steps.set(path.join('/'), step.value)
+      insert(result, path, { $type: 'color', $value: color(step.value) })
+    }
+  for (const token of Object.values(theme.tokens)) {
+    const binding = palette.bindings[token.name]
+    const path = binding && [...root, binding.family, String(binding.step)]
+    const step = path && steps.get(path.join('/'))
+    const own = hexToRgba(token.value)
+    // A token is written as an alias only when resolving the alias gives its exact value back.
+    if (!path || !step || hexToRgba(step).a !== 1 || rgbaToHex({ ...hexToRgba(step), a: own.a }) !== token.value) {
+      insert(result, token.name.split('/'), { $type: 'color', $value: color(token.value) })
+      continue
+    }
+    const $value =
+      own.a === 1
+        ? `{${path.join('.')}}`
+        : { colorSpace: 'srgb', components: { $ref: `#/${path.join('/')}/$value/components` }, alpha: own.a }
+    insert(result, token.name.split('/'), { $type: 'color', $value })
+  }
+}
+
+/**
+ * One color mode and type viewport per file; no proprietary modes extension. Semantic colors alias
+ * the palette group of the same file (ADR 0034).
+ */
+export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
   const result: DtcgGroup = {}
   const put = (name: string, $type: DtcgToken['$type'], $value: unknown) =>
     insert(result, name.split('/'), { $type, $value })
-  for (const token of Object.values(theme.tokens)) put(token.name, 'color', color(token.value))
+  putColors(result, theme, options.palette ?? generateRolePalette(theme), options.palettePath ?? ['palette'])
 
   const shadows = generateModeShadows(theme, options.shadows)
   for (const token of Object.values(shadows.colors)) put(token.name, 'color', color(token.value))
@@ -118,17 +160,26 @@ export function toDtcg(
   return result
 }
 
-/** All modes as ordinary DTCG groups; the type scale, font families and dimensions are exported once. */
+/**
+ * All modes as ordinary DTCG groups; the type scale, font families and dimensions are exported once.
+ * Each mode's palette sits under `palette/<mode>`, next to the mode's semantic colors (ADR 0034).
+ */
 export function toDtcgAllModes(
   theme: Theme,
-  options: { shadows?: ShadowParams; typeScale?: TypeScaleParams } = {},
+  options: { shadows?: ShadowParams; typeScale?: TypeScaleParams; palettes?: Partial<Record<Mode, ModePalette>> } = {},
 ): DtcgGroup {
-  const light = toDtcg(theme.light, options)
-  const dark = toDtcg(theme.dark, options)
-  const mobile = toDtcg(theme.light, { ...options, viewport: 'mobile' })
+  const { palettes, ...rest } = options
+  const mode = (m: Mode) => toDtcg(theme[m], { ...rest, palette: palettes?.[m], palettePath: ['palette', m] })
+  const light = mode('light')
+  const dark = mode('dark')
+  const mobile = toDtcg(theme.light, { ...rest, palette: palettes?.light, viewport: 'mobile' })
   const typography = { desktop: light.typography!, mobile: mobile.typography! }
+  const palette: DtcgGroup = {
+    light: (light.palette as DtcgGroup).light!,
+    dark: (dark.palette as DtcgGroup).dark!,
+  }
   const shared: DtcgGroup = {}
   for (const group of SHARED_GROUPS) shared[group] = light[group]!
-  for (const mode of [light, dark]) for (const group of [...SHARED_GROUPS, 'typography']) delete mode[group]
-  return { light, dark, ...shared, typography }
+  for (const m of [light, dark]) for (const group of ['palette', ...SHARED_GROUPS, 'typography']) delete m[group]
+  return { palette, light, dark, ...shared, typography }
 }

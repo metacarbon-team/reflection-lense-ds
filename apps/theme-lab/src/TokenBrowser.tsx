@@ -11,8 +11,11 @@ import {
 import { Input } from '@reflection/react'
 import { Choice, Panel, Segmented } from './ui/lab'
 
-type Row = { name: string; category: string; values: [DtcgToken, DtcgToken]; typography: boolean; shared: boolean }
+/** A value as shown: the resolved token, and the palette step it aliases (ADR 0034). */
+type Cell = { token: DtcgToken; alias?: string }
+type Row = { name: string; category: string; values: [Cell, Cell]; typography: boolean; shared: boolean }
 const CATEGORIES: Record<string, string> = {
+  palette: 'Palette',
   surface: 'Surface',
   bg: 'Background',
   form: 'Form',
@@ -45,6 +48,27 @@ function flatten(group: DtcgGroup, prefix = ''): Record<string, DtcgToken> {
 }
 
 type ColorValue = { components: [number, number, number]; alpha: number }
+
+/**
+ * Resolves a color through the palette of the same file: an alias `{palette.accent.650}`, or a
+ * translucent color whose components point at a step by `$ref`.
+ */
+function cell(token: DtcgToken, doc: Record<string, DtcgToken>): Cell {
+  if (token.$type !== 'color') return { token }
+  const value = token.$value as string | { components: unknown; alpha: number }
+  if (typeof value === 'string') {
+    const key = value.slice(1, -1).replaceAll('.', '/')
+    return { token: doc[key]!, alias: key.replace(/^palette\//, '') }
+  }
+  const pointer = (value.components as { $ref?: string }).$ref
+  if (!pointer) return { token }
+  const key = pointer.slice(2).split('/$value/')[0]!
+  const step = doc[key]!.$value as ColorValue
+  return {
+    token: { ...token, $value: { ...step, alpha: value.alpha } },
+    alias: `${key.replace(/^palette\//, '')} · ${Math.round(value.alpha * 10000) / 100}%`,
+  }
+}
 const hex = (value: ColorValue) => {
   const [r, g, b] = value.components
   return rgbaToHex({ r, g, b, a: value.alpha })
@@ -74,7 +98,9 @@ function displayValue(token: DtcgToken): string {
   return String(token.$value)
 }
 
-function Value({ token }: { token: DtcgToken }) {
+const cellText = (c: Cell) => [c.alias, displayValue(c.token)].filter(Boolean).join(' ')
+
+function Value({ cell: { token, alias } }: { cell: Cell }) {
   const value = displayValue(token)
   return (
     <span className="lab-token-value">
@@ -84,6 +110,7 @@ function Value({ token }: { token: DtcgToken }) {
         </span>
       )}
       <code>{value}</code>
+      {alias && <code className="text-neutral-subtle">{alias}</code>}
     </span>
   )
 }
@@ -110,14 +137,14 @@ export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeS
         category,
         typography,
         shared: SHARED.test(name),
-        values: [token, (typography ? mobile : dark)[name]!],
+        values: [cell(token, light), cell((typography ? mobile : dark)[name]!, typography ? mobile : dark)],
       }
     })
   }, [props.theme, props.shadows, props.typeScale])
   const filtered = rows.filter(
     (row) =>
       (category === 'all' || row.category === category) &&
-      `${row.name} ${row.values.map(displayValue).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()),
+      `${row.name} ${row.values.map(cellText).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()),
   )
 
   const categories = [
@@ -206,7 +233,7 @@ export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeS
                         </td>
                         {columns.map((i) => (
                           <td key={i}>
-                            <Value token={row.values[i]!} />
+                            <Value cell={row.values[i]!} />
                           </td>
                         ))}
                       </tr>

@@ -1,5 +1,5 @@
 export * from './types'
-export { DTCG_EXTENSION, toDtcg, toDtcgAllModes, type DtcgGroup, type DtcgToken } from './dtcg'
+export { DTCG_EXTENSION, toDtcg, toDtcgAllModes, type DtcgGroup, type DtcgOptions, type DtcgToken } from './dtcg'
 export { generateTheme, generateMode } from './generate'
 export { validateMode, type Issue } from './validate'
 export {
