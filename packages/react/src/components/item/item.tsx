@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { disabledAttrs } from '../../lib/disabled'
 
 /**
@@ -42,8 +43,6 @@ const slotFrame = [
   'flex min-h-4 shrink-0 items-center justify-center group-data-disabled/item:text-disabled',
   '[&_svg]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
 ]
-
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
 export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   /** The row title. One line, cut with an ellipsis when it does not fit. */

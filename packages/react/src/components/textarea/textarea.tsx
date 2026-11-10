@@ -6,7 +6,7 @@ import { controlFrameVariants } from '../input/input'
 
 const textareaVariants = cva([
   'block min-h-16 w-full min-w-0 resize-y px-3 py-2.5 outline-none focus-visible:shadow-focus-ring',
-  'placeholder:text-neutral-subtle data-disabled:placeholder:text-disabled',
+  'placeholder:text-neutral-subtle disabled:placeholder:text-disabled data-disabled:placeholder:text-disabled',
 ])
 
 /** Textarea: several lines in the control frame, resizable vertically. */

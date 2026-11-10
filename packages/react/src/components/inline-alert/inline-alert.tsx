@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { Card } from '../card/card'
 import { IconButton } from '../icon-button/icon-button'
@@ -61,8 +62,6 @@ export function InlineAlert({
   dismissLabel = 'Dismiss',
   ...props
 }: InlineAlertProps) {
-  const hasDescription =
-    description !== undefined && description !== null && description !== false && description !== ''
   return (
     <Card
       data-slot="inline-alert"
@@ -74,7 +73,7 @@ export function InlineAlert({
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">
-        {leadingSlot ? (
+        {hasContent(leadingSlot) ? (
           <span data-slot="inline-alert-leading" className={inlineAlertLeadingVariants({ tone })}>
             {leadingSlot}
           </span>
@@ -83,7 +82,7 @@ export function InlineAlert({
           <span data-slot="inline-alert-title" className="truncate text-body-small-medium text-neutral">
             {title}
           </span>
-          {hasDescription ? (
+          {hasContent(description) ? (
             <span data-slot="inline-alert-description" className="text-body-xsmall text-neutral-subtle">
               {description}
             </span>

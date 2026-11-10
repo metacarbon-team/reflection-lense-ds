@@ -25,6 +25,7 @@ const fieldCounterVariants = cva('ml-auto text-neutral-subtle tabular-nums', {
 
 interface FieldState {
   controlId: string
+  labelId: string
   captionId: string
   hasCaption: boolean
   invalid: boolean
@@ -43,7 +44,8 @@ interface ControlProps {
 /**
  * Props a form control takes from the Field around it: id, description, invalid and disabled.
  * Explicit props on the control win. `attributes` go on the control element; `invalid` and
- * `disabled` drive its styles.
+ * `disabled` drive its styles. `labelId` is the id of the Field's label, for a control that a
+ * `<label htmlFor>` cannot name (a radio group) and takes it through `aria-labelledby`.
  */
 export function useFieldControl(props: ControlProps) {
   const field = useContext(FieldContext)
@@ -55,6 +57,7 @@ export function useFieldControl(props: ControlProps) {
   return {
     invalid,
     disabled,
+    labelId: field?.labelId,
     attributes: {
       id: props.id ?? field?.controlId,
       disabled: disabled || undefined,
@@ -76,13 +79,14 @@ export type FieldProps = Omit<ComponentProps<'div'>, 'children'> & {
   children: ReactNode
 }
 
-/** Field: a label, one control (Input, Textarea, Select) and a caption row, wired for assistive tech. */
+/** Field: a label, one control (Input, Textarea, Select, RadioGroup) and a caption row, wired for assistive tech. */
 export function Field({ label, caption, error, counter, disabled = false, className, children, ...props }: FieldProps) {
   const id = useId()
   const invalid = error !== undefined && error !== null && error !== false
   const message = invalid ? error : caption
   const state: FieldState = {
     controlId: `${id}-control`,
+    labelId: `${id}-label`,
     captionId: `${id}-caption`,
     hasCaption: Boolean(message),
     invalid,
@@ -97,7 +101,7 @@ export function Field({ label, caption, error, counter, disabled = false, classN
         className={cn(fieldVariants(), className)}
         {...props}
       >
-        <label htmlFor={state.controlId} className={cn(fieldLabelVariants({ disabled }))}>
+        <label id={state.labelId} htmlFor={state.controlId} className={cn(fieldLabelVariants({ disabled }))}>
           {label}
         </label>
         {children}

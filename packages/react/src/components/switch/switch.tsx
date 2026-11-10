@@ -4,20 +4,20 @@ import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
 const switchVariants = cva([
-  'peer inline-flex h-5 w-11 shrink-0 items-center rounded-full border p-0.5 outline-none',
+  'group peer inline-flex h-5 w-11 shrink-0 items-center rounded-full border p-0.5 outline-none',
   // State colors apply only while enabled, so disabled (stroke only) wins in both positions.
-  'not-data-disabled:data-[state=unchecked]:border-neutral not-data-disabled:data-[state=unchecked]:bg-neutral',
-  'not-data-disabled:data-[state=unchecked]:hover:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:hover:bg-neutral-hover',
-  'not-data-disabled:data-[state=checked]:border-neutral-subtle not-data-disabled:data-[state=checked]:bg-neutral-emphasized',
-  'not-data-disabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
+  'enabled:data-[state=unchecked]:border-neutral enabled:data-[state=unchecked]:bg-neutral',
+  'enabled:data-[state=unchecked]:hover:border-neutral-emphasized enabled:data-[state=unchecked]:hover:bg-neutral-hover',
+  'enabled:data-[state=checked]:border-neutral-subtle enabled:data-[state=checked]:bg-neutral-emphasized',
+  'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
   'focus-visible:border-transparent focus-visible:shadow-focus-ring',
-  'data-disabled:pointer-events-none data-disabled:border-disabled data-disabled:bg-transparent',
+  'disabled:pointer-events-none disabled:border-disabled disabled:bg-transparent',
 ])
 
 const switchThumbVariants = cva([
   'pointer-events-none block h-4 w-6.5 rounded-full border bg-card-neutral-emphasized transition-transform',
   'data-[state=unchecked]:border-neutral-subtle data-[state=checked]:translate-x-3 data-[state=checked]:border-transparent',
-  'data-disabled:border-transparent data-disabled:bg-current data-disabled:text-disabled',
+  'group-disabled:border-transparent group-disabled:bg-current group-disabled:text-disabled',
 ])
 
 /**

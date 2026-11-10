@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 
 /**
  * The bubble: 28px high, the emphasized card surface, one line of caption text. Width hugs the label
@@ -46,8 +47,6 @@ type TooltipOwnProps = {
   /** Shows the arrow that points at the trigger. Turn it off when the tooltip floats with a gap. */
   arrow?: boolean
 }
-
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
 function TooltipParts({ label, leadingSlot, trailingSlot }: TooltipOwnProps) {
   return (

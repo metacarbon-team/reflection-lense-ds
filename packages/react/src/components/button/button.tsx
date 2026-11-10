@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
-import { disabledAttrs } from '../../lib/disabled'
+import { disabledAttrs, inertProps } from '../../lib/disabled'
 
 /**
  * Button: tone × variant × size. Solid fills with the tone's emphasized background; outline and ghost
@@ -14,15 +14,16 @@ export const buttonVariants = cva(
     'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap',
     'rounded-md border border-transparent outline-none select-none',
     'focus-visible:border-transparent focus-visible:shadow-focus-ring',
-    'data-disabled:pointer-events-none data-disabled:text-disabled data-disabled:shadow-none',
+    'disabled:pointer-events-none data-disabled:pointer-events-none disabled:text-disabled data-disabled:text-disabled disabled:shadow-none data-disabled:shadow-none',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
       tone: { default: '', accent: '', danger: '' },
       variant: {
-        solid: 'shadow-sm data-disabled:border-disabled data-disabled:bg-transparent',
-        outline: 'bg-transparent data-disabled:border-disabled',
+        solid:
+          'shadow-sm disabled:border-disabled data-disabled:border-disabled disabled:bg-transparent data-disabled:bg-transparent',
+        outline: 'bg-transparent disabled:border-disabled data-disabled:border-disabled',
         ghost: 'bg-transparent',
       },
       size: {
@@ -88,6 +89,7 @@ export function Button({ className, tone, variant, size, asChild = false, type, 
       className={cn(buttonVariants({ tone, variant, size }), className)}
       {...props}
       {...disabledAttrs(disabled, !asChild)}
+      {...(asChild ? inertProps(disabled) : undefined)}
     />
   )
 }

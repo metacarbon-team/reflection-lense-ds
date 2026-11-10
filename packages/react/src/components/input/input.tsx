@@ -19,7 +19,7 @@ const inputVariants = cva(
 )
 
 const inputControlVariants = cva(
-  'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle group-data-disabled:placeholder:text-disabled',
+  'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled group-data-disabled:placeholder:text-disabled',
 )
 
 const addonVariants = cva('flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled')

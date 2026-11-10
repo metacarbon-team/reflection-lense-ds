@@ -3,11 +3,10 @@ import { Toast as ToastPrimitive } from 'radix-ui'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { Button } from '../button/button'
 import { IconButton } from '../icon-button/icon-button'
-
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
 const toastViewportVariants = cva('fixed right-4 bottom-4 z-50 flex w-100 max-w-full flex-col gap-3 outline-none')
 
@@ -193,7 +192,8 @@ type ToasterItemProps = {
   /** Natural height of this toast and of the newest one, in px; 0 until measured. */
   height: number
   frontHeight: number
-  onHeight: (id: string, height: number) => void
+  /** Reports the measured height; `null` when the toast leaves the list. */
+  onHeight: (id: string, height: number | null) => void
 }
 
 function ToasterItem({ record, index, offset, expanded, height, frontHeight, onHeight }: ToasterItemProps) {
@@ -221,6 +221,9 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
     Array.from(element.children).forEach((child) => observer.observe(child))
     return () => observer.disconnect()
   }, [id, element, onHeight])
+
+  // An older toast pushed out by `limit` is measured again when it comes back.
+  useLayoutEffect(() => () => onHeight(id, null), [id, onHeight])
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMounted(true))
@@ -296,7 +299,14 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
     if (!element) return
     const enter = () => setHovered(true)
     const leave = () => setHovered(false)
-    const focusIn = () => setFocused(true)
+    // Only keyboard focus opens the pile. When the toast holding the focus closes, Radix moves the focus
+    // to the viewport. After a mouse click that would keep the pile open, and Radix pauses every timer
+    // while the viewport has focus, so the focus goes back to the page.
+    const focusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement
+      if (target.matches(':focus-visible')) setFocused(true)
+      else if (target === element) element.blur()
+    }
     const focusOut = (event: FocusEvent) => {
       if (!element.contains(event.relatedTarget as Node | null)) setFocused(false)
     }
@@ -312,11 +322,16 @@ export function Toaster({ duration = 5000, limit = 3, expand = false, label, cla
     }
   }, [])
 
-  const onHeight = useCallback(
-    (id: string, height: number) =>
-      setHeights((current) => (current[id] === height ? current : { ...current, [id]: height })),
-    [],
-  )
+  // `null` forgets a toast that left the list, so the record does not grow with every toast ever shown.
+  const onHeight = useCallback((id: string, height: number | null) => {
+    setHeights((current) => {
+      if (height !== null) return current[id] === height ? current : { ...current, [id]: height }
+      if (!(id in current)) return current
+      const rest = { ...current }
+      delete rest[id]
+      return rest
+    })
+  }, [])
 
   const shown = all.slice(-limit)
   const heightOf = (id: string) => heights[id] ?? 0

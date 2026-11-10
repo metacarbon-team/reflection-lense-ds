@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { InlineAlert } from './inline-alert'
+import { Specimen as DocSpecimen } from '../../docs/specimen'
 
 const Glyph = ({ children }: { children: ReactNode }) => (
   <svg
@@ -179,25 +180,12 @@ export const Dismissible: Story = {
   },
 }
 
-/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
-function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
-  return (
-    <div className="flex w-full flex-col gap-4">
-      <span
-        className={
-          tone === 'do'
-            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
-            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
-        }
-      >
-        {tone === 'do' ? 'Do' : 'Don’t'}
-      </span>
-      <div className="flex justify-center px-6 pb-6">
-        <div className="w-full max-w-104">{children}</div>
-      </div>
-    </div>
-  )
-}
+/** The shared Do or Don't card; an alert example keeps the width of a narrow column. */
+const Specimen = ({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) => (
+  <DocSpecimen tone={tone}>
+    <div className="w-full max-w-104">{children}</div>
+  </DocSpecimen>
+)
 
 const guideline: Pick<Story, 'tags' | 'parameters'> = {
   tags: ['!autodocs'],
