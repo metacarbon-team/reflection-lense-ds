@@ -1,9 +1,11 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ComponentProps } from 'react'
 import { Checkbox } from '../checkbox'
 import { RadioGroup, Radio } from '../radio'
 import { Switch } from '../switch'
 import { ChevronRightIcon } from '../../lib/icons'
+import { Specimen } from '../../docs/specimen'
 import { Item } from './item'
 
 const FileIcon = () => (
@@ -60,6 +62,12 @@ const meta = {
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
     state: { control: 'select', options: ['default', 'hover', 'pressed', 'active', 'focus'] },
     disabled: { control: 'boolean' },
+  },
+  parameters: {
+    docs: { page: DocsPage },
+    // A disabled row is exempt from the contrast rule (WCAG 1.4.3), but axe only knows a disabled
+    // element by `disabled` or `aria-disabled`, so the rows marked with `data-disabled` are skipped.
+    a11y: { context: { include: '#storybook-root', exclude: '[data-disabled]' } },
   },
 } satisfies Meta<typeof Item>
 
@@ -224,4 +232,78 @@ export const Disabled: Story = {
       />
     </div>
   ),
+}
+
+/**
+ * **Keep the meta label short**  
+ * The meta label never shrinks: the title takes what is left. Use a short value such as a shortcut or
+ * a count.
+ */
+export const GuidelineKeepTheMetaLabelShortDo: Story = {
+  name: 'Guideline 1 Do',
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="do">
+      <div className="w-80">
+        <Item
+          size="lg"
+          label="Budget plan 2025"
+          description="Shared with the finance team"
+          metaLabel="Mon"
+          leadingSlot={<FileIcon />}
+          trailingSlot={<ChevronRightIcon />}
+        />
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineKeepTheMetaLabelShortDont: Story = {
+  name: 'Guideline 1 Don’t',
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <div className="w-80">
+        <Item
+          size="lg"
+          label="Budget plan 2025"
+          description="Shared with the finance team"
+          metaLabel="Updated 3 days ago"
+          leadingSlot={<FileIcon />}
+          trailingSlot={<ChevronRightIcon />}
+        />
+      </div>
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side, one pair per rule. */
+function DocsPage() {
+  const rules = [[GuidelineKeepTheMetaLabelShortDo, GuidelineKeepTheMetaLabelShortDont]] as const
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      {rules.map(([Do, Dont], index) => (
+        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} [&_p]:mb-0!`}>
+          {/* Figma has a caption only over the Do card, so it takes the whole row; the cards sit side by side below. */}
+          <Description of={Do} />
+          <div className="grid grid-cols-2 gap-x-6">
+            <div>
+              <Canvas of={Do} />
+            </div>
+            <div>
+              <Canvas of={Dont} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  )
 }
