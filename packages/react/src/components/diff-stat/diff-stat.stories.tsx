@@ -32,7 +32,7 @@ export const Variants: Story = {
   ),
 }
 
-/** Next to a file name in a list of changes. */
+/** Next to a file name in a list of changes. Each count is named for screen readers with `role` and `aria-label`. */
 export const WithFile: Story = {
   render: () => (
     <ul className="flex w-72 flex-col gap-2">
@@ -42,7 +42,12 @@ export const WithFile: Story = {
       ].map((file) => (
         <li key={file.name} className="flex items-center justify-between gap-4">
           <span className="text-body-small">{file.name}</span>
-          <DiffStat added={file.added} removed={file.removed} />
+          <DiffStat
+            added={file.added}
+            removed={file.removed}
+            role="group"
+            aria-label={`${file.added} lines added, ${file.removed} lines removed`}
+          />
         </li>
       ))}
     </ul>

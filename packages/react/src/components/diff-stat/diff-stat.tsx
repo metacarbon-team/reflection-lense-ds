@@ -30,11 +30,14 @@ export type DiffStatProps = Omit<ComponentProps<'span'>, 'children'> & {
 /**
  * Diff Stat: a compact count of added and removed lines, shown next to a file or a change. Added is
  * green, removed is red. Pass plain numbers: the component writes the sign and the exact count, so the
- * meaning never depends on color alone.
+ * meaning never depends on color alone. Give it a name for screen readers with `role="group"` and an
+ * `aria-label`, for example "120 lines added, 34 lines removed".
  */
 export function DiffStat({ className, added, removed, showAdded = true, showRemoved = true, ...props }: DiffStatProps) {
   const addedText = showAdded ? formatCount(added) : null
   const removedText = showRemoved ? formatCount(removed) : null
+  // With nothing to show, render nothing instead of an empty element.
+  if (addedText === null && removedText === null) return null
   return (
     <span
       data-slot="diff-stat"
