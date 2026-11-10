@@ -2,7 +2,6 @@ import { cva } from 'class-variance-authority'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
-import { CheckIcon, DashIcon } from '../../lib/icons'
 import { useFieldControl } from '../field/field'
 
 /**
@@ -10,14 +9,24 @@ import { useFieldControl } from '../field/field'
  * whole look and the selection (`data-state`) picks the colors. Hover and focus-visible come from the
  * browser in `default`; the `hover` and `focus` variants freeze them for docs and tests.
  */
+const markProps = {
+  viewBox: '0 0 16 16',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.333,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+} as const
+
 const checkboxVariants = cva(
   'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border align-middle outline-none',
   {
     variants: {
       state: {
         default: [
-          'data-[state=unchecked]:border-neutral data-[state=unchecked]:bg-form-neutral data-[state=unchecked]:shadow-sm',
-          'data-[state=unchecked]:hover:border-neutral-emphasized data-[state=unchecked]:hover:bg-form-neutral-hover',
+          'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-form-neutral data-[state=unchecked]:shadow-sm',
+          'data-[state=unchecked]:hover:bg-neutral-hover',
           'data-[state=checked]:border-transparent data-[state=checked]:bg-neutral-emphasized data-[state=checked]:text-neutral-on-emphasized data-[state=checked]:shadow-sm',
           'data-[state=checked]:hover:bg-neutral-emphasized-hover',
           'data-[state=indeterminate]:border-neutral-emphasized data-[state=indeterminate]:bg-neutral data-[state=indeterminate]:text-neutral data-[state=indeterminate]:shadow-sm',
@@ -26,7 +35,7 @@ const checkboxVariants = cva(
           'data-[state=checked]:focus-visible:shadow-focus-ring data-[state=indeterminate]:focus-visible:border-transparent data-[state=indeterminate]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-form-neutral-hover data-[state=unchecked]:shadow-sm',
+          'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-neutral-hover data-[state=unchecked]:shadow-sm',
           'data-[state=checked]:border-transparent data-[state=checked]:bg-neutral-emphasized-hover data-[state=checked]:text-neutral-on-emphasized data-[state=checked]:shadow-sm',
           'data-[state=indeterminate]:border-neutral-emphasized data-[state=indeterminate]:bg-neutral-hover data-[state=indeterminate]:text-neutral data-[state=indeterminate]:shadow-sm',
         ],
@@ -56,30 +65,36 @@ const checkboxVariants = cva(
 export type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> & {
   /** `false`, `true` or `'indeterminate'`, for a parent whose children are only partly selected. */
   checked?: boolean | 'indeterminate'
-  /** Freezes `hover` or `focus` for docs and tests. Error comes from `aria-invalid`, disabled from `disabled`. */
+  /** Freezes `hover` or `focus` for docs and tests. `error` also sets `aria-invalid`; disabled comes from `disabled`. */
   state?: 'default' | 'hover' | 'focus' | 'error'
 }
 
 /**
  * Checkbox: a 20×20 box with three values: unchecked, checked and indeterminate. Use indeterminate
  * only for a parent whose children are partly selected: all selected is checked, none is unchecked.
- * Error comes from `aria-invalid` or a Field error. Name it with a `<label htmlFor>` or `aria-label`.
+ * Error comes from `aria-invalid`, a Field error or `state="error"`. Name it with a `<label htmlFor>` or `aria-label`.
  */
 export function Checkbox({ state = 'default', className, ...props }: CheckboxProps) {
   const control = useFieldControl(props)
   const disabled = control.disabled
-  const resolved = disabled ? 'disabled' : control.invalid ? 'error' : state
+  const invalid = control.invalid || state === 'error'
+  const resolved = disabled ? 'disabled' : invalid ? 'error' : state
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       {...props}
       {...control.attributes}
+      aria-invalid={invalid || control.attributes['aria-invalid']}
       disabled={disabled || undefined}
       className={cn(checkboxVariants({ state: resolved }), className)}
     >
       <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex size-4 items-center justify-center">
-        <CheckIcon className="size-4 group-data-[state=indeterminate]:hidden" />
-        <DashIcon className="hidden size-4 group-data-[state=indeterminate]:block" />
+        <svg {...markProps} className="size-4 group-data-[state=indeterminate]:hidden">
+          <path d="M2.667 8l3.333 3.333 7.333-7.333" />
+        </svg>
+        <svg {...markProps} className="hidden size-4 group-data-[state=indeterminate]:block">
+          <path d="M2.667 8h10.667" />
+        </svg>
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

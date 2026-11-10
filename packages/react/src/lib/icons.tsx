@@ -44,12 +44,6 @@ export const CloseIcon = (props: IconProps) => (
   </Icon>
 )
 
-export const DashIcon = (props: IconProps) => (
-  <Icon {...props}>
-    <path d="M4 8h8" />
-  </Icon>
-)
-
 export const UserIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="8" cy="5.5" r="2.5" />
