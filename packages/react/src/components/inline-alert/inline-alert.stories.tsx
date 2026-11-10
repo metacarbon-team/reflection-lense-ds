@@ -163,7 +163,7 @@ export const Dismissible: Story = {
     return open ? (
       <InlineAlert {...withToneIcon(args)} onDismiss={() => setOpen(false)} />
     ) : (
-      <Button autoFocus variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button tone="default" autoFocus variant="outline" size="sm" onClick={() => setOpen(true)}>
         Show alert again
       </Button>
     )

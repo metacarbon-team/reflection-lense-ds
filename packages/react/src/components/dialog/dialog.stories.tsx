@@ -27,7 +27,9 @@ export const Inline: Story = {
   render: (args) => (
     <Dialog {...args}>
       <DialogTrigger asChild>
-        <Button>Rename theme</Button>
+        <Button tone="default" variant="outline">
+          Rename theme
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -41,7 +43,9 @@ export const Inline: Story = {
         </DialogBody>
         <DialogFooter>
           <DialogClose asChild>
-            <Button size="sm">Cancel</Button>
+            <Button tone="default" variant="outline" size="sm">
+              Cancel
+            </Button>
           </DialogClose>
           <Button size="sm" variant="solid" tone="accent">
             Save changes
@@ -57,7 +61,9 @@ export const Stacked: Story = {
   render: (args) => (
     <Dialog {...args}>
       <DialogTrigger asChild>
-        <Button tone="danger">Delete theme</Button>
+        <Button variant="outline" tone="danger">
+          Delete theme
+        </Button>
       </DialogTrigger>
       <DialogContent showCloseButton={false} className="max-w-sm">
         <DialogHeader>
@@ -69,7 +75,9 @@ export const Stacked: Story = {
             Delete
           </Button>
           <DialogClose asChild>
-            <Button size="sm">Cancel</Button>
+            <Button tone="default" variant="outline" size="sm">
+              Cancel
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

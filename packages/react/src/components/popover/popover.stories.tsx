@@ -46,7 +46,9 @@ export const Playground: Story = {
     <Plain>
       <Popover defaultOpen={viewMode !== 'docs'}>
         <PopoverTrigger asChild>
-          <Button>Layer size</Button>
+          <Button tone="default" variant="outline">
+            Layer size
+          </Button>
         </PopoverTrigger>
         <PopoverContent {...args} aria-label={args.header ? undefined : 'Layer size'}>
           <Rows prefix="playground" />
@@ -83,14 +85,18 @@ export const WithControls: Story = {
     <Plain>
       <Popover>
         <PopoverTrigger asChild>
-          <Button>Filters</Button>
+          <Button tone="default" variant="outline">
+            Filters
+          </Button>
         </PopoverTrigger>
         <PopoverContent {...args} label="Layer filters" description="Choose which layers the list shows.">
           <div className="flex flex-col gap-3">
             <Rows prefix="controls" />
             <div className="flex justify-end gap-2">
               <PopoverClose asChild>
-                <Button size="sm">Cancel</Button>
+                <Button tone="default" variant="outline" size="sm">
+                  Cancel
+                </Button>
               </PopoverClose>
               <PopoverClose asChild>
                 <Button size="sm" variant="solid" tone="accent">
@@ -111,7 +117,9 @@ export const InfoOnly: Story = {
     <Plain>
       <Popover>
         <PopoverTrigger asChild>
-          <Button>Layer info</Button>
+          <Button tone="default" variant="outline">
+            Layer info
+          </Button>
         </PopoverTrigger>
         <PopoverContent {...args} content={false} label="Layer info" description="Created by you, edited today." />
       </Popover>
@@ -125,7 +133,9 @@ export const WithoutHeader: Story = {
     <Plain>
       <Popover>
         <PopoverTrigger asChild>
-          <Button>Filters</Button>
+          <Button tone="default" variant="outline">
+            Filters
+          </Button>
         </PopoverTrigger>
         <PopoverContent {...args} header={false} aria-label="Filters">
           <Rows prefix="no-header" />

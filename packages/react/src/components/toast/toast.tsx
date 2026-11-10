@@ -119,7 +119,7 @@ export function Toast({
 export function ToastAction({ className, children, ...props }: ComponentProps<typeof ToastPrimitive.Action>) {
   return (
     <ToastPrimitive.Action data-slot="toast-action" asChild {...props}>
-      <Button size="sm" className={cn('shrink-0', className)}>
+      <Button tone="default" variant="outline" size="sm" className={cn('shrink-0', className)}>
         {children}
       </Button>
     </ToastPrimitive.Action>

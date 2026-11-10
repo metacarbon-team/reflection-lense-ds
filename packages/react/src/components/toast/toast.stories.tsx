@@ -247,6 +247,8 @@ export const Stack: StoryObj<{ expand: boolean }> = {
 const TriggeredDemo = () => (
   <div className="flex items-center gap-2">
     <Button
+      tone="default"
+      variant="outline"
       onClick={() =>
         toast({
           ...copy,
@@ -257,10 +259,10 @@ const TriggeredDemo = () => (
     >
       Create event
     </Button>
-    <Button variant="outline" onClick={() => toast({ label: 'Saved' })}>
+    <Button tone="default" variant="outline" onClick={() => toast({ label: 'Saved' })}>
       Short toast
     </Button>
-    <Button variant="ghost" onClick={() => toast.dismiss()}>
+    <Button tone="default" variant="ghost" onClick={() => toast.dismiss()}>
       Dismiss all
     </Button>
     <Toaster />

@@ -16,7 +16,7 @@ const selectTriggerVariants = cva([], {
   variants: {
     appearance: {
       input: [controlFrameVariants(), 'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left'],
-      button: buttonVariants({ variant: 'outline', size: 'sm' }),
+      button: buttonVariants({ tone: 'default', variant: 'outline', size: 'sm' }),
     },
   },
   compoundVariants: [

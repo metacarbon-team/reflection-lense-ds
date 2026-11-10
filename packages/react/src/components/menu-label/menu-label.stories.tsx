@@ -26,7 +26,9 @@ export const InMenuAndSelect: Story = {
     <>
       <Menu>
         <MenuTrigger asChild>
-          <Button size="sm">Menu</Button>
+          <Button tone="default" variant="outline" size="sm">
+            Menu
+          </Button>
         </MenuTrigger>
         <MenuContent>
           <MenuLabel>Actions</MenuLabel>

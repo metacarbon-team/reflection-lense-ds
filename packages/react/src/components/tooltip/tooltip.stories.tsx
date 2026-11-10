@@ -64,7 +64,9 @@ export const Playground: Story = {
     <Stage>
       <Tooltip defaultOpen={viewMode !== 'docs'}>
         <TooltipTrigger asChild>
-          <Button>Save</Button>
+          <Button tone="default" variant="outline">
+            Save
+          </Button>
         </TooltipTrigger>
         <TooltipContent {...args} />
       </Tooltip>
@@ -123,7 +125,9 @@ export const WithLabel: Story = {
     <Stage>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button>Attach</Button>
+          <Button tone="default" variant="outline">
+            Attach
+          </Button>
         </TooltipTrigger>
         <TooltipContent {...args} />
       </Tooltip>
@@ -138,7 +142,9 @@ export const WithShortcut: Story = {
     <Stage>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button>Save</Button>
+          <Button tone="default" variant="outline">
+            Save
+          </Button>
         </TooltipTrigger>
         <TooltipContent {...args} />
       </Tooltip>
@@ -153,7 +159,9 @@ export const WithIcon: Story = {
     <Stage>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button>Approval</Button>
+          <Button tone="default" variant="outline">
+            Approval
+          </Button>
         </TooltipTrigger>
         <TooltipContent {...args} />
       </Tooltip>
@@ -168,7 +176,9 @@ export const Bottom: Story = {
     <Stage>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button>Menu</Button>
+          <Button tone="default" variant="outline">
+            Menu
+          </Button>
         </TooltipTrigger>
         <TooltipContent {...args} />
       </Tooltip>
