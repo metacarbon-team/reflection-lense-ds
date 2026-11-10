@@ -274,29 +274,29 @@ export const GuidelineKeepTheTitleShortDont: Story = {
 }
 
 /**
- * Match the type to the meaning. The icon and its color carry the meaning. A Success icon on an error
+ * Match the icon to the meaning. The icon and its color carry the meaning. A Success icon on an error
  * message sends the wrong signal.
  */
-export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
+export const GuidelineMatchTheIconToTheMeaningDo: Story = {
   name: 'Guideline 2 Do',
   tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
-      <Stage label="Notifications: Do, match the type to the meaning">
+      <Stage label="Notifications: Do, match the icon to the meaning">
         <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={dangerIcon} />
       </Stage>
     </Specimen>
   ),
 }
 
-export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
+export const GuidelineMatchTheIconToTheMeaningDont: Story = {
   name: 'Guideline 2 Don’t',
   tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <Stage label="Notifications: Don’t, match the type to the meaning">
+      <Stage label="Notifications: Don’t, match the icon to the meaning">
         <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={successIcon} />
       </Stage>
     </Specimen>
@@ -377,7 +377,7 @@ export const GuidelineUseTheActionToUndoOrViewDont: Story = {
 function DocsPage() {
   const rules = [
     [GuidelineKeepTheTitleShortDo, GuidelineKeepTheTitleShortDont],
-    [GuidelineMatchTheTypeToTheMeaningDo, GuidelineMatchTheTypeToTheMeaningDont],
+    [GuidelineMatchTheIconToTheMeaningDo, GuidelineMatchTheIconToTheMeaningDont],
     [GuidelineDoNotRepeatTheTitleDo, GuidelineDoNotRepeatTheTitleDont],
     [GuidelineUseTheActionToUndoOrViewDo, GuidelineUseTheActionToUndoOrViewDont],
   ] as const
