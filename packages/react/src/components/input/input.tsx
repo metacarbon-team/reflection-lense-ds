@@ -30,7 +30,7 @@ export function Input({ leadingSlot, trailingSlot, className, inputClassName, ..
       data-disabled={control.disabled || undefined}
       className={cn(
         controlFrameClass,
-        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 hover:bg-neutral-hover focus-within:shadow-focus-ring has-disabled:pointer-events-none has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-disabled:shadow-none [&_svg]:size-4 [&_svg]:shrink-0',
+        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring has-disabled:pointer-events-none has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-disabled:shadow-none [&_svg]:size-4 [&_svg]:shrink-0',
         className,
       )}
     >
@@ -44,6 +44,8 @@ export function Input({ leadingSlot, trailingSlot, className, inputClassName, ..
         {...control.attributes}
         className={cn(
           'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-subtle disabled:placeholder:text-disabled group-data-disabled:placeholder:text-disabled',
+          // `type="search"` draws its own clear button in Chrome and Safari; clearing is the trailing slot's job.
+          '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none',
           inputClassName,
         )}
       />

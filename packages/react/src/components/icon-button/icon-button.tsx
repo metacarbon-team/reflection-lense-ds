@@ -3,7 +3,7 @@ import { Slot } from 'radix-ui'
 import { isValidElement } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import { disabledAttrs, inertProps } from '../../lib/disabled'
+import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * IconButton: the Button axes (tone × variant × size × state) on a circle of 32/40/48px with a
@@ -124,6 +124,7 @@ export function IconButton({
   asChild = false,
   type,
   disabled,
+  children,
   ...props
 }: IconButtonProps) {
   // A disabled button drops the frozen states; its look comes from `data-disabled`.
@@ -133,23 +134,16 @@ export function IconButton({
     className: cn(iconButtonVariants({ tone, variant, size, state: resolvedState }), className),
   }
 
-  // A link cannot be disabled: a disabled one becomes a plain `span` with the link role and no `href`,
-  // so it leaves the Tab order.
-  if (asChild && disabled && isValidElement<{ children?: ReactNode }>(props.children)) {
+  if (asChild && isValidElement<{ children?: ReactNode }>(children)) {
     return (
-      <span role="link" aria-label={props['aria-label']} {...rootProps} {...disabledAttrs(true, false)}>
-        {props.children.props.children}
-      </span>
+      <Slot.Root {...rootProps} {...props} {...disabledLinkProps(disabled)}>
+        {linkChild(children, disabled)}
+      </Slot.Root>
     )
   }
-  const Comp = asChild ? Slot.Root : 'button'
   return (
-    <Comp
-      type={asChild ? undefined : (type ?? 'button')}
-      {...rootProps}
-      {...props}
-      {...disabledAttrs(disabled, !asChild)}
-      {...(asChild ? inertProps(disabled) : undefined)}
-    />
+    <button type={type ?? 'button'} {...rootProps} {...props} {...disabledAttrs(disabled, true)}>
+      {children}
+    </button>
   )
 }

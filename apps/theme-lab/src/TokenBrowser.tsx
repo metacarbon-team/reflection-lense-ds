@@ -11,8 +11,8 @@ import {
 import { Input } from '@reflection/react'
 import { Choice, Panel, Segmented } from './ui/lab'
 
-/** A value as shown: the resolved token, and the palette step it aliases (ADR 0034). */
-type Cell = { token: DtcgToken; alias?: string }
+/** A value as shown: the resolved token and the palette step it aliases (ADR 0034); none when the mode lacks the token. */
+type Cell = { token?: DtcgToken; alias?: string }
 type Row = { name: string; category: string; values: [Cell, Cell]; typography: boolean; shared: boolean }
 const CATEGORIES: Record<string, string> = {
   palette: 'Palette',
@@ -53,17 +53,18 @@ type ColorValue = { components: [number, number, number]; alpha: number }
  * Resolves a color through the palette of the same file: an alias `{palette.accent.650}`, or a
  * translucent color whose components point at a step by `$ref`.
  */
-function cell(token: DtcgToken, doc: Record<string, DtcgToken>): Cell {
-  if (token.$type !== 'color') return { token }
+function cell(token: DtcgToken | undefined, doc: Record<string, DtcgToken>): Cell {
+  if (!token || token.$type !== 'color') return { token }
   const value = token.$value as string | { components: unknown; alpha: number }
   if (typeof value === 'string') {
     const key = value.slice(1, -1).replaceAll('.', '/')
-    return { token: doc[key]!, alias: key.replace(/^palette\//, '') }
+    return { token: doc[key], alias: key.replace(/^palette\//, '') }
   }
   const pointer = (value.components as { $ref?: string }).$ref
   if (!pointer) return { token }
   const key = pointer.slice(2).split('/$value/')[0]!
-  const step = doc[key]!.$value as ColorValue
+  const step = doc[key]?.$value as ColorValue | undefined
+  if (!step) return { alias: key.replace(/^palette\//, '') }
   return {
     token: { ...token, $value: { ...step, alpha: value.alpha } },
     alias: `${key.replace(/^palette\//, '')} · ${Math.round(value.alpha * 10000) / 100}%`,
@@ -98,9 +99,10 @@ function displayValue(token: DtcgToken): string {
   return String(token.$value)
 }
 
-const cellText = (c: Cell) => [c.alias, displayValue(c.token)].filter(Boolean).join(' ')
+const cellText = (c: Cell) => [c.alias, c.token && displayValue(c.token)].filter(Boolean).join(' ')
 
 function Value({ cell: { token, alias } }: { cell: Cell }) {
+  if (!token) return <code className="text-neutral-subtle">—</code>
   const value = displayValue(token)
   return (
     <span className="lab-token-value">
@@ -125,7 +127,10 @@ export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeS
     const light = flatten(toDtcg(props.theme.light, options))
     const dark = flatten(toDtcg(props.theme.dark, options))
     const mobile = flatten(toDtcg(props.theme.light, { ...options, viewport: 'mobile' }))
-    return Object.entries(light).map(([name, token]): Row => {
+    // Each mode has its own palette ramps, and their step counts can differ: list the steps of both.
+    const names = [...new Set([...Object.keys(light), ...Object.keys(dark).filter((n) => n.startsWith('palette/'))])]
+    return names.map((name): Row => {
+      const token = light[name] ?? dark[name]!
       const typography = name.startsWith('typography/')
       const category = name.startsWith('font/')
         ? name.split('/').slice(0, 2).join('/')
@@ -137,7 +142,7 @@ export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeS
         category,
         typography,
         shared: SHARED.test(name),
-        values: [cell(token, light), cell((typography ? mobile : dark)[name]!, typography ? mobile : dark)],
+        values: [cell(light[name], light), cell((typography ? mobile : dark)[name], typography ? mobile : dark)],
       }
     })
   }, [props.theme, props.shadows, props.typeScale])

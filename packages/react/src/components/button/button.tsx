@@ -1,9 +1,10 @@
 import { cva } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
-import { cloneElement, isValidElement } from 'react'
+import { isValidElement } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import { disabledAttrs, inertProps } from '../../lib/disabled'
+import { hasContent } from '../../lib/has-content'
+import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * Button: tone × variant × size. Solid fills with the tone's emphasized background; outline and ghost
@@ -97,8 +98,6 @@ export const buttonVariants = cva(
   },
 )
 
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
-
 export type ButtonProps = ComponentProps<'button'> & {
   /** What the button communicates. `accent` marks the main action, `default` the secondary ones, `danger` a destructive one. */
   tone?: 'default' | 'accent' | 'danger'
@@ -157,10 +156,9 @@ export function Button({
   )
 
   if (asChild && isValidElement<{ children?: ReactNode }>(children)) {
-    // A link cannot be disabled: it stays a link, marked `aria-disabled`, out of the Tab order, and a click is cancelled.
     return (
-      <Slot.Root {...rootProps} {...props} {...disabledAttrs(disabled, false)} {...inertProps(disabled)}>
-        {cloneElement(children, undefined, withSlots(children.props.children))}
+      <Slot.Root {...rootProps} {...props} {...disabledLinkProps(disabled)}>
+        {linkChild(children, disabled, withSlots(children.props.children))}
       </Slot.Root>
     )
   }

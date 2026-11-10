@@ -26,7 +26,7 @@ const checkboxVariants = cva(
       state: {
         default: [
           'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-form-neutral data-[state=unchecked]:shadow-sm',
-          'data-[state=unchecked]:hover:bg-neutral-hover',
+          'data-[state=unchecked]:hover:bg-form-neutral-hover',
           'data-[state=checked]:border-transparent data-[state=checked]:bg-neutral-emphasized data-[state=checked]:text-neutral-on-emphasized data-[state=checked]:shadow-sm',
           'data-[state=checked]:hover:bg-neutral-emphasized-hover',
           'data-[state=indeterminate]:border-neutral-emphasized data-[state=indeterminate]:bg-neutral data-[state=indeterminate]:text-neutral data-[state=indeterminate]:shadow-sm',
@@ -35,7 +35,7 @@ const checkboxVariants = cva(
           'data-[state=checked]:focus-visible:shadow-focus-ring data-[state=indeterminate]:focus-visible:border-transparent data-[state=indeterminate]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-neutral-hover data-[state=unchecked]:shadow-sm',
+          'data-[state=unchecked]:border-neutral-emphasized data-[state=unchecked]:bg-form-neutral-hover data-[state=unchecked]:shadow-sm',
           'data-[state=checked]:border-transparent data-[state=checked]:bg-neutral-emphasized-hover data-[state=checked]:text-neutral-on-emphasized data-[state=checked]:shadow-sm',
           'data-[state=indeterminate]:border-neutral-emphasized data-[state=indeterminate]:bg-neutral-hover data-[state=indeterminate]:text-neutral data-[state=indeterminate]:shadow-sm',
         ],

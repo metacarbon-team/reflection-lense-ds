@@ -66,9 +66,7 @@ export function InlineAlert({
       padding="md"
       // Warnings and errors interrupt a screen reader; the rest wait for a pause.
       role={tone === 'warning' || tone === 'danger' ? 'alert' : 'status'}
-      // The Card border sits inside its padding in Figma, so the 16px padding loses the 1px border here:
-      // the alert is 72px high with a one-line title and a description, as in Figma.
-      className={cn('w-full min-w-0 animate-rise-in gap-0 p-3.75 motion-reduce:animate-none', className)}
+      className={cn('w-full min-w-0 animate-rise-in gap-0 motion-reduce:animate-none', className)}
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">

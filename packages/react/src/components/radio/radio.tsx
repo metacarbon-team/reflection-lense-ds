@@ -20,7 +20,7 @@ const radioVariants = cva(
       state: {
         default: [
           'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-xs',
-          'enabled:data-[state=unchecked]:hover:bg-neutral-hover',
+          'enabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
           'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
           'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
           // The ring is repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
@@ -28,7 +28,7 @@ const radioVariants = cva(
           'enabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-neutral-hover enabled:data-[state=unchecked]:shadow-xs',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral-hover enabled:data-[state=unchecked]:shadow-xs',
           'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
         ],
         focus: [

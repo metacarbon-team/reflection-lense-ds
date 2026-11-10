@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import { cloneElement, type MouseEvent, type ReactElement, type ReactNode } from 'react'
 
 type DisabledAttrs = { disabled?: true; 'aria-disabled'?: true; 'data-disabled'?: '' }
 
@@ -21,9 +21,24 @@ export const disabledAttrs = (disabled: boolean | undefined, native: boolean): D
 const cancelClick = (event: MouseEvent) => event.preventDefault()
 
 /**
- * Keeps a disabled element that is not a native control (a link, a router link under `asChild`)
- * from acting: it leaves the tab order, and a click is cancelled. `pointer-events-none` stops only
- * the mouse; assistive tech still sends a click. Spread it after the caller's props so their
- * `onClick` does not run. Router links skip navigation when the click is cancelled.
+ * A disabled link, the same in every component (Button, Icon Button, Link and Nav Item under
+ * `asChild`, and Link itself): it keeps the link role, says it is disabled, leaves the tab order and
+ * cancels the click. `pointer-events-none` stops only the mouse; assistive tech still sends a click.
+ * Spread it after the caller's props, so their `onClick` does not run. Router links skip navigation
+ * when the click is cancelled.
  */
-export const inertProps = (disabled: boolean | undefined) => (disabled ? { tabIndex: -1, onClick: cancelClick } : {})
+export const disabledLinkProps = (disabled: boolean | undefined) =>
+  disabled
+    ? { role: 'link', 'aria-disabled': true as const, 'data-disabled': '' as const, tabIndex: -1, onClick: cancelClick }
+    : {}
+
+type LinkElement = ReactElement<{ href?: string; children?: ReactNode }>
+
+/**
+ * The child of an `asChild` control, optionally with new content. A disabled one loses its plain
+ * `href`, so it cannot be followed; a router link builds its `href` from `to`, and the cancelled
+ * click of {@link disabledLinkProps} stops it. The caller's element and its other props stay.
+ */
+export function linkChild(child: LinkElement, disabled: boolean | undefined, ...content: ReactNode[]) {
+  return cloneElement(child, disabled ? { href: undefined } : undefined, ...content)
+}

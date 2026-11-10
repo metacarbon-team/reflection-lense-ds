@@ -1,11 +1,11 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
-import { cloneElement, isValidElement } from 'react'
+import { isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { ChevronDownIcon, ChevronRightIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
-import { disabledAttrs } from '../../lib/disabled'
+import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * Nav Item: a 32px row of the sidebar. Hover and focus-visible come from the browser in `default`; the
@@ -110,19 +110,10 @@ export function NavItem({
     className: cn(navItemVariants({ state: resolved }), className),
   }
 
-  if (asChild && isValidElement(children)) {
-    // A link cannot be disabled: a disabled one becomes a plain `span` with the link role and no `href`.
-    // It keeps the caller's attributes (name, id, test ids) but not their click handler.
-    if (isDisabled) {
-      return (
-        <span role="link" {...rootProps} {...props} onClick={undefined} {...disabledAttrs(true, false)}>
-          {content}
-        </span>
-      )
-    }
+  if (asChild && isValidElement<{ children?: ReactNode }>(children)) {
     return (
-      <Slot.Root {...rootProps} {...props}>
-        {cloneElement(children, undefined, content)}
+      <Slot.Root {...rootProps} {...props} {...disabledLinkProps(isDisabled)}>
+        {linkChild(children, isDisabled, content)}
       </Slot.Root>
     )
   }

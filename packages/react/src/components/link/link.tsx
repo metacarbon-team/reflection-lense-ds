@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
-import { cloneElement, isValidElement } from 'react'
+import { isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import { disabledAttrs, inertProps } from '../../lib/disabled'
+import { disabledLinkProps, linkChild } from '../../lib/disabled'
 import { hasContent } from '../../lib/has-content'
 
 /**
@@ -94,10 +94,8 @@ export function Link({
     'data-slot': 'link',
     className: cn(linkVariants({ type, size, state: resolved }), className),
     ...props,
-    ...disabledAttrs(disabled, false),
     // Without `href` an `a` loses its link role, so a disabled link keeps it explicitly.
-    ...(disabled ? { role: 'link' } : {}),
-    ...inertProps(disabled),
+    ...disabledLinkProps(disabled),
   }
 
   const withSlots = (label: ReactNode) => (
@@ -118,10 +116,7 @@ export function Link({
 
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<{ children?: ReactNode; href?: string }>
-    // A disabled link must not navigate, so the child's own `href` is dropped too. A router link builds
-    // its `href` from `to`; for it the cancelled click from `inertProps` is what stops navigation.
-    const childProps = disabled ? { href: undefined } : undefined
-    return <Slot.Root {...rootProps}>{cloneElement(child, childProps, withSlots(child.props.children))}</Slot.Root>
+    return <Slot.Root {...rootProps}>{linkChild(child, disabled, withSlots(child.props.children))}</Slot.Root>
   }
   return (
     <a href={disabled ? undefined : href} {...rootProps}>
