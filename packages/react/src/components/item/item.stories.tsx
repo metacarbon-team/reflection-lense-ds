@@ -69,7 +69,7 @@ type Story = StoryObj<typeof meta>
 /** A radio in the leading slot needs a `RadioGroup` around it, so the Playground sits inside one. */
 export const Playground: Story = {
   render: (args) => (
-    <RadioGroup className="w-80">
+    <RadioGroup aria-label="Playground" className="w-80">
       <Item {...args} />
     </RadioGroup>
   ),
@@ -147,7 +147,7 @@ export const WithControls: Story = {
           leadingSlot={<Checkbox id="item-usage-data" defaultChecked />}
         />
       </div>
-      <RadioGroup defaultValue="standard" className="gap-0">
+      <RadioGroup defaultValue="standard" aria-label="Delivery method" className="gap-0">
         <Item
           size="lg"
           label="Standard delivery"

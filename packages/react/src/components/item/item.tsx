@@ -46,7 +46,7 @@ const itemMetaVariants = cva('shrink-0 whitespace-nowrap text-neutral-subtle gro
   defaultVariants: { size: 'md' },
 })
 
-const itemErrorVariants = cva('truncate text-danger group-data-disabled/item:text-disabled', {
+const itemErrorVariants = cva('block truncate text-danger group-data-disabled/item:text-disabled', {
   variants: { size: metaRole },
   defaultVariants: { size: 'md' },
 })
@@ -56,7 +56,8 @@ const itemDescriptionVariants = cva('line-clamp-2 text-neutral-subtle group-data
   defaultVariants: { size: 'md' },
 })
 
-// A slot is 16 × 16: the description is indented by that width, so a checkbox or radio shrinks to fit.
+// A slot hugs its content. An icon, a checkbox and a radio are 16 × 16, and the description is indented
+// by that width for each slot; anything else, such as a switch or an avatar, keeps its own size.
 const slotClass = [
   'flex min-h-4 shrink-0 items-center justify-center group-data-disabled/item:text-disabled',
   '[&_svg]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
@@ -71,9 +72,9 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   errorLabel?: ReactNode
   /** Short meta text on the right. It never shrinks, so keep it short: the title takes what is left. */
   metaLabel?: ReactNode
-  /** Content before the title, 16 × 16: an icon, an avatar, a checkbox or a radio. The row shows the slot when it is set. */
+  /** Content before the title: an icon, an avatar, a checkbox or a radio. The slot hugs its content: an icon, a checkbox and a radio are 16 × 16. The row shows the slot when it is set. */
   leadingSlot?: ReactNode
-  /** Content at the end of the row, 16 × 16: a switch or buttons. The row shows the slot when it is set. */
+  /** Content at the end of the row: an icon, a switch or buttons. The slot hugs its content: an icon is 16 × 16, a switch keeps its own size. The row shows the slot when it is set. */
   trailingSlot?: ReactNode
   /** Adds a thin line under the row. */
   divider?: boolean
@@ -96,11 +97,11 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
 /** Keeps the description and the error under the title: an empty space the width of each slot on both sides. */
 function Indented({ leading, trailing, children }: { leading: boolean; trailing: boolean; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-2">
+    <span className="flex items-start gap-2">
       {leading && <span aria-hidden="true" className="w-4 shrink-0" />}
-      <div className="min-w-0 flex-1">{children}</div>
+      <span className="min-w-0 flex-1">{children}</span>
       {trailing && <span aria-hidden="true" className="w-4 shrink-0" />}
-    </div>
+    </span>
   )
 }
 
@@ -130,22 +131,21 @@ export function Item({
   const { 'aria-disabled': ariaDisabled, ...disabledProps } = disabledAttrs(isDisabled, false)
   const hasLeading = hasContent(leadingSlot)
   const hasTrailing = hasContent(trailingSlot)
-  // With `htmlFor` the row is a <label>. The cast keeps the div props; `htmlFor` is passed on its own.
-  const Root = (htmlFor === undefined ? 'div' : 'label') as 'div'
-  return (
-    <Root
-      data-slot="item"
-      className={cn(
-        // A disabled row drops the frozen states; its look comes from `data-disabled`.
-        itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined }),
-        className,
-      )}
-      {...(htmlFor === undefined ? undefined : { htmlFor })}
-      {...props}
-      {...disabledProps}
-      {...(props.role && ariaDisabled ? { 'aria-disabled': ariaDisabled } : undefined)}
-    >
-      <div className="flex items-center gap-2">
+  const rootProps = {
+    'data-slot': 'item',
+    className: cn(
+      // A disabled row drops the frozen states; its look comes from `data-disabled`.
+      itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined }),
+      className,
+    ),
+    ...props,
+    ...disabledProps,
+    ...(props.role && ariaDisabled ? { 'aria-disabled': ariaDisabled } : undefined),
+  }
+  // The row is made of inline elements only, so it is valid inside a <label>.
+  const content = (
+    <>
+      <span className="flex items-center gap-2">
         {hasLeading && (
           <span data-slot="item-leading-slot" className={cn(slotClass)}>
             {leadingSlot}
@@ -164,19 +164,19 @@ export function Item({
             {trailingSlot}
           </span>
         )}
-      </div>
+      </span>
       {hasContent(description) && (
         <Indented leading={hasLeading} trailing={hasTrailing}>
-          <p data-slot="item-description" className={itemDescriptionVariants({ size })}>
+          <span data-slot="item-description" className={itemDescriptionVariants({ size })}>
             {description}
-          </p>
+          </span>
         </Indented>
       )}
       {hasContent(errorLabel) && (
         <Indented leading={hasLeading} trailing={hasTrailing}>
-          <p data-slot="item-error" className={itemErrorVariants({ size })}>
+          <span data-slot="item-error" className={itemErrorVariants({ size })}>
             {errorLabel}
-          </p>
+          </span>
         </Indented>
       )}
       {divider && (
@@ -185,6 +185,14 @@ export function Item({
           className="absolute inset-x-0 bottom-0 border-b border-neutral-subtle group-data-disabled/item:border-disabled"
         />
       )}
-    </Root>
+    </>
+  )
+  // The props are typed for a div; a label takes the same attributes.
+  return htmlFor === undefined ? (
+    <div {...rootProps}>{content}</div>
+  ) : (
+    <label htmlFor={htmlFor} {...(rootProps as ComponentProps<'label'>)}>
+      {content}
+    </label>
   )
 }
