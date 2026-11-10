@@ -390,17 +390,16 @@ function DocsPage() {
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
       {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            <Description of={Do} />
-            <Canvas of={Do} />
-          </div>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
+        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} [&_p]:mb-0!`}>
+          {/* Figma has a caption only over the Do card, so it takes the whole row; the cards sit side by side below. */}
+          <Description of={Do} />
+          <div className="grid grid-cols-2 gap-x-6">
             <div>
-              <Description of={Dont} />
+              <Canvas of={Do} />
             </div>
-            <Canvas of={Dont} />
+            <div>
+              <Canvas of={Dont} />
+            </div>
           </div>
         </div>
       ))}
