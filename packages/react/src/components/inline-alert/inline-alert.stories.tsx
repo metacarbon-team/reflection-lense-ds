@@ -94,7 +94,7 @@ const meta = {
     tone: 'default',
     title: copy.default.title,
     description: copy.default.description,
-    // 'auto' follows the tone, as the icon does in Figma; pick another option to pin an icon or hide it.
+    // 'auto' follows the tone, as the icon does in Figma; pick another option to pin an icon.
     leadingSlot: 'auto',
     onDismiss: dismissOn,
   },
@@ -105,8 +105,8 @@ const meta = {
     // The icon and the close button are shown when they are set; the controls switch them on and off.
     leadingSlot: {
       control: 'select',
-      options: ['auto', 'none', ...Object.keys(iconByName)],
-      mapping: { auto: 'auto', none: undefined, ...iconByName },
+      options: ['auto', ...Object.keys(iconByName)],
+      mapping: { auto: 'auto', ...iconByName },
     },
     onDismiss: { control: 'boolean', mapping: { true: noop, false: undefined } },
     dismissLabel: { control: 'text' },
@@ -135,7 +135,7 @@ export const Playground: Story = {}
 export const Variants: Story = {
   parameters: { wide: true },
   render: () => (
-    <div className="grid grid-cols-[auto_25rem] items-center gap-3">
+    <div className="grid w-fit grid-cols-[5rem_25rem] items-center gap-x-4 gap-y-3">
       {tones.map((tone) => (
         <div key={tone} className="contents">
           <span className="text-caption text-neutral-subtle">{tone}</span>
@@ -144,11 +144,6 @@ export const Variants: Story = {
       ))}
     </div>
   ),
-}
-
-/** Without a leading slot the text starts at the left edge. */
-export const WithoutIcon: Story = {
-  args: { tone: 'info', ...copy.info, leadingSlot: undefined },
 }
 
 /** A long title is cut off with an ellipsis; put the detail in the description. */
