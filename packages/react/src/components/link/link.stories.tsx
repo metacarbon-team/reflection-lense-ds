@@ -60,7 +60,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {}
+export const Playground: Story = { args: { leadingSlot: 'arrow', trailingSlot: 'arrow' } }
 
 /** Every type and size in each state, then disabled. */
 export const States: Story = {
@@ -191,6 +191,7 @@ export const GuidelineDo: Story = {
   ),
 }
 
+/** The second link is larger than the first. */
 export const GuidelineDont: Story = {
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
@@ -224,10 +225,7 @@ function DocsPage() {
           <Canvas of={GuidelineDo} />
         </div>
         <div className="row-span-3 grid grid-rows-subgrid">
-          {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
-          <div>
-            <Description of={GuidelineDont} />
-          </div>
+          <Description of={GuidelineDont} />
           <Canvas of={GuidelineDont} />
         </div>
       </div>
