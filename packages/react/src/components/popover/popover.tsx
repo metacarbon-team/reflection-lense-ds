@@ -121,7 +121,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className="z-50 outline-none"
+        className="z-50 origin-(--radix-popover-content-transform-origin) outline-none data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none"
         {...props}
       >
         <PopoverPanel

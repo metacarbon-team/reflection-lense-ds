@@ -1,7 +1,8 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { Button } from './button'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const meta = {
   title: 'Components/Button',
@@ -193,32 +194,39 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
  * Accent marks the main action, so it must stand out. Never place two Accent buttons inline: pair Accent
  * with Neutral or Ghost. Best practice: one main action per page.
  */
-export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
-  name: 'Guideline 1',
+export const GuidelineKeepAccentAsTheOneDominantActionDo: Story = {
+  name: 'Guideline 1 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <div className="flex items-center gap-2">
-          <Button tone="default" variant="outline" size="sm">
-            Cancel
-          </Button>
-          <Button tone="accent" variant="solid" size="sm">
-            Save
-          </Button>
-        </div>
-      </Specimen>
-      <Specimen tone="dont">
-        <div className="flex items-center gap-2">
-          <Button tone="accent" variant="solid" size="sm">
-            Cancel
-          </Button>
-          <Button tone="accent" variant="solid" size="sm">
-            Save
-          </Button>
-        </div>
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <div className="flex items-center gap-2">
+        <Button tone="default" variant="outline" size="sm">
+          Cancel
+        </Button>
+        <Button tone="accent" variant="solid" size="sm">
+          Save
+        </Button>
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineKeepAccentAsTheOneDominantActionDont: Story = {
+  name: 'Guideline 1 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-2">
+        <Button tone="accent" variant="solid" size="sm">
+          Cancel
+        </Button>
+        <Button tone="accent" variant="solid" size="sm">
+          Save
+        </Button>
+      </div>
+    </Specimen>
   ),
 }
 
@@ -226,38 +234,48 @@ export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
  * **Use 8 px gap between buttons in groups.**  
  * Preserve the 8 px gap consistently across button groups.
  */
-export const GuidelineUse8PxGapBetweenButtonsInGroups: Story = {
-  name: 'Guideline 2',
+export const GuidelineUse8PxGapBetweenButtonsInGroupsDo: Story = {
+  name: 'Guideline 2 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <div className="flex items-center gap-2">
-          <Button tone="accent" variant="solid" size="sm">
-            Button
-          </Button>
-          <Button tone="accent" variant="solid" size="sm">
-            Button
-          </Button>
-        </div>
-      </Specimen>
-      <Specimen tone="dont">
-        <div className="flex items-center gap-1">
-          <Button tone="accent" variant="solid" size="sm">
-            Button
-          </Button>
-          <Button tone="accent" variant="solid" size="sm">
-            Button
-          </Button>
-        </div>
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <div className="flex items-center gap-2">
+        <Button tone="accent" variant="solid" size="sm">
+          Button
+        </Button>
+        <Button tone="accent" variant="solid" size="sm">
+          Button
+        </Button>
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineUse8PxGapBetweenButtonsInGroupsDont: Story = {
+  name: 'Guideline 2 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-1">
+        <Button tone="accent" variant="solid" size="sm">
+          Button
+        </Button>
+        <Button tone="accent" variant="solid" size="sm">
+          Button
+        </Button>
+      </div>
+    </Specimen>
   ),
 }
 
 /** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
 function DocsPage() {
-  const rules = [GuidelineKeepAccentAsTheOneDominantAction, GuidelineUse8PxGapBetweenButtonsInGroups]
+  const rules = [
+    [GuidelineKeepAccentAsTheOneDominantActionDo, GuidelineKeepAccentAsTheOneDominantActionDont],
+    [GuidelineUse8PxGapBetweenButtonsInGroupsDo, GuidelineUse8PxGapBetweenButtonsInGroupsDont],
+  ] as const
   return (
     <>
       <Title />
@@ -266,12 +284,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map((rule, index) => (
-        <div key={index}>
-          <Description of={rule} />
-          <Canvas of={rule} />
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

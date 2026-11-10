@@ -86,7 +86,7 @@ export function SelectContent({
         position={position}
         sideOffset={sideOffset}
         className={cn(
-          'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
+          'relative z-50 origin-(--radix-select-content-transform-origin) max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none',
           className,
         )}
         {...props}

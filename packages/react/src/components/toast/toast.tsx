@@ -144,10 +144,12 @@ export type ToastOptions = {
 type ToastRecord = ToastOptions & { id: string; closing?: boolean }
 
 /** How long a closing toast fades out before it leaves the list, in ms. Leaving is faster than arriving. */
-const EXIT_MS = 200
+const EXIT_MS = 300
 const ENTER_MS = 300
 /** A strong ease-out: the card moves at once and settles gently. The built-in `ease-out` is too weak. */
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)'
+/** Leaving: an even ease, so the card fades out over its whole time instead of vanishing in the first moments. */
+const EASE_EXIT = 'cubic-bezier(0.4, 0, 0.2, 1)'
 // Geometry of the pile, in px. Cards are placed with inline styles because their offsets depend on the
 // measured height of every toast; the look (borders, colors, radius, transitions) stays in classes.
 const GAP = 12
@@ -255,10 +257,10 @@ function ToasterItem({ record, index, offset, expanded, height, frontHeight, onH
       data-expanded={expanded}
       className={cn(toastLayerClass)}
       style={{
-        transform: `translateY(${visible ? lift : lift + 24}px) scale(${scale})`,
+        transform: `translateY(${visible ? lift : lift + 24}px) scale(${closing ? scale * 0.96 : scale})`,
         opacity: visible ? 1 : 0,
         transitionDuration: `${closing ? EXIT_MS : ENTER_MS}ms`,
-        transitionTimingFunction: EASE_OUT,
+        transitionTimingFunction: closing ? EASE_EXIT : EASE_OUT,
         // A folded pile gives every card the height of the front one, so the layers line up.
         height: (folded ? frontHeight : height) || undefined,
         // Follows the finger while swiping (Radix sets the variable) and flies out when released.

@@ -1,6 +1,8 @@
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Link } from './link'
 import { Specimen } from '../../docs/specimen'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const ArrowRight = () => (
   <svg
@@ -53,6 +55,7 @@ const meta = {
     leadingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
     trailingSlot: { control: 'inline-radio', options: ['none', 'arrow', 'external'], mapping: slotIcons },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Link>
 
 export default meta
@@ -154,30 +157,52 @@ export const DisabledAsChild: Story = {
  * **Keep one size within a group of links.**  
  * Links placed next to each other use the same size, so the group reads as one set.
  */
-export const Guidelines: Story = {
+export const GuidelinesDo: Story = {
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <div className="flex items-center gap-4">
-          <Link type="standalone" size="sm" href="#">
-            Terms
-          </Link>
-          <Link type="standalone" size="sm" href="#">
-            Privacy
-          </Link>
-        </div>
-      </Specimen>
-      <Specimen tone="dont">
-        <div className="flex items-center gap-4">
-          <Link type="standalone" size="sm" href="#">
-            Terms
-          </Link>
-          <Link type="standalone" size="md" href="#">
-            Privacy
-          </Link>
-        </div>
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <div className="flex items-center gap-4">
+        <Link type="standalone" size="sm" href="#">
+          Terms
+        </Link>
+        <Link type="standalone" size="sm" href="#">
+          Privacy
+        </Link>
+      </div>
+    </Specimen>
   ),
+}
+
+export const GuidelinesDont: Story = {
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-4">
+        <Link type="standalone" size="sm" href="#">
+          Terms
+        </Link>
+        <Link type="standalone" size="md" href="#">
+          Privacy
+        </Link>
+      </div>
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side. */
+function DocsPage() {
+  const rules = [[GuidelinesDo, GuidelinesDont]] as const
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      <GuidelinePairs rules={rules} />
+    </>
+  )
 }

@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
-export const skeletonVariants = cva('block shrink-0 bg-neutral-pressed', {
+export const skeletonVariants = cva('block shrink-0 animate-shimmer bg-neutral-pressed motion-reduce:animate-none', {
   variants: {
     shape: {
       text: 'h-3.5 w-40 rounded-full',

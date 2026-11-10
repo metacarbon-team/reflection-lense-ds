@@ -5,18 +5,23 @@ import { useFieldControl } from '../field/field'
 
 export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
   /** Content before the value: an icon, a country picker, a prefix. */
-  leading?: ReactNode
+  leadingSlot?: ReactNode
   /** Content after the value: an icon, a unit, a clear button. */
-  trailing?: ReactNode
+  trailingSlot?: ReactNode
   /** Classes for the `<input>` itself; `className` styles the frame. */
   inputClassName?: string
 }
 
+// `has-disabled:` repeats the disabled look for an input disabled by a `<fieldset disabled>`, which
+// leaves the frame without `data-disabled`.
+const addonClass =
+  'flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled group-has-disabled:text-disabled'
+
 /**
- * Input: one line of text in the control frame, with optional leading and trailing content. Props go
+ * Input: one line of text in the control frame, with optional leading and trailing slots. Props go
  * to the `<input>`; `className` goes to the frame.
  */
-export function Input({ leading, trailing, className, inputClassName, ...props }: InputProps) {
+export function Input({ leadingSlot, trailingSlot, className, inputClassName, ...props }: InputProps) {
   const control = useFieldControl(props)
   return (
     <span
@@ -25,16 +30,13 @@ export function Input({ leading, trailing, className, inputClassName, ...props }
       data-disabled={control.disabled || undefined}
       className={cn(
         controlFrameClass,
-        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
+        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 hover:bg-neutral-hover focus-within:shadow-focus-ring has-disabled:pointer-events-none has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-disabled:shadow-none [&_svg]:size-4 [&_svg]:shrink-0',
         className,
       )}
     >
-      {leading && (
-        <span
-          data-slot="input-addon"
-          className="flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled"
-        >
-          {leading}
+      {leadingSlot && (
+        <span data-slot="input-addon" className={addonClass}>
+          {leadingSlot}
         </span>
       )}
       <input
@@ -45,12 +47,9 @@ export function Input({ leading, trailing, className, inputClassName, ...props }
           inputClassName,
         )}
       />
-      {trailing && (
-        <span
-          data-slot="input-addon"
-          className="flex shrink-0 items-center text-neutral-subtle group-data-disabled:text-disabled"
-        >
-          {trailing}
+      {trailingSlot && (
+        <span data-slot="input-addon" className={addonClass}>
+          {trailingSlot}
         </span>
       )}
     </span>

@@ -22,6 +22,7 @@ const tooltipVariants = cva(
   [
     'group/tooltip relative z-50 flex h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
     'bg-card-neutral-emphasized text-caption text-neutral select-none',
+    'origin-(--radix-tooltip-content-transform-origin) data-[state=delayed-open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {

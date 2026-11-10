@@ -1,7 +1,8 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { IconButton } from './icon-button'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const Plus = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden="true">
@@ -280,32 +281,39 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
  * Accent marks the main action, so it must stand out. Never place two Accent icon buttons inline: pair
  * Accent with Neutral or Ghost. Best practice: one main action per page.
  */
-export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
-  name: 'Guideline 1',
+export const GuidelineKeepAccentAsTheOneDominantActionDo: Story = {
+  name: 'Guideline 1 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <div className="flex items-center gap-2">
-          <IconButton tone="default" variant="outline" aria-label="Attach a file">
-            <Paperclip />
-          </IconButton>
-          <IconButton tone="accent" variant="solid" aria-label="Send">
-            <ArrowUp />
-          </IconButton>
-        </div>
-      </Specimen>
-      <Specimen tone="dont">
-        <div className="flex items-center gap-2">
-          <IconButton tone="accent" variant="solid" aria-label="Attach a file">
-            <Paperclip />
-          </IconButton>
-          <IconButton tone="accent" variant="solid" aria-label="Send">
-            <ArrowUp />
-          </IconButton>
-        </div>
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <div className="flex items-center gap-2">
+        <IconButton tone="default" variant="outline" aria-label="Attach a file">
+          <Paperclip />
+        </IconButton>
+        <IconButton tone="accent" variant="solid" aria-label="Send">
+          <ArrowUp />
+        </IconButton>
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineKeepAccentAsTheOneDominantActionDont: Story = {
+  name: 'Guideline 1 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-2">
+        <IconButton tone="accent" variant="solid" aria-label="Attach a file">
+          <Paperclip />
+        </IconButton>
+        <IconButton tone="accent" variant="solid" aria-label="Send">
+          <ArrowUp />
+        </IconButton>
+      </div>
+    </Specimen>
   ),
 }
 
@@ -313,38 +321,48 @@ export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
  * **Use 8 px gap between buttons in groups.**  
  * Preserve the 8 px gap consistently across icon button groups.
  */
-export const GuidelineUse8PxGapBetweenButtonsInGroups: Story = {
-  name: 'Guideline 2',
+export const GuidelineUse8PxGapBetweenButtonsInGroupsDo: Story = {
+  name: 'Guideline 2 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <div className="flex items-center gap-2">
-          <IconButton tone="default" variant="outline" aria-label="Zoom out">
-            <ZoomOut />
-          </IconButton>
-          <IconButton tone="default" variant="outline" aria-label="Zoom in">
-            <ZoomIn />
-          </IconButton>
-        </div>
-      </Specimen>
-      <Specimen tone="dont">
-        <div className="flex items-center gap-1">
-          <IconButton tone="default" variant="outline" aria-label="Zoom out">
-            <ZoomOut />
-          </IconButton>
-          <IconButton tone="default" variant="outline" aria-label="Zoom in">
-            <ZoomIn />
-          </IconButton>
-        </div>
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <div className="flex items-center gap-2">
+        <IconButton tone="default" variant="outline" aria-label="Zoom out">
+          <ZoomOut />
+        </IconButton>
+        <IconButton tone="default" variant="outline" aria-label="Zoom in">
+          <ZoomIn />
+        </IconButton>
+      </div>
+    </Specimen>
+  ),
+}
+
+export const GuidelineUse8PxGapBetweenButtonsInGroupsDont: Story = {
+  name: 'Guideline 2 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <div className="flex items-center gap-1">
+        <IconButton tone="default" variant="outline" aria-label="Zoom out">
+          <ZoomOut />
+        </IconButton>
+        <IconButton tone="default" variant="outline" aria-label="Zoom in">
+          <ZoomIn />
+        </IconButton>
+      </div>
+    </Specimen>
   ),
 }
 
 /** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
 function DocsPage() {
-  const rules = [GuidelineKeepAccentAsTheOneDominantAction, GuidelineUse8PxGapBetweenButtonsInGroups]
+  const rules = [
+    [GuidelineKeepAccentAsTheOneDominantActionDo, GuidelineKeepAccentAsTheOneDominantActionDont],
+    [GuidelineUse8PxGapBetweenButtonsInGroupsDo, GuidelineUse8PxGapBetweenButtonsInGroupsDont],
+  ] as const
   return (
     <>
       <Title />
@@ -353,12 +371,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map((rule, index) => (
-        <div key={index}>
-          <Description of={rule} />
-          <Canvas of={rule} />
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

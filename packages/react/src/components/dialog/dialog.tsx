@@ -39,13 +39,13 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
         data-slot="dialog-overlay"
-        className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4"
+        className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out motion-reduce:animate-none"
       >
         <DialogPrimitive.Content
           data-slot="dialog-content"
           data-close-button={showCloseButton || undefined}
           className={cn(
-            'group/dialog relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none',
+            'group/dialog relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out motion-reduce:animate-none',
             className,
           )}
           {...props}

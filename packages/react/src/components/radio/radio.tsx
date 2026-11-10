@@ -11,7 +11,7 @@ import { useFieldControl } from '../field/field'
  */
 const radioVariants = cva(
   [
-    'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
+    'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none transition duration-200 ease-out-strong motion-reduce:transition-none',
     'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
     'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
   ],
@@ -76,6 +76,10 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 }
 
 export type RadioProps = ComponentProps<typeof RadioGroupPrimitive.Item> & {
+  /** The value the group takes when this radio is selected. */
+  value: string
+  /** Blocks selection and dims the radio. Independent of `state`. */
+  disabled?: boolean
   /** Freezes `hover` or `focus` for docs and tests. `error` also sets `aria-invalid`; disabled comes from `disabled`. */
   state?: 'default' | 'hover' | 'focus' | 'error'
 }
@@ -99,7 +103,10 @@ export function Radio({ state = 'default', className, ...props }: RadioProps) {
       className={cn(radioVariants({ state: variant }), className)}
       {...props}
     >
-      <RadioGroupPrimitive.Indicator data-slot="radio-indicator" className="block size-2 rounded-full bg-current" />
+      <RadioGroupPrimitive.Indicator
+        data-slot="radio-indicator"
+        className="block size-2 animate-mark-in rounded-full bg-current motion-reduce:animate-none"
+      />
     </RadioGroupPrimitive.Item>
   )
 }

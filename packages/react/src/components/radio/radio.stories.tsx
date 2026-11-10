@@ -193,7 +193,6 @@ function DeliveryDont() {
       {deliveryOptions.map((option) => (
         <RadioGroup
           key={option.id}
-          asChild
           defaultValue={option.id === 'next-day' ? undefined : option.id}
           aria-label={option.label}
           className="gap-0"
@@ -214,7 +213,7 @@ function DeliveryDont() {
 
 /** Select only one radio in a group. Inside a group only one option can be selected at a time. */
 export const GuidelineDo: Story = {
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
@@ -224,7 +223,7 @@ export const GuidelineDo: Story = {
 }
 
 export const GuidelineDont: Story = {
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
@@ -240,7 +239,7 @@ function DocsPage() {
       <Title />
       <Description />
       <Primary />
-      <Controls />
+      <Controls exclude={['checked']} />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
       <div className="-mt-2! grid grid-cols-2 gap-x-6 [&_p]:mb-0!">

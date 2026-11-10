@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn'
 
 const switchClass = [
   'group peer inline-flex h-5 w-11 shrink-0 items-center rounded-full border p-0.5 outline-none',
+  'transition duration-200 ease-out-strong motion-reduce:transition-none',
   // State colors apply only while enabled, so disabled (stroke only) wins in both positions.
   'enabled:data-[state=unchecked]:border-neutral enabled:data-[state=unchecked]:bg-neutral',
   'enabled:data-[state=unchecked]:hover:border-neutral-emphasized enabled:data-[state=unchecked]:hover:bg-neutral-hover',
@@ -22,7 +23,7 @@ export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrim
     <SwitchPrimitive.Root data-slot="switch" className={cn(switchClass, className)} {...props}>
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className="pointer-events-none block h-4 w-6.5 rounded-full border bg-card-neutral-emphasized transition-transform data-[state=unchecked]:border-neutral-subtle data-[state=checked]:translate-x-3 data-[state=checked]:border-transparent group-disabled:border-transparent group-disabled:bg-current group-disabled:text-disabled"
+        className="pointer-events-none block h-4 w-6.5 rounded-full border bg-card-neutral-emphasized transition duration-200 ease-out-strong motion-reduce:transition-none data-[state=unchecked]:border-neutral-subtle data-[state=checked]:translate-x-3 data-[state=checked]:border-transparent group-disabled:border-transparent group-disabled:bg-current group-disabled:text-disabled"
       />
     </SwitchPrimitive.Root>
   )

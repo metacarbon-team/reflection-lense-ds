@@ -1,9 +1,11 @@
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useId, useState } from 'react'
 import { useArgs } from 'storybook/preview-api'
 import { Field } from '../field/field'
 import { Checkbox } from './checkbox'
 import { Specimen } from '../../docs/specimen'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const meta = {
   title: 'Components/Checkbox',
@@ -13,6 +15,7 @@ const meta = {
     checked: { control: 'inline-radio', options: [false, true, 'indeterminate'] },
     state: { control: 'inline-radio', options: ['default', 'hover', 'focus', 'error'] },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof Checkbox>
 
 export default meta
@@ -181,16 +184,38 @@ function NotificationList({ mirror }: { mirror: boolean }) {
  * Indeterminate marks a parent whose children are only partly selected. If all children are selected
  * the parent is checked; if none, unchecked.
  */
-export const Guidelines: Story = {
+export const GuidelinesDo: Story = {
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <NotificationList mirror />
-      </Specimen>
-      <Specimen tone="dont">
-        <NotificationList mirror={false} />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <NotificationList mirror />
+    </Specimen>
   ),
+}
+
+export const GuidelinesDont: Story = {
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <NotificationList mirror={false} />
+    </Specimen>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then the Do and Don't examples side by side. */
+function DocsPage() {
+  const rules = [[GuidelinesDo, GuidelinesDont]] as const
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      <GuidelinePairs rules={rules} />
+    </>
+  )
 }

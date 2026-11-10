@@ -1,7 +1,8 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { DiffStat, diffStatVariants } from './diff-stat'
 import { Specimen } from '../../docs/specimen'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const meta = {
   title: 'Components/Diff Stat',
@@ -86,19 +87,25 @@ function WrongStat({ added, removed, swapped }: { added: string; removed: string
  * **Always show the sign**  
  * Numbers start with + or −, so the meaning never depends on color alone.
  */
-export const GuidelineAlwaysShowTheSign: Story = {
-  name: 'Guideline 1',
-  tags: ['!autodocs'],
+export const GuidelineAlwaysShowTheSignDo: Story = {
+  name: 'Guideline 1 Do',
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <DiffStat added={120} removed={34} />
-      </Specimen>
-      <Specimen tone="dont">
-        <WrongStat added="120" removed="34" />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <DiffStat added={120} removed={34} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineAlwaysShowTheSignDont: Story = {
+  name: 'Guideline 1 Don’t',
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <WrongStat added="120" removed="34" />
+    </Specimen>
   ),
 }
 
@@ -106,19 +113,25 @@ export const GuidelineAlwaysShowTheSign: Story = {
  * **Show exact numbers**  
  * Write the full count. Rounded values hide how big the change really is, and a reviewer needs the exact size.
  */
-export const GuidelineShowExactNumbers: Story = {
-  name: 'Guideline 2',
-  tags: ['!autodocs'],
+export const GuidelineShowExactNumbersDo: Story = {
+  name: 'Guideline 2 Do',
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <DiffStat added={1204} removed={87} />
-      </Specimen>
-      <Specimen tone="dont">
-        <WrongStat added="+1k" removed="−0.1k" />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <DiffStat added={1204} removed={87} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineShowExactNumbersDont: Story = {
+  name: 'Guideline 2 Don’t',
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <WrongStat added="+1k" removed="−0.1k" />
+    </Specimen>
   ),
 }
 
@@ -126,25 +139,35 @@ export const GuidelineShowExactNumbers: Story = {
  * **Green for added, red for removed**  
  * Keep the colors the same everywhere. Swapped colors make a deletion look like a good thing.
  */
-export const GuidelineGreenForAddedRedForRemoved: Story = {
-  name: 'Guideline 3',
-  tags: ['!autodocs'],
+export const GuidelineGreenForAddedRedForRemovedDo: Story = {
+  name: 'Guideline 3 Do',
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <DiffStat added={42} removed={8} />
-      </Specimen>
-      <Specimen tone="dont">
-        <WrongStat added="+42" removed="−8" swapped />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <DiffStat added={42} removed={8} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineGreenForAddedRedForRemovedDont: Story = {
+  name: 'Guideline 3 Don’t',
+  tags: ['!autodocs', '!dev'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+  render: () => (
+    <Specimen tone="dont">
+      <WrongStat added="+42" removed="−8" swapped />
+    </Specimen>
   ),
 }
 
 /** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
 function DocsPage() {
-  const rules = [GuidelineAlwaysShowTheSign, GuidelineShowExactNumbers, GuidelineGreenForAddedRedForRemoved]
+  const rules = [
+    [GuidelineAlwaysShowTheSignDo, GuidelineAlwaysShowTheSignDont],
+    [GuidelineShowExactNumbersDo, GuidelineShowExactNumbersDont],
+    [GuidelineGreenForAddedRedForRemovedDo, GuidelineGreenForAddedRedForRemovedDont],
+  ] as const
   return (
     <>
       <Title />
@@ -153,12 +176,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map((rule, index) => (
-        <div key={index}>
-          <Description of={rule} />
-          <Canvas of={rule} />
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

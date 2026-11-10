@@ -14,6 +14,8 @@ import { disabledAttrs, inertProps } from '../../lib/disabled'
 export const buttonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap',
+    // Press feedback: the control sinks a little, so it feels like it heard the click.
+    'transition duration-150 ease-out-strong motion-reduce:transition-none enabled:active:scale-97',
     'rounded-md border border-transparent outline-none select-none',
     'focus-visible:border-transparent focus-visible:shadow-focus-ring',
     'disabled:pointer-events-none data-disabled:pointer-events-none disabled:text-disabled data-disabled:text-disabled disabled:shadow-none data-disabled:shadow-none',

@@ -1,9 +1,10 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { InlineAlert } from './inline-alert'
 import { Specimen as DocSpecimen } from '../../docs/specimen'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const Glyph = ({ children }: { children: ReactNode }) => (
   <svg
@@ -187,18 +188,25 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
  * **Match the tone to the message**  
  * The tone and its icon carry the meaning. A success alert on an error sends the wrong signal.
  */
-export const GuidelineMatchTheToneToTheMessage: Story = {
-  name: 'Guideline 1',
+export const GuidelineMatchTheToneToTheMessageDo: Story = {
+  name: 'Guideline 1 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />
-      </Specimen>
-      <Specimen tone="dont">
-        <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineMatchTheToneToTheMessageDont: Story = {
+  name: 'Guideline 1 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />
+    </Specimen>
   ),
 }
 
@@ -207,24 +215,31 @@ export const GuidelineMatchTheToneToTheMessage: Story = {
  * The title is read at a glance. A long title is cut off with an ellipsis and hides the point. Move the
  * detail to the description.
  */
-export const GuidelineKeepTheTitleShort: Story = {
-  name: 'Guideline 2',
+export const GuidelineKeepTheTitleShortDo: Story = {
+  name: 'Guideline 2 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />
-      </Specimen>
-      <Specimen tone="dont">
-        <InlineAlert
-          tone="success"
-          leadingSlot={icons.success}
-          onDismiss={noop}
-          title="Your profile changes have been saved successfully to your account"
-          description={copy.success.description}
-        />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineKeepTheTitleShortDont: Story = {
+  name: 'Guideline 2 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <InlineAlert
+        tone="success"
+        leadingSlot={icons.success}
+        onDismiss={noop}
+        title="Your profile changes have been saved successfully to your account"
+        description={copy.success.description}
+      />
+    </Specimen>
   ),
 }
 
@@ -233,30 +248,41 @@ export const GuidelineKeepTheTitleShort: Story = {
  * The description adds new detail: what happened or what to do next. Repeating the title only makes the
  * alert longer.
  */
-export const GuidelineDoNotRepeatTheTitle: Story = {
-  name: 'Guideline 3',
+export const GuidelineDoNotRepeatTheTitleDo: Story = {
+  name: 'Guideline 3 Do',
+  tags: ['!autodocs', '!dev'],
   ...guideline,
   render: () => (
-    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
-      <Specimen tone="do">
-        <InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />
-      </Specimen>
-      <Specimen tone="dont">
-        <InlineAlert
-          tone="info"
-          leadingSlot={icons.info}
-          onDismiss={noop}
-          title="New version available"
-          description="A new version is available."
-        />
-      </Specimen>
-    </div>
+    <Specimen tone="do">
+      <InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />
+    </Specimen>
+  ),
+}
+
+export const GuidelineDoNotRepeatTheTitleDont: Story = {
+  name: 'Guideline 3 Don’t',
+  tags: ['!autodocs', '!dev'],
+  ...guideline,
+  render: () => (
+    <Specimen tone="dont">
+      <InlineAlert
+        tone="info"
+        leadingSlot={icons.info}
+        onDismiss={noop}
+        title="New version available"
+        description="A new version is available."
+      />
+    </Specimen>
   ),
 }
 
 /** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
 function DocsPage() {
-  const rules = [GuidelineMatchTheToneToTheMessage, GuidelineKeepTheTitleShort, GuidelineDoNotRepeatTheTitle]
+  const rules = [
+    [GuidelineMatchTheToneToTheMessageDo, GuidelineMatchTheToneToTheMessageDont],
+    [GuidelineKeepTheTitleShortDo, GuidelineKeepTheTitleShortDont],
+    [GuidelineDoNotRepeatTheTitleDo, GuidelineDoNotRepeatTheTitleDont],
+  ] as const
   return (
     <>
       <Title />
@@ -265,12 +291,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map((rule, index) => (
-        <div key={index}>
-          <Description of={rule} />
-          <Canvas of={rule} />
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

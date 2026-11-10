@@ -20,7 +20,7 @@ const markProps = {
 } as const
 
 const checkboxVariants = cva(
-  'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border align-middle outline-none',
+  'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border align-middle outline-none transition duration-200 ease-out-strong motion-reduce:transition-none',
   {
     variants: {
       state: {
@@ -88,7 +88,10 @@ export function Checkbox({ state = 'default', className, ...props }: CheckboxPro
       disabled={disabled || undefined}
       className={cn(checkboxVariants({ state: resolved }), className)}
     >
-      <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex size-4 items-center justify-center">
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="flex size-4 items-center justify-center animate-mark-in motion-reduce:animate-none"
+      >
         <svg {...markProps} className="size-4 group-data-[state=indeterminate]:hidden">
           <path d="M2.667 8l3.333 3.333 7.333-7.333" />
         </svg>
