@@ -48,6 +48,27 @@ const DangerIcon = () => (
   </Glyph>
 )
 
+const successIcon = (
+  <span className="text-success">
+    <SuccessIcon />
+  </span>
+)
+const infoIcon = (
+  <span className="text-info">
+    <InfoIcon />
+  </span>
+)
+const warningIcon = (
+  <span className="text-warning">
+    <WarningIcon />
+  </span>
+)
+const dangerIcon = (
+  <span className="text-danger">
+    <DangerIcon />
+  </span>
+)
+
 /** A provider and a viewport that sit in the page flow, so a story can show toasts in place. */
 const Stage = ({ children, label }: { children: ReactNode; label?: string }) => (
   <ToastProvider duration={Infinity}>
@@ -109,103 +130,32 @@ export const Playground: Story = {
 
 const copy = { label: 'Event has been created', description: 'Sunday, December 03 at 9:00 AM' }
 
-/** Every combination of the icon, the description and the action. The close button is always there. */
+const kinds = [
+  { name: 'default', icon: <BellIcon /> },
+  { name: 'success', icon: successIcon },
+  { name: 'info', icon: infoIcon },
+  { name: 'warning', icon: warningIcon },
+  { name: 'danger', icon: dangerIcon },
+]
+
+/** The icon and its color carry the meaning: neutral, success, info, warning and danger, each with and without the action. */
 export const Variants: Story = {
   render: () => (
     <div className="inline-grid grid-cols-[auto_repeat(2,max-content)] items-center gap-x-6 gap-y-6">
       <span />
       <span className="text-caption text-neutral-subtle">with action</span>
       <span className="text-caption text-neutral-subtle">without action</span>
-      {[true, false].flatMap((icon) =>
-        [true, false].map((description) => (
-          <div key={`${icon}-${description}`} className="contents">
-            <span className="text-caption text-neutral-subtle">
-              {icon ? 'icon' : 'no icon'}, {description ? 'description' : 'no description'}
-            </span>
-            {[undo, undefined].map((action, index) => (
-              <Stage
-                key={index}
-                label={`Notifications: ${icon ? 'icon' : 'no icon'}, ${description ? 'description' : 'no description'}, ${action ? 'action' : 'no action'}`}
-              >
-                <Pinned
-                  label={copy.label}
-                  description={description ? copy.description : undefined}
-                  leadingSlot={icon ? <BellIcon /> : undefined}
-                  action={action}
-                />
-              </Stage>
-            ))}
-          </div>
-        )),
-      )}
+      {kinds.map((kind) => (
+        <div key={kind.name} className="contents">
+          <span className="text-caption text-neutral-subtle">{kind.name}</span>
+          {[undo, undefined].map((action, index) => (
+            <Stage key={index} label={`Notifications: ${kind.name}, ${action ? 'with action' : 'without action'}`}>
+              <Pinned {...copy} leadingSlot={kind.icon} action={action} />
+            </Stage>
+          ))}
+        </div>
+      ))}
     </div>
-  ),
-}
-
-/** The leading slot carries the meaning: a neutral bell, or an icon in a status color. */
-export const StatusIcons: Story = {
-  render: () => (
-    <Stage>
-      <Pinned {...copy} leadingSlot={<BellIcon />} action={undo} />
-      <Pinned
-        {...copy}
-        leadingSlot={
-          <span className="text-success">
-            <SuccessIcon />
-          </span>
-        }
-      />
-      <Pinned
-        {...copy}
-        leadingSlot={
-          <span className="text-info">
-            <InfoIcon />
-          </span>
-        }
-      />
-      <Pinned
-        {...copy}
-        leadingSlot={
-          <span className="text-warning">
-            <WarningIcon />
-          </span>
-        }
-      />
-      <Pinned
-        {...copy}
-        leadingSlot={
-          <span className="text-danger">
-            <DangerIcon />
-          </span>
-        }
-      />
-    </Stage>
-  ),
-}
-
-/** Only the title is required. The icon, the description and the action are left out. */
-export const TitleOnly: Story = {
-  render: () => (
-    <Stage>
-      <Pinned label="Event has been created" />
-    </Stage>
-  ),
-}
-
-/** A title that does not fit is cut with an ellipsis; move the detail to the description. */
-export const LongTitle: Story = {
-  render: () => (
-    <Stage>
-      <Pinned
-        label="Your event has been successfully created and added to the shared calendar"
-        description="Sunday, December 03 at 9:00 AM"
-        leadingSlot={
-          <span className="text-success">
-            <SuccessIcon />
-          </span>
-        }
-      />
-    </Stage>
   ),
 }
 
@@ -234,15 +184,15 @@ const StackDemo = ({ expand }: { expand?: boolean }) => {
   )
 }
 
+// `toast()` keeps one list for the whole page, and every mounted Toaster shows it. On the Docs page each
+// Toaster story runs in its own frame, so the two demos do not show each other's toasts.
+const isolatedDocs = { docs: { story: { inline: false, height: '440px' } } }
+
 /**
  * Three toasts in a real `Toaster`. They pile up by themselves: the newest in front, the older ones
  * smaller and lifted behind it. Hover or focus the pile to open it into a list; leave to fold it.
  * `expand` keeps it open.
  */
-// `toast()` keeps one list for the whole page, and every mounted Toaster shows it. On the Docs page each
-// Toaster story runs in its own frame, so the two demos do not show each other's toasts.
-const isolatedDocs = { docs: { story: { inline: false, height: '440px' } } }
-
 export const Stack: StoryObj<{ expand: boolean }> = {
   args: { expand: false },
   parameters: isolatedDocs,
@@ -265,9 +215,6 @@ const TriggeredDemo = () => (
     >
       Create event
     </Button>
-    <Button tone="default" variant="outline" onClick={() => toast({ label: 'Saved' })}>
-      Short toast
-    </Button>
     <Button tone="default" variant="ghost" onClick={() => toast.dismiss()}>
       Dismiss all
     </Button>
@@ -276,7 +223,7 @@ const TriggeredDemo = () => (
 )
 
 /**
- * The real thing: a `Toaster` mounted once and `toast()` called from a button. Press the buttons a few
+ * The real thing: a `Toaster` mounted once and `toast()` called from a button. Press the button a few
  * times: toasts pile up (three at most), open on hover, and close after five seconds, on the action,
  * on the close button and on a swipe.
  */
@@ -290,16 +237,6 @@ export const Triggered: Story = {
   ),
 }
 
-const successIcon = (
-  <span className="text-success">
-    <SuccessIcon />
-  </span>
-)
-const dangerIcon = (
-  <span className="text-danger">
-    <DangerIcon />
-  </span>
-)
 const date = 'Sunday, December 03 at 9:00 AM'
 
 /**
@@ -308,7 +245,7 @@ const date = 'Sunday, December 03 at 9:00 AM'
  */
 export const GuidelineKeepTheTitleShortDo: Story = {
   name: 'Guideline 1 Do',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
@@ -321,7 +258,7 @@ export const GuidelineKeepTheTitleShortDo: Story = {
 
 export const GuidelineKeepTheTitleShortDont: Story = {
   name: 'Guideline 1 Don’t',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
@@ -342,7 +279,7 @@ export const GuidelineKeepTheTitleShortDont: Story = {
  */
 export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
   name: 'Guideline 2 Do',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
@@ -355,7 +292,7 @@ export const GuidelineMatchTheTypeToTheMeaningDo: Story = {
 
 export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
   name: 'Guideline 2 Don’t',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
@@ -372,7 +309,7 @@ export const GuidelineMatchTheTypeToTheMeaningDont: Story = {
  */
 export const GuidelineDoNotRepeatTheTitleDo: Story = {
   name: 'Guideline 3 Do',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
@@ -385,7 +322,7 @@ export const GuidelineDoNotRepeatTheTitleDo: Story = {
 
 export const GuidelineDoNotRepeatTheTitleDont: Story = {
   name: 'Guideline 3 Don’t',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
@@ -402,7 +339,7 @@ export const GuidelineDoNotRepeatTheTitleDont: Story = {
  */
 export const GuidelineUseTheActionToUndoOrViewDo: Story = {
   name: 'Guideline 4 Do',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
@@ -420,7 +357,7 @@ export const GuidelineUseTheActionToUndoOrViewDo: Story = {
 
 export const GuidelineUseTheActionToUndoOrViewDont: Story = {
   name: 'Guideline 4 Don’t',
-  tags: ['!autodocs'],
+  tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
