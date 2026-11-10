@@ -53,7 +53,13 @@ export function DialogContent({
           {children}
           {showCloseButton && (
             <DialogPrimitive.Close asChild>
-              <IconButton aria-label={closeLabel} variant="ghost" size="sm" className="absolute top-4 right-4">
+              <IconButton
+                aria-label={closeLabel}
+                tone="default"
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 right-4"
+              >
                 <CloseIcon />
               </IconButton>
             </DialogPrimitive.Close>

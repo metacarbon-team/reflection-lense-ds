@@ -208,7 +208,7 @@ export function Drawer(props: { open: boolean; title: string; onClose: () => voi
     >
       <div className="flex items-center justify-between border-b border-neutral-subtle py-3 pr-3 pl-5">
         <h2 className="text-heading-small">{props.title}</h2>
-        <IconButton aria-label="Close" variant="ghost" size="sm" onClick={onClose}>
+        <IconButton aria-label="Close" tone="default" variant="ghost" size="sm" onClick={onClose}>
           <CloseIcon />
         </IconButton>
       </div>

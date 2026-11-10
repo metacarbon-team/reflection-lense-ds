@@ -104,7 +104,7 @@ export function Toast({
       </div>
       {hasContent(action) && action}
       <ToastPrimitive.Close asChild>
-        <IconButton aria-label={closeLabel} variant="ghost" size="sm">
+        <IconButton aria-label={closeLabel} tone="default" variant="ghost" size="sm">
           <CloseIcon />
         </IconButton>
       </ToastPrimitive.Close>

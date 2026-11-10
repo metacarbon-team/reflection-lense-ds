@@ -102,6 +102,7 @@ export function InlineAlert({
         {onDismiss ? (
           <IconButton
             data-slot="inline-alert-dismiss"
+            tone="default"
             size="sm"
             variant="ghost"
             aria-label={dismissLabel}
