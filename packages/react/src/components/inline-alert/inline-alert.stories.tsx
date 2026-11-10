@@ -131,21 +131,19 @@ type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {}
 
-/** Every tone with a description, as a title only and without the close button. */
+/** Every tone with a description and as a title only. */
 export const Variants: Story = {
   parameters: { wide: true },
   render: () => (
-    <div className="grid grid-cols-[auto_repeat(3,25rem)] items-center gap-3">
+    <div className="grid grid-cols-[auto_repeat(2,25rem)] items-center gap-3">
       <span />
       <span className="text-caption text-neutral-subtle">with description</span>
       <span className="text-caption text-neutral-subtle">title only</span>
-      <span className="text-caption text-neutral-subtle">not dismissible</span>
       {tones.map((tone) => (
         <div key={tone} className="contents">
           <span className="text-caption text-neutral-subtle">{tone}</span>
           <InlineAlert tone={tone} leadingSlot={icons[tone]} onDismiss={noop} {...copy[tone]} />
           <InlineAlert tone={tone} leadingSlot={icons[tone]} onDismiss={noop} title={copy[tone].title} />
-          <InlineAlert tone={tone} leadingSlot={icons[tone]} {...copy[tone]} />
         </div>
       ))}
     </div>
@@ -155,11 +153,6 @@ export const Variants: Story = {
 /** The description is optional: a title that says everything needs no second line. */
 export const TitleOnly: Story = {
   args: { tone: 'success', title: 'Changes saved', description: undefined, leadingSlot: icons.success },
-}
-
-/** Without a close button the alert stays until the page changes it. */
-export const NotDismissible: Story = {
-  args: { tone: 'warning', ...copy.warning, leadingSlot: icons.warning, onDismiss: undefined },
 }
 
 /** Without a leading slot the text starts at the left edge. */
