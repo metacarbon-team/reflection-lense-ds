@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import { cloneElement, isValidElement } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
@@ -96,17 +96,15 @@ export const buttonVariants = cva(
 
 const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
-type ButtonVariantProps = NonNullable<VariantProps<typeof buttonVariants>>
-
 export type ButtonProps = ComponentProps<'button'> & {
   /** What the button communicates. `accent` marks the main action, `default` the secondary ones, `danger` a destructive one. */
-  tone?: ButtonVariantProps['tone']
+  tone?: 'default' | 'accent' | 'danger'
   /** Visual weight. `solid` for the main action in a group, `outline` and `ghost` for lower emphasis. */
-  variant?: ButtonVariantProps['variant']
+  variant?: 'solid' | 'outline' | 'ghost'
   /** Height and padding: `sm` 32, `md` 40, `lg` 48 px. Keep one size within a group. */
-  size?: ButtonVariantProps['size']
+  size?: 'sm' | 'md' | 'lg'
   /** Freezes `hover`, `pressed` or `focus` for docs and tests. In `default` the browser decides. */
-  state?: ButtonVariantProps['state']
+  state?: 'default' | 'hover' | 'pressed' | 'focus'
   /** Blocks the action and dims the button. Independent of `state`. */
   disabled?: boolean
   /** Content before the label, 16 × 16: usually an icon. The button shows the slot when it is set. */
