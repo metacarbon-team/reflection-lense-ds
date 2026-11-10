@@ -1,4 +1,6 @@
+import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { ReactNode } from 'react'
 import { IconButton } from './icon-button'
 
 const Plus = () => (
@@ -44,6 +46,7 @@ const meta = {
     asChild: { control: false },
     children: { control: false },
   },
+  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof IconButton>
 
 export default meta
@@ -211,4 +214,149 @@ export const AsLink: Story = {
       </IconButton>
     </div>
   ),
+}
+
+const iconProps = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+} as const
+
+const Paperclip = () => (
+  <svg {...iconProps}>
+    <path d="M20 11.5l-8 8a5 5 0 01-7-7l8.5-8.5a3.5 3.5 0 015 5L10 17.5a2 2 0 01-3-3l7.5-7.5" />
+  </svg>
+)
+
+const ArrowUp = () => (
+  <svg {...iconProps}>
+    <path d="M12 19V5M6 11l6-6 6 6" />
+  </svg>
+)
+
+const ZoomOut = () => (
+  <svg {...iconProps}>
+    <circle cx="11" cy="11" r="6" />
+    <path d="M20 20l-4.5-4.5M8.5 11h5" />
+  </svg>
+)
+
+const ZoomIn = () => (
+  <svg {...iconProps}>
+    <circle cx="11" cy="11" r="6" />
+    <path d="M20 20l-4.5-4.5M8.5 11h5M11 8.5v5" />
+  </svg>
+)
+
+/** One side of the guideline: a Do or Don't badge attached to the top, over the live example. */
+function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <span
+        className={
+          tone === 'do'
+            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
+            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
+        }
+      >
+        {tone === 'do' ? 'Do' : 'Don’t'}
+      </span>
+      <div className="flex justify-center px-6 pb-6">{children}</div>
+    </div>
+  )
+}
+
+const guideline: Pick<Story, 'tags' | 'parameters'> = {
+  tags: ['!autodocs'],
+  parameters: { layout: 'fullscreen', controls: { disable: true } },
+}
+
+/**
+ * **Keep Accent as the one dominant action.**  
+ * Accent marks the main action, so it must stand out. Never place two Accent icon buttons inline: pair
+ * Accent with Neutral or Ghost. Best practice: one main action per page.
+ */
+export const GuidelineKeepAccentAsTheOneDominantAction: Story = {
+  ...guideline,
+  render: () => (
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <div className="flex items-center gap-2">
+          <IconButton tone="default" variant="outline" aria-label="Attach a file">
+            <Paperclip />
+          </IconButton>
+          <IconButton tone="accent" variant="solid" aria-label="Send">
+            <ArrowUp />
+          </IconButton>
+        </div>
+      </Specimen>
+      <Specimen tone="dont">
+        <div className="flex items-center gap-2">
+          <IconButton tone="accent" variant="solid" aria-label="Attach a file">
+            <Paperclip />
+          </IconButton>
+          <IconButton tone="accent" variant="solid" aria-label="Send">
+            <ArrowUp />
+          </IconButton>
+        </div>
+      </Specimen>
+    </div>
+  ),
+}
+
+/**
+ * **Use 8 px gap between buttons in groups.**  
+ * Preserve the 8 px gap consistently across icon button groups.
+ */
+export const GuidelineUse8PxGapBetweenButtonsInGroups: Story = {
+  ...guideline,
+  render: () => (
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <div className="flex items-center gap-2">
+          <IconButton tone="default" variant="outline" aria-label="Zoom out">
+            <ZoomOut />
+          </IconButton>
+          <IconButton tone="default" variant="outline" aria-label="Zoom in">
+            <ZoomIn />
+          </IconButton>
+        </div>
+      </Specimen>
+      <Specimen tone="dont">
+        <div className="flex items-center gap-1">
+          <IconButton tone="default" variant="outline" aria-label="Zoom out">
+            <ZoomOut />
+          </IconButton>
+          <IconButton tone="default" variant="outline" aria-label="Zoom in">
+            <ZoomIn />
+          </IconButton>
+        </div>
+      </Specimen>
+    </div>
+  ),
+}
+
+/** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
+function DocsPage() {
+  const rules = [GuidelineKeepAccentAsTheOneDominantAction, GuidelineUse8PxGapBetweenButtonsInGroups]
+  return (
+    <>
+      <Title />
+      <Description />
+      <Primary />
+      <Controls />
+      <Stories includePrimary={false} />
+      <Subheading>Guidelines</Subheading>
+      {rules.map((rule, index) => (
+        <div key={index}>
+          <Description of={rule} />
+          <Canvas of={rule} />
+        </div>
+      ))}
+    </>
+  )
 }
