@@ -91,7 +91,10 @@ export interface GeneratorParams {
   flare: number
   /** Minimum ΔL between neighbouring layers and between bg prominences. */
   layerStep: number
-  /** Minimum ΔL between a fill and its hover, and between hover and pressed. */
+  /**
+   * Minimum ΔL between a fill and its hover, and between hover and pressed. Ghost fills climb the same
+   * ladder from no fill: hover two steps, then pressed and active one step each.
+   */
   stateStep: number
   /** Minimum ΔL by which `form/neutral` moves away from every neutral layer (ADR 0007, 0026). */
   formStep: number

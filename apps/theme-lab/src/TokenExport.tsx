@@ -159,7 +159,7 @@ export function ExportDialog(props: {
           <span className="mr-auto text-caption text-neutral-subtle" role="status">
             {message}
           </span>
-          <Button size="sm" onClick={() => void copy()}>
+          <Button tone="default" variant="outline" size="sm" onClick={() => void copy()}>
             Copy
           </Button>
           {format !== 'figma' && (

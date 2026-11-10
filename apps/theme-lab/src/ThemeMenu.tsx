@@ -57,7 +57,9 @@ function Confirm(props: {
         {props.children && <DialogBody className="gap-4">{props.children}</DialogBody>}
         <DialogFooter>
           <DialogClose asChild>
-            <Button size="sm">Cancel</Button>
+            <Button tone="default" variant="outline" size="sm">
+              Cancel
+            </Button>
           </DialogClose>
           {props.actions}
         </DialogFooter>
@@ -102,7 +104,7 @@ export function ThemeMenu(props: {
     <>
       <Menu>
         <MenuTrigger asChild>
-          <Button size="sm">
+          <Button tone="default" variant="outline" size="sm">
             <span className="text-neutral-subtle">Theme</span> {active.name}
             {props.modified && (
               <>
@@ -273,7 +275,7 @@ function ImportThemeDialog(props: {
                 e.target.value = ''
               }}
             />
-            <Button size="sm" onClick={() => file.current?.click()}>
+            <Button tone="default" variant="outline" size="sm" onClick={() => file.current?.click()}>
               Open file…
             </Button>
           </div>
@@ -281,7 +283,9 @@ function ImportThemeDialog(props: {
         <DialogFooter>
           {props.warning && <span className="mr-auto text-caption text-neutral-subtle">{props.warning}</span>}
           <DialogClose asChild>
-            <Button size="sm">Cancel</Button>
+            <Button tone="default" variant="outline" size="sm">
+              Cancel
+            </Button>
           </DialogClose>
           <Button variant="solid" tone="accent" size="sm" disabled={!text.trim()} onClick={submit}>
             Import

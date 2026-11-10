@@ -26,7 +26,7 @@ Use the Palette → Core → Theme relationship. Light/Dark and Desktop/Mobile a
 
 Units: the payload uses rem with 1rem = 16px (ADR 0029). Figma variables hold px, so multiply rem values by 16; px values stay as they are. Each size/<n> is the sizing mirror of spacing/<n>: alias it to spacing/<n> and scope it to width and height, while spacing stays scoped to gap and padding. Write code syntax as var(--spacing-4-5), var(--size-md), var(--radius-full) — a decimal point in a name is a dash.
 
-Include colors and transparency, typography, dimensions, and shadows as effect styles. focus/ring is the focus/ring effect style: bind its layer colors to focus/accent and focus/accent/subtle. The payload contains all modes, resolved DTCG tokens, and palette ramps with token mappings. DTCG $root means the base token at its parent path.
+Include colors and transparency, typography, dimensions, and shadows as effect styles. focus/ring is the focus/ring effect style: bind its layer colors to focus/accent and focus/accent/subtle. The payload contains all modes, DTCG tokens whose colors alias the palette group (a plain alias, or a JSON Pointer $ref to the step's components plus the token's own alpha, ADR 0034), and palette ramps with token mappings. DTCG $root means the base token at its parent path.
 
 Name Figma variables by the canonical token path. When a token is also a group (a DTCG $root), repeat its last segment in Figma (ADR 0002): bg/neutral → bg/neutral/neutral, bg/accent/emphasized → bg/accent/emphasized/emphasized, surface → surface/surface. Core routes follow the same rule under their light/ and dark/ prefixes. Code syntax always uses the canonical name (var(--bg-neutral)).
 

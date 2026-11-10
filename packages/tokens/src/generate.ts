@@ -263,7 +263,8 @@ function build(
   }
 
   // 3. Ghost fills: translucent, the only fill of transparent controls, visible on every neutral layer
-  //    and on form fields.
+  //    and on form fields. They climb the state ladder from no fill: hover two state steps away from
+  //    every base, pressed one step past hover, active (the current row) one step past pressed.
   const ghostBases = [...neutralBases, ...formOver]
   // Role ghosts tint towards a mid tone; when the layers move away from the text, towards the layers'
   // side instead, so a hovered ghost never costs text contrast (ADR 0015).
@@ -272,21 +273,23 @@ function build(
   for (const r of ROLES) {
     const base = quantize(r === 'neutral' ? layerPole : paint(roleTone[r], ghostL))
     const over = (a: number, under: Rgb) => seen(composite({ ...base, a }, under))
-    const hoverA = solveAlpha((a) => ghostBases.every((L) => Math.abs(over(a, L) - seen(L)) >= p.stateStep))
-    const pressedA =
-      hoverA === null
+    // The smallest alpha at least one state step past `from` on every base.
+    const stepPast = (from: number | null) =>
+      from === null
         ? null
-        : solveAlpha(
-            (a) => a >= hoverA && ghostBases.every((L) => Math.abs(over(a, L) - over(hoverA, L)) >= p.stateStep),
-          )
-    if (hoverA === null || pressedA === null) {
+        : solveAlpha((a) => a >= from && ghostBases.every((L) => Math.abs(over(a, L) - over(from, L)) >= p.stateStep))
+    const hoverA = solveAlpha((a) => ghostBases.every((L) => Math.abs(over(a, L) - seen(L)) >= 2 * p.stateStep))
+    const pressedA = stepPast(hoverA)
+    const activeA = stepPast(pressedA)
+    if (hoverA === null || pressedA === null || activeA === null) {
       feasible = false
       continue
     }
     put(`ghost/${r}/hover`, base, hoverA)
     put(`ghost/${r}/pressed`, base, pressedA)
+    put(`ghost/${r}/active`, base, activeA)
     for (const L of ghostBases)
-      ghostComposites.push(composite({ ...base, a: hoverA }, L), composite({ ...base, a: pressedA }, L))
+      for (const a of [hoverA, pressedA, activeA]) ghostComposites.push(composite({ ...base, a }, L))
   }
 
   // 4. Text (ADR 0012): subtle is the 4.5:1 floor on the worst background; contrast depends on

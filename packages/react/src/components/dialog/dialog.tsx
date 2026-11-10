@@ -53,7 +53,13 @@ export function DialogContent({
           {children}
           {showCloseButton && (
             <DialogPrimitive.Close asChild>
-              <IconButton aria-label={closeLabel} variant="ghost" size="sm" className="absolute top-4 right-4">
+              <IconButton
+                aria-label={closeLabel}
+                tone="default"
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 right-4"
+              >
                 <CloseIcon />
               </IconButton>
             </DialogPrimitive.Close>
@@ -100,7 +106,7 @@ export function DialogBody({ className, ...props }: ComponentProps<'div'>) {
 }
 
 /** `inline`: actions in a row at the end. `stacked`: full-width actions, primary first. */
-export const dialogFooterVariants = cva('flex gap-2 p-4', {
+const dialogFooterVariants = cva('flex gap-2 p-4', {
   variants: {
     layout: {
       inline: 'flex-wrap items-center justify-end',

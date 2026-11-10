@@ -132,3 +132,4 @@ The pipeline also writes Figma `codeSyntax` for every platform.
 - 2026-10-30 — the neutral stack moves to whichever side of `surface` keeps the text readable, not always towards the text. See [0015](0015-layer-direction.md).
 - 2026-11-03 — raised gains an opaque emphasized strength; inverse regions use local component mode inversion. These decisions are superseded by [0017](0017-semantic-surface-usage.md).
 - 2026-11-04 — `surface/neutral` becomes `surface` and `blanket/neutral` becomes `surface/backdrop`; the `blanket` scope is removed. See [0024](0024-surface-group.md).
+- 2026-11-10 — ghost fills gain an `active` state (the current row), and hover moves to two state steps. See [0033](0033-ghost-state-ladder.md).

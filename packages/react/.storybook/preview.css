@@ -8,3 +8,8 @@
 body {
   @apply bg-surface text-body text-neutral;
 }
+
+/* Docs pages: only the area that holds the examples follows the color mode of the theme. */
+.sbdocs .docs-story {
+  @apply bg-surface;
+}

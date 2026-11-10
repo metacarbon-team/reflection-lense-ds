@@ -38,7 +38,9 @@ export const Default: Story = {
   render: (args) => (
     <Menu {...args}>
       <MenuTrigger asChild>
-        <Button size="sm">Actions</Button>
+        <Button tone="default" variant="outline" size="sm">
+          Actions
+        </Button>
       </MenuTrigger>
       <MenuContent>
         <MenuItem>
@@ -70,7 +72,9 @@ export const WithIcons: Story = {
   render: (args) => (
     <Menu {...args}>
       <MenuTrigger asChild>
-        <Button size="sm">File</Button>
+        <Button tone="default" variant="outline" size="sm">
+          File
+        </Button>
       </MenuTrigger>
       <MenuContent>
         <MenuGroup>
@@ -97,7 +101,9 @@ export const Checkable: Story = {
     return (
       <Menu {...args}>
         <MenuTrigger asChild>
-          <Button size="sm">Format</Button>
+          <Button tone="default" variant="outline" size="sm">
+            Format
+          </Button>
         </MenuTrigger>
         <MenuContent>
           <MenuLabel>Text style</MenuLabel>

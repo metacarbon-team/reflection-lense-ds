@@ -35,6 +35,7 @@ const MODIFIERS: Record<string, number> = {
   'on-emphasized': 1,
   hover: 2,
   pressed: 2,
+  active: 2,
 }
 
 const TOLERANCE = 1e-3
@@ -64,6 +65,8 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
     // Text has two prominences, normal and subtle (ADR 0012).
     const okFg = scope !== 'fg' || !rest.includes('emphasized')
+    // `active` marks the current row of a transparent control: a ghost state only.
+    const okActive = scope === 'ghost' || !rest.includes('active')
     // Form and card exist only in the neutral role; form has no prominence (ADR 0026).
     const statesOnly = rest.every((m) => m === 'hover' || m === 'pressed')
     const okNeutralOnly = !NEUTRAL_ONLY_SCOPES.includes(scope as Scope) || role === 'neutral'
@@ -74,7 +77,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     const okGrammar =
       scope === SURFACE
         ? SURFACE_TOKENS.includes(name)
-        : okScope && okRole && okRest && okFg && okNeutralOnly && okForm && okCard
+        : okScope && okRole && okRest && okFg && okActive && okNeutralOnly && okForm && okCard
     if (!okGrammar) fail('grammar', name, 0, 1)
     const translucent = isTranslucent(name)
     if (translucent ? c.a >= 1 : c.a < 1)
@@ -220,17 +223,24 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     if (d2 < p.stateStep - TOLERANCE) fail('state separation', `${name}/pressed`, d2, p.stateStep, `${name}/hover`)
   }
 
-  // Ghost fills: visible on every neutral layer, pressed distinct from hover.
+  // Ghost fills on every neutral layer: hover two state steps from no fill, then pressed and active
+  // one step each.
   for (const role of ROLES) {
     const hover = get(`ghost/${role}/hover`)
     const pressed = get(`ghost/${role}/pressed`)
-    if (!hover || !pressed) continue
+    const active = get(`ghost/${role}/active`)
+    if (!hover || !pressed || !active) {
+      fail('ghost states', `ghost/${role}`, 0, 1)
+      continue
+    }
     for (const [b, under] of ghostBases) {
-      const h = composite(hover, under)
+      const [h, pr, ac] = [hover, pressed, active].map((g) => composite(g, under))
       const d1 = Math.abs(L(h) - L(under))
-      const d2 = Math.abs(L(composite(pressed, under)) - L(h))
-      if (d1 < p.stateStep - TOLERANCE) fail('ghost visibility', `ghost/${role}/hover`, d1, p.stateStep, b)
+      const d2 = Math.abs(L(pr) - L(h))
+      const d3 = Math.abs(L(ac) - L(pr))
+      if (d1 < 2 * p.stateStep - TOLERANCE) fail('ghost visibility', `ghost/${role}/hover`, d1, 2 * p.stateStep, b)
       if (d2 < p.stateStep - TOLERANCE) fail('ghost state separation', `ghost/${role}/pressed`, d2, p.stateStep, b)
+      if (d3 < p.stateStep - TOLERANCE) fail('ghost state separation', `ghost/${role}/active`, d3, p.stateStep, b)
     }
   }
 

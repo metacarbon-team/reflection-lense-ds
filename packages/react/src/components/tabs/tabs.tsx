@@ -3,9 +3,16 @@ import { Tabs as TabsPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
-type TabsStyle = Required<VariantProps<typeof tabsListVariants>> & { size: 'sm' | 'lg' }
+type TabsStyle = {
+  variant: NonNullable<VariantProps<typeof tabsListVariants>['variant']>
+  size: NonNullable<VariantProps<typeof tabsTriggerVariants>['size']>
+}
 const TabsStyleContext = createContext<TabsStyle>({ variant: 'line', size: 'sm' })
 
+/**
+ * The tabs root: owns the selected value. Radix Tabs; `defaultValue`, `value`, `onValueChange` work as in
+ * Radix. Horizontal only: Figma has no vertical tabs, so `orientation="vertical"` is not styled.
+ */
 export const Tabs = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.Root>) => (
   <TabsPrimitive.Root data-slot="tabs" className={cn('flex flex-col gap-2', className)} {...props} />
 )
@@ -36,35 +43,45 @@ export const tabsTriggerVariants = cva(
   {
     variants: {
       variant: {
+        // The active tab is marked in CSS from Radix's `data-state`: an underline, or the raised pill.
         line: [
           'h-10 gap-1.5 px-3 text-label focus-visible:rounded-xs',
-          'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-current',
+          'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-t-lg after:bg-current',
           'after:opacity-0 data-[state=active]:after:opacity-100',
         ],
         pill: [
           'gap-1 border border-transparent',
-          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle data-[state=active]:shadow-2xs',
+          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle data-[state=active]:shadow-sm',
           'focus-visible:bg-neutral-subtle',
         ],
       },
       size: { sm: '', lg: '' },
+      // Freezes hover or focus for docs and tests; in `default` the browser decides.
+      state: {
+        default: '',
+        hover: 'bg-ghost-neutral-hover text-neutral',
+        focus: 'text-neutral shadow-focus-ring',
+      },
     },
     compoundVariants: [
+      { variant: 'line', state: 'focus', className: 'rounded-xs' },
+      { variant: 'pill', state: 'focus', className: 'bg-neutral-subtle' },
       { variant: 'pill', size: 'sm', className: 'h-6 rounded-md px-2 text-caption' },
       { variant: 'pill', size: 'lg', className: 'h-9 rounded-lg px-3 text-label' },
     ],
   },
 )
 
-export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants> & {
-    /** Pill tabs only: `sm` 24px, `lg` 36px. */
-    size?: 'sm' | 'lg'
-  }
+export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> & {
+  /** `line` (default): an underline under the active tab. `pill`: a muted track with a raised active tab. */
+  variant?: TabsStyle['variant']
+  /** Pill tabs only: `sm` 24px, `lg` 36px. */
+  size?: TabsStyle['size']
+}
 
 export function TabsList({ className, variant = 'line', size = 'sm', ...props }: TabsListProps) {
   return (
-    <TabsStyleContext value={{ variant: variant ?? 'line', size }}>
+    <TabsStyleContext value={{ variant, size }}>
       <TabsPrimitive.List
         data-slot="tabs-list"
         data-variant={variant}
@@ -75,13 +92,26 @@ export function TabsList({ className, variant = 'line', size = 'sm', ...props }:
   )
 }
 
-export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
+/** One tab. `value` links it to the `TabsContent` with the same value; `disabled` removes it from the tab order and blocks selection. */
+export function TabsTrigger({
+  className,
+  state,
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Trigger> & {
+  /** Freezes `hover` or `focus` for docs and tests. The active tab comes from the selected value, not from here. */
+  state?: 'default' | 'hover' | 'focus'
+}) {
   const style = useContext(TabsStyleContext)
   return (
-    <TabsPrimitive.Trigger data-slot="tabs-trigger" className={cn(tabsTriggerVariants(style), className)} {...props} />
+    <TabsPrimitive.Trigger
+      data-slot="tabs-trigger"
+      className={cn(tabsTriggerVariants({ ...style, state }), className)}
+      {...props}
+    />
   )
 }
 
+/** The panel of the tab with the same `value`. Focusable, so a keyboard user can reach the content after the tabs. */
 export function TabsContent({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
