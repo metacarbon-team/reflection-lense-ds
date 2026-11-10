@@ -1,4 +1,3 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { DiffStat, diffStatVariants } from './diff-stat'
@@ -7,7 +6,6 @@ const meta = {
   title: 'Components/Diff Stat',
   component: DiffStat,
   args: { added: 42, removed: 8, showAdded: true, showRemoved: true },
-  parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof DiffStat>
 
 export default meta
@@ -69,10 +67,10 @@ export const ExactNumbers: Story = {
   args: { added: 1204, removed: 87 },
 }
 
-/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+/** One side of the guideline: a Do or Don't badge attached to the top, over the live example. */
 function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <span
         className={
           tone === 'do'
@@ -100,105 +98,56 @@ function WrongStat({ added, removed, swapped }: { added: string; removed: string
   )
 }
 
-/** Always show the sign. Numbers start with + or −, so the meaning never depends on color alone. */
-export const GuidelineAlwaysShowTheSignDo: Story = {
-  tags: ['!autodocs'],
+/**
+ * **Always show the sign**  
+ * Numbers start with + or −, so the meaning never depends on color alone.
+ */
+export const GuidelineAlwaysShowTheSign: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <Specimen tone="do">
-      <DiffStat added={120} removed={34} />
-    </Specimen>
-  ),
-}
-
-export const GuidelineAlwaysShowTheSignDont: Story = {
-  tags: ['!autodocs'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="dont">
-      <WrongStat added="120" removed="34" />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <DiffStat added={120} removed={34} />
+      </Specimen>
+      <Specimen tone="dont">
+        <WrongStat added="120" removed="34" />
+      </Specimen>
+    </div>
   ),
 }
 
 /**
- * Show exact numbers. Write the full count. Rounded values hide how big the change really is, and a
- * reviewer needs the exact size.
+ * **Show exact numbers**  
+ * Write the full count. Rounded values hide how big the change really is, and a reviewer needs the exact size.
  */
-export const GuidelineShowExactNumbersDo: Story = {
-  tags: ['!autodocs'],
+export const GuidelineShowExactNumbers: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <Specimen tone="do">
-      <DiffStat added={1204} removed={87} />
-    </Specimen>
-  ),
-}
-
-export const GuidelineShowExactNumbersDont: Story = {
-  tags: ['!autodocs'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="dont">
-      <WrongStat added="+1k" removed="−0.1k" />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <DiffStat added={1204} removed={87} />
+      </Specimen>
+      <Specimen tone="dont">
+        <WrongStat added="+1k" removed="−0.1k" />
+      </Specimen>
+    </div>
   ),
 }
 
 /**
- * Green for added, red for removed. Keep the colors the same everywhere. Swapped colors make a deletion
- * look like a good thing.
+ * **Green for added, red for removed**  
+ * Keep the colors the same everywhere. Swapped colors make a deletion look like a good thing.
  */
-export const GuidelineGreenForAddedRedForRemovedDo: Story = {
-  tags: ['!autodocs'],
+export const GuidelineGreenForAddedRedForRemoved: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
-    <Specimen tone="do">
-      <DiffStat added={42} removed={8} />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <DiffStat added={42} removed={8} />
+      </Specimen>
+      <Specimen tone="dont">
+        <WrongStat added="+42" removed="−8" swapped />
+      </Specimen>
+    </div>
   ),
-}
-
-export const GuidelineGreenForAddedRedForRemovedDont: Story = {
-  tags: ['!autodocs'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="dont">
-      <WrongStat added="+42" removed="−8" swapped />
-    </Specimen>
-  ),
-}
-
-/** The Docs tab: the usual blocks, then the Do and Don't examples side by side, one pair per rule. */
-function DocsPage() {
-  const rules = [
-    [GuidelineAlwaysShowTheSignDo, GuidelineAlwaysShowTheSignDont],
-    [GuidelineShowExactNumbersDo, GuidelineShowExactNumbersDont],
-    [GuidelineGreenForAddedRedForRemovedDo, GuidelineGreenForAddedRedForRemovedDont],
-  ] as const
-  return (
-    <>
-      <Title />
-      <Description />
-      <Primary />
-      <Controls />
-      <Stories includePrimary={false} />
-      <Subheading>Guidelines</Subheading>
-      {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-2!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            <Description of={Do} />
-            <Canvas of={Do} />
-          </div>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
-            <div>
-              <Description of={Dont} />
-            </div>
-            <Canvas of={Dont} />
-          </div>
-        </div>
-      ))}
-    </>
-  )
 }
