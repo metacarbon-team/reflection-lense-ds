@@ -5,7 +5,10 @@ import { CloseIcon } from '../../lib/icons'
 import { Card } from '../card/card'
 import { IconButton } from '../icon-button/icon-button'
 
-export const inlineAlertVariants = cva('w-full min-w-0 gap-0', {
+const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
+
+// The Card border sits inside its padding in Figma, so the 16px padding loses the 1px border here: the alert is 72px high with a one-line title and a description, as in Figma.
+export const inlineAlertVariants = cva('w-full min-w-0 gap-0 p-3.75', {
   variants: {
     tone: {
       default: '',
@@ -33,14 +36,23 @@ const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-c
 })
 
 export type InlineAlertProps = Omit<ComponentProps<'div'>, 'title'> &
-  VariantProps<typeof inlineAlertVariants> & {
+  Omit<VariantProps<typeof inlineAlertVariants>, 'tone'> & {
+    /** Sets the card tint, the stroke and the icon color. Use `default` for general notes, `info` for news, `success` for a finished action, `warning` for a risk and `danger` for a failure. */
+    tone?: 'default' | 'success' | 'warning' | 'danger' | 'info'
     /** One short line that makes sense even if nothing else is read. A long title is cut off with an ellipsis. */
     title: ReactNode
     /** One or two lines of detail or the next step. Leave it out when the title says everything. */
     description?: ReactNode
-    /** A 16px icon before the title, usually matching the tone. Leave it out to hide the icon. */
+    /**
+     * A 16px icon before the title, usually matching the tone. Leave it out to hide the icon; without it
+     * the tone shows only by color, so an icon is recommended. In Figma this is an icon swap and cannot be hidden.
+     */
     leadingSlot?: ReactNode
-    /** Shows the close button on the right edge and runs when it is pressed. Leave it out when the alert cannot be dismissed. */
+    /**
+     * Shows the close button on the right edge and runs when it is pressed. Leave it out when the alert
+     * cannot be dismissed. The alert does not move focus: when the page removes it, put focus where the
+     * user was working.
+     */
     onDismiss?: () => void
     /** Accessible name of the close button. */
     dismissLabel?: string
@@ -61,8 +73,6 @@ export function InlineAlert({
   dismissLabel = 'Dismiss',
   ...props
 }: InlineAlertProps) {
-  const hasDescription =
-    description !== undefined && description !== null && description !== false && description !== ''
   return (
     <Card
       data-slot="inline-alert"
@@ -74,7 +84,7 @@ export function InlineAlert({
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">
-        {leadingSlot ? (
+        {hasContent(leadingSlot) ? (
           <span data-slot="inline-alert-leading" className={inlineAlertLeadingVariants({ tone })}>
             {leadingSlot}
           </span>
@@ -83,7 +93,7 @@ export function InlineAlert({
           <span data-slot="inline-alert-title" className="truncate text-body-small-medium text-neutral">
             {title}
           </span>
-          {hasDescription ? (
+          {hasContent(description) ? (
             <span data-slot="inline-alert-description" className="text-body-xsmall text-neutral-subtle">
               {description}
             </span>

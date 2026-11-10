@@ -68,6 +68,18 @@ const copy: Record<Tone, { title: string; description: string }> = {
 
 const noop = () => {}
 
+/** The five icons by their Figma layer names, for the `leadingSlot` control. */
+const iconByName: Record<string, ReactNode> = {
+  terminal: icons.default,
+  'circle-check': icons.success,
+  'triangle-alert': icons.warning,
+  'circle-alert': icons.danger,
+  info: icons.info,
+}
+
+/** The boolean control shows the close button as a switch: `true` becomes `noop` through the mapping below. */
+const dismissOn = true as unknown as () => void
+
 /** The icon for `leadingSlot: 'auto'`: the one that matches the current tone. */
 const withToneIcon = ({ tone, leadingSlot, ...rest }: ComponentProps<typeof InlineAlert>) => ({
   tone,
@@ -84,7 +96,7 @@ const meta = {
     description: copy.default.description,
     // 'auto' follows the tone, as the icon does in Figma; pick another option to pin an icon or hide it.
     leadingSlot: 'auto',
-    onDismiss: noop,
+    onDismiss: dismissOn,
   },
   argTypes: {
     tone: { control: 'inline-radio', options: tones },
@@ -93,8 +105,8 @@ const meta = {
     // The icon and the close button are shown when they are set; the controls switch them on and off.
     leadingSlot: {
       control: 'select',
-      options: ['auto', 'none', ...tones],
-      mapping: { auto: 'auto', none: undefined, ...icons },
+      options: ['auto', 'none', ...Object.keys(iconByName)],
+      mapping: { auto: 'auto', none: undefined, ...iconByName },
     },
     onDismiss: { control: 'boolean', mapping: { true: noop, false: undefined } },
     dismissLabel: { control: 'text' },
@@ -165,14 +177,14 @@ export const LongTitle: Story = {
   },
 }
 
-/** The close button only calls `onDismiss`; the page decides what to remove. */
+/** The close button only calls `onDismiss`; the page decides what to remove and where focus goes next. */
 export const Dismissible: Story = {
   render: (args) => {
     const [open, setOpen] = useState(true)
     return open ? (
       <InlineAlert {...withToneIcon(args)} onDismiss={() => setOpen(false)} />
     ) : (
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button autoFocus variant="outline" size="sm" onClick={() => setOpen(true)}>
         Show alert again
       </Button>
     )
