@@ -19,7 +19,7 @@ Set `data-mode="light"` or `data-mode="dark"` on `<html>`, or on any subtree for
 
 ## Conventions
 
-- Variants are `cva` functions exported next to each component (`buttonVariants`, `badgeVariants`…), for styling other elements the same way.
+- Variants are `cva` functions, used only where a part has variants; fixed classes are plain strings, as in shadcn/ui. A component exports its `*Variants` when the call alone gives its look (`buttonVariants`, `badgeVariants`, `tabsTriggerVariants`…), for styling other elements the same way.
 - `className` is merged with `cn` (`tailwind-merge` that knows the theme's text roles): a utility you pass replaces the component's utility for the same property.
 - Every part renders `data-slot="<part>"` for targeting in CSS.
 - Form controls (Input, Textarea, SelectTrigger) take their id, description, invalid and disabled state from the surrounding `Field`.

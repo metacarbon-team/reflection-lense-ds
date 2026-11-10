@@ -1,9 +1,10 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import { cloneElement, isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { ChevronDownIcon, ChevronRightIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { disabledAttrs } from '../../lib/disabled'
 
 /**
@@ -30,15 +31,13 @@ const navItemVariants = cva(
   },
 )
 
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
-
 export type NavItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   /** Text of the row. One line, cut with an ellipsis when it does not fit. */
   label: ReactNode
   /** Root rows sit at the left edge. Nested rows add an indent and go under a group row. */
   level?: 'root' | 'nested'
   /** Freezes `hover` or `focus` for docs and tests. `active` marks the current page. */
-  state?: 'default' | 'hover' | 'active' | 'focus'
+  state?: VariantProps<typeof navItemVariants>['state']
   /** Marks the current page. Same as `state="active"`. Mark one row only. */
   active?: boolean
   /** Blocks the row and dims it. */
@@ -113,9 +112,10 @@ export function NavItem({
 
   if (asChild && isValidElement(children)) {
     // A link cannot be disabled: a disabled one becomes a plain `span` with the link role and no `href`.
+    // It keeps the caller's attributes (name, id, test ids) but not their click handler.
     if (isDisabled) {
       return (
-        <span role="link" {...rootProps} {...disabledAttrs(true, false)}>
+        <span role="link" {...rootProps} {...props} onClick={undefined} {...disabledAttrs(true, false)}>
           {content}
         </span>
       )

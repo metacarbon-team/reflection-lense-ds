@@ -1,7 +1,7 @@
 import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import type { ReactNode } from 'react'
 import { DiffStat, diffStatVariants } from './diff-stat'
+import { Specimen } from '../../docs/specimen'
 
 const meta = {
   title: 'Components/Diff Stat',
@@ -67,24 +67,6 @@ export const OnlyRemoved: Story = {
 /** The full count with a thousands separator: rounded values hide how big the change really is. */
 export const ExactNumbers: Story = {
   args: { added: 1204, removed: 87 },
-}
-
-/** One side of the guideline: a Do or Don't badge attached to the top, over the live example. */
-function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <span
-        className={
-          tone === 'do'
-            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
-            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
-        }
-      >
-        {tone === 'do' ? 'Do' : 'Don’t'}
-      </span>
-      <div className="flex justify-center px-6 pb-6">{children}</div>
-    </div>
-  )
 }
 
 /**

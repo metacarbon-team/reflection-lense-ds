@@ -7,7 +7,7 @@ import { cn } from '../../lib/cn'
  * the tone is carried by a colored dot, and `default` has no dot. Size sets the height (16, 20, 24 px)
  * and the slot icon size (12, 16, 16 px).
  */
-export const tagVariants = cva(
+const tagVariants = cva(
   [
     'inline-flex shrink-0 items-center gap-1 whitespace-nowrap',
     'border border-neutral-subtle bg-form-neutral text-label-small text-neutral shadow-xs',

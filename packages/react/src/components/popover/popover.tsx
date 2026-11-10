@@ -1,21 +1,6 @@
-import { cva } from 'class-variance-authority'
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-
-const popoverPanelVariants = cva(
-  'flex w-72 flex-col gap-3 rounded-lg border border-neutral-subtle bg-card-neutral-emphasized p-3 text-neutral shadow-md',
-)
-
-const popoverHeaderVariants = cva('flex min-w-0 flex-col gap-0.5')
-
-const popoverTitleVariants = cva('text-label text-neutral')
-
-const popoverDescriptionVariants = cva('text-body-small text-neutral-subtle')
-
-const popoverBodyVariants = cva('min-w-0')
-
-const popoverContentVariants = cva('z-50 outline-none')
 
 /** Popover: a small floating panel that opens from a trigger. Compose it from PopoverTrigger and PopoverContent. */
 export const Popover = (props: ComponentProps<typeof PopoverPrimitive.Root>) => (
@@ -75,21 +60,28 @@ export function PopoverPanel({
   ...props
 }: PopoverPanelProps) {
   return (
-    <div data-slot="popover-panel" className={cn(popoverPanelVariants(), className)} {...props}>
+    <div
+      data-slot="popover-panel"
+      className={cn(
+        'flex w-72 flex-col gap-3 rounded-lg border border-neutral-subtle bg-card-neutral-emphasized p-3 text-neutral shadow-md',
+        className,
+      )}
+      {...props}
+    >
       {header && (
-        <div data-slot="popover-header" className={popoverHeaderVariants()}>
-          <p id={labelId} data-slot="popover-title" className={popoverTitleVariants()}>
+        <div data-slot="popover-header" className="flex min-w-0 flex-col gap-0.5">
+          <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
             {label}
           </p>
           {description && (
-            <p id={descriptionId} data-slot="popover-description" className={popoverDescriptionVariants()}>
+            <p id={descriptionId} data-slot="popover-description" className="text-body-small text-neutral-subtle">
               {description}
             </p>
           )}
         </div>
       )}
       {content && (
-        <div data-slot="popover-body" className={popoverBodyVariants()}>
+        <div data-slot="popover-body" className="min-w-0">
           {children}
         </div>
       )}
@@ -129,7 +121,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className={popoverContentVariants()}
+        className="z-50 outline-none"
         {...props}
       >
         <PopoverPanel

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { toast, Toast, ToastAction, ToastProvider, Toaster, ToastViewport } from './toast'
+import { Specimen } from '../../docs/specimen'
 
 const Glyph = ({ children }: { children: ReactNode }) => (
   <svg
@@ -238,8 +239,13 @@ const StackDemo = ({ expand }: { expand?: boolean }) => {
  * smaller and lifted behind it. Hover or focus the pile to open it into a list; leave to fold it.
  * `expand` keeps it open.
  */
+// `toast()` keeps one list for the whole page, and every mounted Toaster shows it. On the Docs page each
+// Toaster story runs in its own frame, so the two demos do not show each other's toasts.
+const isolatedDocs = { docs: { story: { inline: false, height: '440px' } } }
+
 export const Stack: StoryObj<{ expand: boolean }> = {
   args: { expand: false },
+  parameters: isolatedDocs,
   argTypes: { expand: { control: 'boolean' } },
   render: ({ expand }) => <StackDemo expand={expand} />,
 }
@@ -275,30 +281,13 @@ const TriggeredDemo = () => (
  * on the close button and on a swipe.
  */
 export const Triggered: Story = {
+  parameters: isolatedDocs,
   // The Toaster is pinned to the corner of the story frame; the frame needs room for three toasts opened into a list.
   render: () => (
     <div className="h-96">
       <TriggeredDemo />
     </div>
   ),
-}
-
-/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
-function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
-  return (
-    <div className="flex w-full flex-col gap-4">
-      <span
-        className={
-          tone === 'do'
-            ? 'm-1 rounded-sm border-b border-success bg-card-success px-2 py-0.5 text-caption text-success uppercase'
-            : 'm-1 rounded-sm border-b border-danger bg-card-danger px-2 py-0.5 text-caption text-danger uppercase'
-        }
-      >
-        {tone === 'do' ? 'Do' : 'Don’t'}
-      </span>
-      <div className="flex justify-center px-6 pb-6">{children}</div>
-    </div>
-  )
 }
 
 const successIcon = (

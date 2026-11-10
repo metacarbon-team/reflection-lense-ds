@@ -12,34 +12,34 @@ import { useFieldControl } from '../field/field'
 const radioVariants = cva(
   [
     'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
-    'data-disabled:pointer-events-none data-disabled:data-[state=unchecked]:border-disabled data-disabled:data-[state=unchecked]:bg-disabled',
-    'data-disabled:data-[state=checked]:border-transparent data-disabled:data-[state=checked]:bg-disabled data-disabled:data-[state=checked]:text-disabled',
+    'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
+    'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
   ],
   {
     variants: {
       state: {
         default: [
-          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-xs',
-          'not-data-disabled:data-[state=unchecked]:hover:bg-neutral-hover',
-          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
-          'not-data-disabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-xs',
+          'enabled:data-[state=unchecked]:hover:bg-neutral-hover',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
+          'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
           // The ring is repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
-          'not-data-disabled:data-[state=unchecked]:focus-visible:border-transparent not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
-          'not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
+          'enabled:data-[state=unchecked]:focus-visible:border-transparent enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
+          'enabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'not-data-disabled:data-[state=unchecked]:border-neutral-emphasized not-data-disabled:data-[state=unchecked]:bg-neutral-hover not-data-disabled:data-[state=unchecked]:shadow-xs',
-          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-neutral-emphasized-hover not-data-disabled:data-[state=checked]:text-neutral-on-emphasized not-data-disabled:data-[state=checked]:shadow-xs',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-neutral-hover enabled:data-[state=unchecked]:shadow-xs',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
         ],
         focus: [
-          'not-data-disabled:border-transparent not-data-disabled:shadow-focus-ring',
-          'not-data-disabled:data-[state=unchecked]:bg-form-neutral',
-          'not-data-disabled:data-[state=checked]:bg-neutral-emphasized not-data-disabled:data-[state=checked]:text-neutral-on-emphasized',
+          'enabled:border-transparent enabled:shadow-focus-ring',
+          'enabled:data-[state=unchecked]:bg-form-neutral',
+          'enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized',
         ],
         error: [
-          'not-data-disabled:data-[state=unchecked]:border-danger-emphasized not-data-disabled:data-[state=unchecked]:bg-form-neutral not-data-disabled:data-[state=unchecked]:shadow-sm',
-          'not-data-disabled:data-[state=checked]:border-transparent not-data-disabled:data-[state=checked]:bg-danger-emphasized not-data-disabled:data-[state=checked]:text-danger-on-emphasized not-data-disabled:data-[state=checked]:shadow-sm',
-          'not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
+          'enabled:data-[state=unchecked]:border-danger-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-sm',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-danger-emphasized enabled:data-[state=checked]:text-danger-on-emphasized enabled:data-[state=checked]:shadow-sm',
+          'enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring enabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
       },
     },
@@ -55,10 +55,13 @@ const RadioGroupInvalidContext = createContext(false)
 /**
  * RadioGroup: holds a set of radios and lets exactly one be selected. Arrow keys move the
  * selection. Name the group with `aria-label` or `aria-labelledby`; `disabled` here disables every
- * radio. In a Field the group takes the id, description, error and disabled state, and every radio shows the error.
+ * radio. In a Field the group takes the id, description, error and disabled state, and every radio
+ * shows the error. The Field's label names the group through `aria-labelledby`: a `<label htmlFor>`
+ * cannot name a group.
  */
 export function RadioGroup({ className, ...props }: RadioGroupProps) {
   const control = useFieldControl(props)
+  const labelledBy = props['aria-labelledby'] ?? (props['aria-label'] ? undefined : control.labelId)
   return (
     <RadioGroupInvalidContext value={control.invalid}>
       <RadioGroupPrimitive.Root
@@ -66,6 +69,7 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
         className={cn('flex flex-col gap-3', className)}
         {...props}
         {...control.attributes}
+        aria-labelledby={labelledBy}
       />
     </RadioGroupInvalidContext>
   )

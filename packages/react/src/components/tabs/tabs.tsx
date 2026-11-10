@@ -3,7 +3,10 @@ import { Tabs as TabsPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
-type TabsStyle = Required<VariantProps<typeof tabsListVariants>> & { size: 'sm' | 'lg' }
+type TabsStyle = {
+  variant: NonNullable<VariantProps<typeof tabsListVariants>['variant']>
+  size: NonNullable<VariantProps<typeof tabsTriggerVariants>['size']>
+}
 const TabsStyleContext = createContext<TabsStyle>({ variant: 'line', size: 'sm' })
 
 export const Tabs = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.Root>) => (
@@ -30,7 +33,7 @@ export const tabsTriggerVariants = cva(
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
-    'data-disabled:pointer-events-none data-disabled:text-disabled',
+    'disabled:pointer-events-none disabled:text-disabled',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
@@ -59,12 +62,12 @@ export const tabsTriggerVariants = cva(
 export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants> & {
     /** Pill tabs only: `sm` 24px, `lg` 36px. */
-    size?: 'sm' | 'lg'
+    size?: VariantProps<typeof tabsTriggerVariants>['size']
   }
 
 export function TabsList({ className, variant = 'line', size = 'sm', ...props }: TabsListProps) {
   return (
-    <TabsStyleContext value={{ variant: variant ?? 'line', size }}>
+    <TabsStyleContext value={{ variant: variant ?? 'line', size: size ?? 'sm' }}>
       <TabsPrimitive.List
         data-slot="tabs-list"
         data-variant={variant}

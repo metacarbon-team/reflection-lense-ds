@@ -106,7 +106,7 @@ export function DialogBody({ className, ...props }: ComponentProps<'div'>) {
 }
 
 /** `inline`: actions in a row at the end. `stacked`: full-width actions, primary first. */
-export const dialogFooterVariants = cva('flex gap-2 p-4', {
+const dialogFooterVariants = cva('flex gap-2 p-4', {
   variants: {
     layout: {
       inline: 'flex-wrap items-center justify-end',

@@ -1,13 +1,15 @@
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { disabledAttrs } from '../../lib/disabled'
 
 /**
  * Size sets the row padding and the text roles of its parts. Hover, pressed and focus-visible come
  * from the browser in `default`; the `hover`, `pressed` and `focus` states freeze them for docs and
  * tests. `active` marks the current row. A disabled row is marked with `data-disabled`: the row
- * ignores the pointer, and each part takes its colors from `group-data-disabled`.
+ * ignores the pointer, and each part takes its colors from `group-data-disabled`. `clickable` is a
+ * row that is a `label` for the control in its slot.
  */
 const itemVariants = cva(
   'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
@@ -25,25 +27,40 @@ const itemVariants = cva(
         active: 'bg-neutral',
         focus: 'shadow-focus-ring',
       },
+      clickable: { true: 'cursor-pointer', false: '' },
     },
-    defaultVariants: { size: 'md', state: 'default' },
+    defaultVariants: { size: 'md', state: 'default', clickable: false },
   },
 )
 
-/** Text role of each part per size. The error label uses the meta role. */
-const textRoles = {
-  sm: { title: 'text-label-small', meta: 'text-caption', description: 'text-caption' },
-  md: { title: 'text-label', meta: 'text-body-small', description: 'text-body-xsmall' },
-  lg: { title: 'text-label-large', meta: 'text-body-small', description: 'text-body-small' },
-} as const
+// Text roles of the parts per size. The meta and the error label share the meta role.
+const itemTitleVariants = cva('min-w-0 flex-1 truncate text-neutral group-data-disabled/item:text-disabled', {
+  variants: { size: { sm: 'text-label-small', md: 'text-label', lg: 'text-label-large' } },
+  defaultVariants: { size: 'md' },
+})
+
+const metaRole = { sm: 'text-caption', md: 'text-body-small', lg: 'text-body-small' }
+
+const itemMetaVariants = cva('shrink-0 whitespace-nowrap text-neutral-subtle group-data-disabled/item:text-disabled', {
+  variants: { size: metaRole },
+  defaultVariants: { size: 'md' },
+})
+
+const itemErrorVariants = cva('truncate text-danger group-data-disabled/item:text-disabled', {
+  variants: { size: metaRole },
+  defaultVariants: { size: 'md' },
+})
+
+const itemDescriptionVariants = cva('line-clamp-2 text-neutral-subtle group-data-disabled/item:text-disabled', {
+  variants: { size: { sm: 'text-caption', md: 'text-body-xsmall', lg: 'text-body-small' } },
+  defaultVariants: { size: 'md' },
+})
 
 // A slot is 16 × 16: the description is indented by that width, so a checkbox or radio shrinks to fit.
-const slotFrame = [
+const slotClass = [
   'flex min-h-4 shrink-0 items-center justify-center group-data-disabled/item:text-disabled',
   '[&_svg]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
 ]
-
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
 
 export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   /** The row title. One line, cut with an ellipsis when it does not fit. */
@@ -61,9 +78,9 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   /** Adds a thin line under the row. */
   divider?: boolean
   /** L fits a title with a description. M is tighter and fits one-line rows. S is the densest. */
-  size?: 'sm' | 'md' | 'lg'
+  size?: VariantProps<typeof itemVariants>['size']
   /** Freezes `hover`, `pressed` or `focus` for docs and tests. `active` marks the current row. */
-  state?: 'default' | 'hover' | 'pressed' | 'active' | 'focus'
+  state?: VariantProps<typeof itemVariants>['state']
   /**
    * Blocks the row and dims its text. With `htmlFor`, also disable the control in the slot: the row
    * only takes the disabled look, the control itself is what must be blocked.
@@ -111,7 +128,6 @@ export function Item({
   // `aria-disabled` only means something on an element with a role. A plain row, or a label tied to a
   // control by `htmlFor`, gets just `data-disabled`.
   const { 'aria-disabled': ariaDisabled, ...disabledProps } = disabledAttrs(isDisabled, false)
-  const roles = textRoles[size]
   const hasLeading = hasContent(leadingSlot)
   const hasTrailing = hasContent(trailingSlot)
   // With `htmlFor` the row is a <label>. The cast keeps the div props; `htmlFor` is passed on its own.
@@ -121,8 +137,7 @@ export function Item({
       data-slot="item"
       className={cn(
         // A disabled row drops the frozen states; its look comes from `data-disabled`.
-        itemVariants({ size, state: isDisabled ? 'default' : state }),
-        htmlFor !== undefined && 'cursor-pointer',
+        itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined }),
         className,
       )}
       {...(htmlFor === undefined ? undefined : { htmlFor })}
@@ -132,49 +147,34 @@ export function Item({
     >
       <div className="flex items-center gap-2">
         {hasLeading && (
-          <span data-slot="item-leading-slot" className={cn(slotFrame)}>
+          <span data-slot="item-leading-slot" className={cn(slotClass)}>
             {leadingSlot}
           </span>
         )}
-        <span
-          data-slot="item-label"
-          className={cn('min-w-0 flex-1 truncate text-neutral group-data-disabled/item:text-disabled', roles.title)}
-        >
+        <span data-slot="item-label" className={itemTitleVariants({ size })}>
           {label}
         </span>
         {hasContent(metaLabel) && (
-          <span
-            data-slot="item-meta"
-            className={cn(
-              'shrink-0 whitespace-nowrap text-neutral-subtle group-data-disabled/item:text-disabled',
-              roles.meta,
-            )}
-          >
+          <span data-slot="item-meta" className={itemMetaVariants({ size })}>
             {metaLabel}
           </span>
         )}
         {hasTrailing && (
-          <span data-slot="item-trailing-slot" className={cn(slotFrame)}>
+          <span data-slot="item-trailing-slot" className={cn(slotClass)}>
             {trailingSlot}
           </span>
         )}
       </div>
       {hasContent(description) && (
         <Indented leading={hasLeading} trailing={hasTrailing}>
-          <p
-            data-slot="item-description"
-            className={cn('line-clamp-2 text-neutral-subtle group-data-disabled/item:text-disabled', roles.description)}
-          >
+          <p data-slot="item-description" className={itemDescriptionVariants({ size })}>
             {description}
           </p>
         </Indented>
       )}
       {hasContent(errorLabel) && (
         <Indented leading={hasLeading} trailing={hasTrailing}>
-          <p
-            data-slot="item-error"
-            className={cn('truncate text-danger group-data-disabled/item:text-disabled', roles.meta)}
-          >
+          <p data-slot="item-error" className={itemErrorVariants({ size })}>
             {errorLabel}
           </p>
         </Indented>

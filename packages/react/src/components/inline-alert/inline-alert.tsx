@@ -1,27 +1,13 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { Card } from '../card/card'
 import { IconButton } from '../icon-button/icon-button'
 
-const hasContent = (node: ReactNode) => node !== undefined && node !== null && node !== false && node !== ''
-
-// The Card border sits inside its padding in Figma, so the 16px padding loses the 1px border here: the alert is 72px high with a one-line title and a description, as in Figma.
-export const inlineAlertVariants = cva('w-full min-w-0 gap-0 p-3.75', {
-  variants: {
-    tone: {
-      default: '',
-      success: '',
-      warning: '',
-      danger: '',
-      info: '',
-    },
-  },
-  defaultVariants: { tone: 'default' },
-})
-
-// The leading icon takes the tone color; the box is one title line high, so the icon centers on it.
+// The tint and the stroke come from Card; the leading icon takes the tone color here. The box is one
+// title line high, so the icon centers on it.
 const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-center [&_svg]:size-4', {
   variants: {
     tone: {
@@ -36,7 +22,7 @@ const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-c
 })
 
 export type InlineAlertProps = Omit<ComponentProps<'div'>, 'title'> &
-  Omit<VariantProps<typeof inlineAlertVariants>, 'tone'> & {
+  Omit<VariantProps<typeof inlineAlertLeadingVariants>, 'tone'> & {
     /** Sets the card tint, the stroke and the icon color. Use `default` for general notes, `info` for news, `success` for a finished action, `warning` for a risk and `danger` for a failure. */
     tone?: 'default' | 'success' | 'warning' | 'danger' | 'info'
     /** One short line that makes sense even if nothing else is read. A long title is cut off with an ellipsis. */
@@ -80,7 +66,9 @@ export function InlineAlert({
       padding="md"
       // Warnings and errors interrupt a screen reader; the rest wait for a pause.
       role={tone === 'warning' || tone === 'danger' ? 'alert' : 'status'}
-      className={cn(inlineAlertVariants({ tone }), className)}
+      // The Card border sits inside its padding in Figma, so the 16px padding loses the 1px border here:
+      // the alert is 72px high with a one-line title and a description, as in Figma.
+      className={cn('w-full min-w-0 gap-0 p-3.75', className)}
       {...props}
     >
       <div className="flex min-w-0 items-start gap-2">
