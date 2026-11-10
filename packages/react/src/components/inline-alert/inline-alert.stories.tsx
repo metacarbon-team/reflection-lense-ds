@@ -191,10 +191,10 @@ export const Dismissible: Story = {
   },
 }
 
-/** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
+/** One side of the guideline: a Do or Don't badge attached to the top, over the live example. */
 function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <span
         className={
           tone === 'do'
@@ -216,82 +216,77 @@ const guideline: Pick<Story, 'tags' | 'parameters'> = {
   parameters: { layout: 'fullscreen', wide: true, controls: { disable: true } },
 }
 
-/** Match the tone to the message. The tone and its icon carry the meaning. A success alert on an error sends the wrong signal. */
-export const GuidelineMatchTheToneToTheMessageDo: Story = {
+/**
+ * **Match the tone to the message**  
+ * The tone and its icon carry the meaning. A success alert on an error sends the wrong signal.
+ */
+export const GuidelineMatchTheToneToTheMessage: Story = {
   ...guideline,
   render: () => (
-    <Specimen tone="do">
-      <InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <InlineAlert tone="danger" leadingSlot={icons.danger} onDismiss={noop} {...copy.danger} />
+      </Specimen>
+      <Specimen tone="dont">
+        <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />
+      </Specimen>
+    </div>
   ),
 }
 
-export const GuidelineMatchTheToneToTheMessageDont: Story = {
+/**
+ * **Keep the title short**  
+ * The title is read at a glance. A long title is cut off with an ellipsis and hides the point. Move the
+ * detail to the description.
+ */
+export const GuidelineKeepTheTitleShort: Story = {
   ...guideline,
   render: () => (
-    <Specimen tone="dont">
-      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.danger} />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />
+      </Specimen>
+      <Specimen tone="dont">
+        <InlineAlert
+          tone="success"
+          leadingSlot={icons.success}
+          onDismiss={noop}
+          title="Your profile changes have been saved successfully to your account"
+          description={copy.success.description}
+        />
+      </Specimen>
+    </div>
   ),
 }
 
-/** Keep the title short. The title is read at a glance. A long title is cut off with an ellipsis and hides the point. Move the detail to the description. */
-export const GuidelineKeepTheTitleShortDo: Story = {
+/**
+ * **Do not repeat the title**  
+ * The description adds new detail: what happened or what to do next. Repeating the title only makes the
+ * alert longer.
+ */
+export const GuidelineDoNotRepeatTheTitle: Story = {
   ...guideline,
   render: () => (
-    <Specimen tone="do">
-      <InlineAlert tone="success" leadingSlot={icons.success} onDismiss={noop} {...copy.success} />
-    </Specimen>
+    <div className="grid grid-cols-2 divide-x divide-neutral-subtle">
+      <Specimen tone="do">
+        <InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />
+      </Specimen>
+      <Specimen tone="dont">
+        <InlineAlert
+          tone="info"
+          leadingSlot={icons.info}
+          onDismiss={noop}
+          title="New version available"
+          description="A new version is available."
+        />
+      </Specimen>
+    </div>
   ),
 }
 
-export const GuidelineKeepTheTitleShortDont: Story = {
-  ...guideline,
-  render: () => (
-    <Specimen tone="dont">
-      <InlineAlert
-        tone="success"
-        leadingSlot={icons.success}
-        onDismiss={noop}
-        title="Your profile changes have been saved successfully to your account"
-        description={copy.success.description}
-      />
-    </Specimen>
-  ),
-}
-
-/** Do not repeat the title. The description adds new detail: what happened or what to do next. Repeating the title only makes the alert longer. */
-export const GuidelineDoNotRepeatTheTitleDo: Story = {
-  ...guideline,
-  render: () => (
-    <Specimen tone="do">
-      <InlineAlert tone="info" leadingSlot={icons.info} onDismiss={noop} {...copy.info} />
-    </Specimen>
-  ),
-}
-
-export const GuidelineDoNotRepeatTheTitleDont: Story = {
-  ...guideline,
-  render: () => (
-    <Specimen tone="dont">
-      <InlineAlert
-        tone="info"
-        leadingSlot={icons.info}
-        onDismiss={noop}
-        title="New version available"
-        description="A new version is available."
-      />
-    </Specimen>
-  ),
-}
-
-/** The Docs tab: the usual blocks, then each Do and Don't pair side by side. */
+/** The Docs tab: the usual blocks, then one Guidelines heading with a title, a subtitle and a panel per rule. */
 function DocsPage() {
-  const rules = [
-    [GuidelineMatchTheToneToTheMessageDo, GuidelineMatchTheToneToTheMessageDont],
-    [GuidelineKeepTheTitleShortDo, GuidelineKeepTheTitleShortDont],
-    [GuidelineDoNotRepeatTheTitleDo, GuidelineDoNotRepeatTheTitleDont],
-  ] as const
+  const rules = [GuidelineMatchTheToneToTheMessage, GuidelineKeepTheTitleShort, GuidelineDoNotRepeatTheTitle]
   return (
     <>
       <Title />
@@ -300,19 +295,10 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} grid grid-cols-2 gap-x-6 [&_p]:mb-0!`}>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            <Description of={Do} />
-            <Canvas of={Do} />
-          </div>
-          <div className="row-span-3 grid grid-rows-subgrid">
-            {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
-            <div>
-              <Description of={Dont} />
-            </div>
-            <Canvas of={Dont} />
-          </div>
+      {rules.map((rule, index) => (
+        <div key={index}>
+          <Description of={rule} />
+          <Canvas of={rule} />
         </div>
       ))}
     </>
