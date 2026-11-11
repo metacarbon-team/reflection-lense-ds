@@ -1,7 +1,7 @@
 import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useRef, useState, type ReactNode } from 'react'
-import { CloseIcon, ChevronDownIcon } from '../../lib/icons'
+import { useState, type ReactNode } from 'react'
+import { ChevronDownIcon } from '../../lib/icons'
 import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 import { Field } from '../field/field'
@@ -51,38 +51,21 @@ const CountryPrefix = () => (
 
 const Unit = () => <span className="text-body-small">kg</span>
 
-/**
- * A search field that shows a clear button once there is text to clear, as the filled search state in
- * Figma. The button is ours to compose in `trailingSlot`; Input does not add one.
- */
-function ClearableSearch({ initial = '' }: { initial?: string }) {
-  const [value, setValue] = useState(initial)
-  const ref = useRef<HTMLInputElement>(null)
+/** A controlled search field: the clear button empties `value` through `onChange`, the same way typing does. */
+function ControlledSearchDemo() {
+  const [value, setValue] = useState('Reflection')
   return (
-    <Input
-      ref={ref}
-      type="search"
-      aria-label="Search"
-      placeholder="Search"
-      value={value}
-      onChange={(event) => setValue(event.target.value)}
-      leadingSlot={<Search />}
-      trailingSlot={
-        value ? (
-          <button
-            type="button"
-            aria-label="Clear search"
-            className="flex rounded-xs text-neutral-subtle outline-none hover:text-neutral focus-visible:shadow-focus-ring"
-            onClick={() => {
-              setValue('')
-              ref.current?.focus()
-            }}
-          >
-            <CloseIcon />
-          </button>
-        ) : undefined
-      }
-    />
+    <div className="flex flex-col gap-2">
+      <Input
+        type="search"
+        aria-label="Search"
+        placeholder="Search"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        leadingSlot={<Search />}
+      />
+      <span className="text-caption text-neutral-subtle">value: “{value}”</span>
+    </div>
   )
 }
 
@@ -109,13 +92,13 @@ const looks: Look[] = ['default', 'hover', 'focus', 'filled', 'error', 'disabled
 // Hover and focus are frozen with the classes the component applies on the real states (the hover fill,
 // the focus ring), so the grid shows what a user sees without a `state` prop.
 const frozen: Partial<Record<Look, string>> = {
-  hover: 'bg-neutral-hover',
+  hover: 'bg-form-neutral-hover',
   focus: 'shadow-focus-ring',
 }
 
-const slots: Record<Kind, { leadingSlot?: ReactNode; trailingSlot?: ReactNode; trailingFilled?: ReactNode }> = {
+const slots: Record<Kind, { leadingSlot?: ReactNode; trailingSlot?: ReactNode }> = {
   default: { leadingSlot: <Placeholder />, trailingSlot: <Placeholder /> },
-  search: { leadingSlot: <Search />, trailingFilled: <CloseIcon /> },
+  search: { leadingSlot: <Search /> },
   phone: { leadingSlot: <CountryPrefix />, trailingSlot: <Placeholder /> },
   metric: { leadingSlot: <Placeholder />, trailingSlot: <Unit /> },
 }
@@ -146,7 +129,7 @@ export const Variants: Story = {
                 defaultValue={look === 'filled' ? 'Value' : undefined}
                 className={frozen[look]}
                 leadingSlot={slot.leadingSlot}
-                trailingSlot={look === 'filled' && slot.trailingFilled ? slot.trailingFilled : slot.trailingSlot}
+                trailingSlot={slot.trailingSlot}
               />
             )
           })}
@@ -174,10 +157,25 @@ export const Phone: Story = {
   args: { type: 'tel', placeholder: '(555) 000-0000', leadingSlot: <CountryPrefix />, 'aria-label': 'Phone number' },
 }
 
-/** The clear button shows only while the field has text. Type, then clear. */
+/**
+ * `type="search"` shows the clear button while the field holds text: type, then clear. It is built in,
+ * so there is nothing to compose; a `trailingSlot` replaces it.
+ */
 export const SearchWithClear: Story = {
   decorators: narrow,
-  render: () => <ClearableSearch initial="Reflection" />,
+  args: {
+    type: 'search',
+    placeholder: 'Search',
+    'aria-label': 'Search',
+    defaultValue: 'Reflection',
+    leadingSlot: <Search />,
+  },
+}
+
+/** A controlled search field. Clearing goes through `onChange`, so the value below follows it. */
+export const ControlledSearch: Story = {
+  decorators: narrow,
+  render: () => <ControlledSearchDemo />,
 }
 
 /** In a Field the label, the caption and the error come from the Field and are wired to the input. */
