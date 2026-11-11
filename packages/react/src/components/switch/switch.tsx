@@ -6,7 +6,7 @@ import { useFieldControl } from '../field/field'
 const switchClass = [
   'group peer inline-flex h-5 w-11 shrink-0 items-center rounded-full border p-0.5 outline-none',
   // State colors apply only while enabled, so disabled (stroke only) wins in both positions.
-  'enabled:data-[state=unchecked]:border-neutral enabled:data-[state=unchecked]:bg-neutral',
+  'enabled:data-[state=unchecked]:border-neutral-subtle enabled:data-[state=unchecked]:bg-neutral',
   'enabled:data-[state=unchecked]:hover:border-neutral-emphasized enabled:data-[state=unchecked]:hover:bg-neutral-hover',
   'enabled:data-[state=checked]:border-neutral-subtle enabled:data-[state=checked]:bg-neutral-emphasized',
   'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
