@@ -1,4 +1,4 @@
-// Type scale (ADR 0030): Tailwind v4 steps in rem, and text roles that take a step per viewport.
+// Type scale: Tailwind v4 steps in rem, and text roles that take a step per viewport.
 // The Theme Lab edits both tables; validateTypeScale keeps the steps in order and on the grid.
 
 import { REM_BASE } from './dimensions'
@@ -23,7 +23,7 @@ export interface TextRole {
   weights?: Record<string, number>
   /** The step this role uses in each viewport. */
   step: Record<Viewport, string>
-  /** Tracking step (`font/tracking/<name>`, ADR 0031); `normal` when omitted. */
+  /** Tracking step (`font/tracking/<name>`); `normal` when omitted. */
   tracking?: string
   decoration?: 'underline'
   textCase?: 'uppercase'
@@ -78,9 +78,9 @@ export const DEFAULT_TYPE_SCALE: TypeScaleParams = {
     step('5xl', 48, 48),
     step('6xl', 60, 60),
   ],
-  // Tailwind v4 `--tracking-*` (ADR 0031).
+  // Tailwind v4 `--tracking-*`.
   tracking: { tighter: -0.05, tight: -0.025, normal: 0, wide: 0.025, wider: 0.05, widest: 0.1 },
-  // Weights as in the Figma library (ADR 0030), tracking steps from ADR 0031.
+  // Weights as in the Figma library, tracking steps on Tailwind v4 steps.
   roles: [
     {
       name: 'display/large',
@@ -174,7 +174,7 @@ export function textStyles(p: TypeScaleParams = DEFAULT_TYPE_SCALE, viewport: Vi
 
 const onGrid = (value: number, grid: number) => Math.abs(value / grid - Math.round(value / grid)) < 1e-6
 
-/** Problems with an edited scale, in words; empty when the scale is valid (ADR 0030). */
+/** Problems with an edited scale, in words; empty when the scale is valid. */
 export function validateTypeScale(p: TypeScaleParams): string[] {
   const issues: string[] = []
   const names = new Set<string>()

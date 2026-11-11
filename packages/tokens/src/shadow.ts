@@ -1,4 +1,4 @@
-// Elevation shadows (ADR 0010), tuned in the Theme Lab. Each level is a tight contact shadow plus a
+// Elevation shadows, tuned in the Theme Lab. Each level is a tight contact shadow plus a
 // soft ambient one, as on the Mirror concept; the smallest level (2xs) is only a crisp 1px contact
 // line. Edges are not part of a shadow: they come from stroke tokens.
 
@@ -110,7 +110,7 @@ export interface ModeShadows {
   composite: Record<string, string>
 }
 
-/** Shadow tokens of one mode (ADR 0010): geometry is shared, color follows the mode's surface. */
+/** Shadow tokens of one mode: geometry is shared, color follows the mode's surface. */
 export function generateModeShadows(theme: ModeTheme, p: ShadowParams = DEFAULT_SHADOWS): ModeShadows {
   const color = shadowColor(theme.tokens[SURFACE]!.value, p.tint)
   const scale = theme.mode === 'dark' ? p.darkAlphaScale : 1

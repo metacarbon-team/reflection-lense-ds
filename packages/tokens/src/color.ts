@@ -1,5 +1,5 @@
 // Color math used by the generator and the validator. No dependencies on purpose: the same
-// functions must be portable to other platforms and checkable against test vectors (ADR 0001).
+// functions must be portable to other platforms and checkable against test vectors.
 
 /** sRGB in gamma space, channels 0..1. */
 export interface Rgb {
@@ -117,7 +117,7 @@ export function contrast(a: Rgb, b: Rgb): number {
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
 }
 
-/** Normal alpha blending in sRGB (ADR 0003). */
+/** Normal alpha blending in sRGB. */
 export function composite(top: Rgba, bottom: Rgb): Rgb {
   return {
     r: top.r * top.a + bottom.r * (1 - top.a),

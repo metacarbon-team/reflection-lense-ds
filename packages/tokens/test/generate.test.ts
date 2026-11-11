@@ -35,7 +35,7 @@ describe('generator', () => {
     expect(validateMode(theme.dark)).toEqual([])
   })
 
-  it('keeps every background seed and passes every rule it can, whatever the seeds (ADR 0015)', () => {
+  it('keeps every background seed and passes every rule it can, whatever the seeds', () => {
     const random = mulberry32(20261028)
     const hex = () =>
       '#' +
@@ -51,7 +51,7 @@ describe('generator', () => {
         const generated = generateMode(mode, seeds)
         if (generated.tokens[SURFACE]!.value !== seeds.bg)
           failures.push(`${seeds.bg} ${mode}: background moved`)
-        // On mid tones the text spacing is compressed at the pole (ADR 0016) and still passes. On the
+        // On mid tones the text spacing is compressed at the pole and still passes. On the
         // most saturated ones the band between the 4.5:1 floor and white or black is narrower than
         // the smallest compressed step itself: only there may the two prominences fail to separate.
         const issues = validateMode(generated).filter((i) => !atPoleWithoutRoom(generated, i))
@@ -64,7 +64,7 @@ describe('generator', () => {
     expect(failures.slice(0, 10)).toEqual([])
   }, 120_000)
 
-  it('makes form fields translucent, lighter in light themes and sunken in dark ones (ADR 0007, 0026)', () => {
+  it('makes form fields translucent, lighter in light themes and sunken in dark ones', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
       const form = hexToRgba(mode.tokens['form/neutral']!.value)
@@ -82,7 +82,7 @@ describe('generator', () => {
     expect(rgbToOklch(sunk).l).toBeLessThan(1)
   })
 
-  it('adds the opaque emphasized card with distinct states in the neutral palette family (ADR 0026)', () => {
+  it('adds the opaque emphasized card with distinct states in the neutral palette family', () => {
     for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
       const name = 'card/neutral/emphasized'
       const normal = hexToRgba(mode.tokens['form/neutral']!.value)
@@ -109,7 +109,25 @@ describe('generator', () => {
     }
   })
 
-  it('replaces raised with form and card scopes; cards mirror the background stack (ADR 0026)', () => {
+  it('keeps the emphasized card away from the text, the background color when there is no room', () => {
+    const theme = generateTheme({
+      light: { ...DEFAULT_SEEDS.light, bg: '#ffffff' },
+      dark: { ...DEFAULT_SEEDS.dark, bg: '#000000' },
+    })
+    for (const mode of Object.values(theme)) {
+      const card = mode.tokens['card/neutral/emphasized']!.value
+      expect(card).toBe(mode.tokens[SURFACE]!.value)
+      expect(validateMode(mode)).toEqual([])
+      // A card on the text's side of the background is caught: text and controls sit on cards.
+      const broken = structuredClone(mode)
+      broken.tokens['card/neutral/emphasized']!.value = mode.mode === 'light' ? '#000000' : '#ffffff'
+      expect(validateMode(broken)).toContainEqual(
+        expect.objectContaining({ rule: 'text contrast', token: 'fg/neutral', against: 'card/neutral/emphasized' }),
+      )
+    }
+  })
+
+  it('replaces raised with form and card scopes; cards mirror the background stack', () => {
     for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
       expect(Object.keys(mode.tokens).filter((n) => n.includes('raised'))).toEqual([])
       for (const name of ['form/neutral', 'form/neutral/hover', 'form/neutral/pressed'])
@@ -129,7 +147,7 @@ describe('generator', () => {
     }
   })
 
-  it('turns the lightest status tint into a status card (ADR 0027)', () => {
+  it('turns the lightest status tint into a status card', () => {
     for (const mode of Object.values(generateTheme(DEFAULT_SEEDS))) {
       for (const role of ['success', 'warning', 'danger', 'info']) {
         expect(mode.tokens[`bg/${role}/subtle`]).toBeUndefined()
@@ -152,7 +170,7 @@ describe('generator', () => {
     }
   })
 
-  it('keeps accent and status fills exactly, adapting their text instead (ADR 0011)', () => {
+  it('keeps accent and status fills exactly, adapting their text instead', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of ['light', 'dark'] as const) {
       const tokens = theme[mode].tokens
@@ -181,7 +199,7 @@ describe('generator', () => {
     expect(rgbToOklch(hexToRgba(mode.tokens['fg/neutral']!.value)).l).toBeGreaterThan(surface)
   })
 
-  it('compresses the text spacing on a mid tone and says so (ADR 0016)', () => {
+  it('compresses the text spacing on a mid tone and says so', () => {
     const mode = generateMode('light', { bg: '#847033', fg: '#1a1b1a', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
     expect(mode.tokens[SURFACE]!.value).toBe('#847033')
@@ -199,7 +217,7 @@ describe('generator', () => {
       }
   })
 
-  it('keeps a visible hierarchy on a pure black background (ADR 0014)', () => {
+  it('keeps a visible hierarchy on a pure black background', () => {
     const mode = generateMode('dark', { bg: '#000000', fg: '#f8f6f0', accent: '#cee04b' })
     expect(validateMode(mode)).toEqual([])
     const surface = hexToRgba(mode.tokens[SURFACE]!.value)
@@ -209,7 +227,7 @@ describe('generator', () => {
     expect(contrast(hexToRgba(mode.tokens['bg/neutral']!.value), surface)).toBeGreaterThan(1.06)
   })
 
-  it('shares surface with subtle and moves normal to the former subtle step (ADR 0019)', () => {
+  it('shares surface with subtle and moves normal to the former subtle step', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
       expect(mode.tokens['bg/neutral/subtle']!.value).toBe(mode.tokens[SURFACE]!.value)
@@ -227,7 +245,7 @@ describe('generator', () => {
     }
   })
 
-  it('groups the canvas and the backdrop under surface (ADR 0024)', () => {
+  it('groups the canvas and the backdrop under surface', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
       expect(Object.keys(mode.tokens).filter((n) => n.split('/')[0] === 'surface')).toEqual(
@@ -245,7 +263,7 @@ describe('generator', () => {
     }
   })
 
-  it('adds a translucent focus halo in the ring color (ADR 0025)', () => {
+  it('adds a translucent focus halo in the ring color', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     for (const mode of [theme.light, theme.dark]) {
       const ring = mode.tokens['focus/accent']!
@@ -326,7 +344,7 @@ describe('palette', () => {
       expect(applyPalette(mode, roles).tokens).toEqual(mode.tokens)
       for (const role of ['accent', 'success', 'danger', 'info'])
         expect(roles.bindings[`bg/${role}/emphasized`]!.step).toBe(roles.bindings['bg/neutral/emphasized']!.step)
-      // Neutral subtle intentionally shares the surface anchor (ADR 0019), unlike tinted roles.
+      // Neutral subtle intentionally shares the surface anchor, unlike tinted roles.
       expect(roles.bindings['bg/neutral/subtle']).toEqual(roles.bindings[SURFACE])
       for (const role of ['success', 'warning', 'danger', 'info'])
         expect(roles.bindings[`card/${role}`]!.step).toBe(roles.bindings['bg/accent/subtle']!.step)
@@ -396,7 +414,7 @@ describe('shadows', () => {
     expect(shadowCss(levels[3]!, { r: 0, g: 0, b: 0 }).split(', ')).toHaveLength(2)
   })
 
-  it('emits translucent layer colors and composites per mode (ADR 0010)', () => {
+  it('emits translucent layer colors and composites per mode', () => {
     const theme = generateTheme(DEFAULT_SEEDS)
     const light = generateModeShadows(theme.light)
     const dark = generateModeShadows(theme.dark)
@@ -420,7 +438,7 @@ function mulberry32(seed: number) {
   }
 }
 
-/** A prominence issue where primary text already sits at white or black: no room left (ADR 0016). */
+/** A prominence issue where primary text already sits at white or black: no room left. */
 function atPoleWithoutRoom(mode: ModeTheme, issue: Issue) {
   return (
     issue.rule === 'fg prominence separation' &&

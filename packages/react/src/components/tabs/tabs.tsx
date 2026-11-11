@@ -51,7 +51,8 @@ export const tabsTriggerVariants = cva(
         ],
         pill: [
           'gap-1 border border-transparent',
-          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle data-[state=active]:shadow-sm',
+          // A disabled control has no shadow, active or not.
+          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle enabled:data-[state=active]:shadow-sm',
           'focus-visible:bg-neutral-subtle',
         ],
       },

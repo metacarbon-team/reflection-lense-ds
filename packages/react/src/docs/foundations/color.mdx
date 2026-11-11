@@ -1,0 +1,138 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import { ColorTokens, Palette } from '../token-table'
+
+<Meta title="Foundations/Color" />
+
+# Color
+
+Semantic tokens only: components never reference the palette or a raw color. Every color is generated from three seeds per mode (background, text, accent) plus fixed status base colors, and checked for contrast before it ships. Swatches on this page follow the **Mode** toolbar.
+
+## Names
+
+```
+scope / role / prominence / context / state
+```
+
+Segments appear in this order; any of the last three can be absent.
+
+| Segment    | Values                                                                      |
+| ---------- | --------------------------------------------------------------------------- |
+| scope      | `surface`, `bg`, `form`, `card`, `ghost`, `fg`, `stroke`, `focus`           |
+| role       | `neutral`, `accent`, `success`, `warning`, `danger`, `info`; and `disabled` |
+| prominence | `subtle`, (none), `emphasized`                                              |
+| context    | `on-emphasized`: text on an emphasized fill                                 |
+| state      | `hover`, `pressed`; `active` for `ghost` only                               |
+
+- `surface` has no role: `surface` (the window) and `surface/backdrop` (behind modals).
+- `form` exists only for `neutral` and has no prominence.
+- `card` exists for `neutral` (three prominences) and the statuses (one each).
+- Text has two prominences, `fg/<role>/subtle` and `fg/<role>`; `emphasized` is for fills only.
+- `disabled` is a role with exactly three tokens: `bg/disabled`, `fg/disabled`, `stroke/disabled`.
+
+## Opacity
+
+Opacity is fixed by the name. Components never add alpha (`bg-x/50`) or composite colors themselves.
+
+| Opaque                                              | Translucent                                                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `surface`, `bg/*`, `card/*`, `fg/*`, `focus/accent` | `form/*`, `ghost/*`, `stroke/*`, `surface/backdrop`, `focus/accent/subtle`, the `disabled` role |
+
+Translucent tokens are the text color (or a role color) at a fixed alpha, so they read on every layer underneath. Opaque fills have their own `hover` and `pressed` tokens; never derive a state with an overlay.
+
+## Which scope
+
+| Scope                                                   | Use for                                                                                                                                                                    |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surface`                                               | the window background only; `surface/backdrop` under a modal                                                                                                               |
+| `bg/neutral/subtle` → `bg/neutral`                      | the neutral layer stack: `subtle` equals `surface`, `bg/neutral` is one step further                                                                                       |
+| `bg/neutral/emphasized`                                 | the strong neutral fill (neutral solid button, inverse badge)                                                                                                              |
+| `bg/<role>/subtle`, `bg/<role>`, `bg/<role>/emphasized` | tinted backgrounds and solid fills of a colored role; status roles start at `card/<status>` instead of `subtle`                                                            |
+| `form/neutral`                                          | inputs, text areas, select triggers and other form fields, on any neutral layer                                                                                            |
+| `card/neutral/emphasized`                               | lifted surfaces: cards, menus, popovers, toasts, select menus. White in light themes, black in dark ones; equal to `surface` when the background is already white or black |
+| `card/neutral/subtle`, `card/neutral`                   | quieter cards; same values as `bg/neutral/subtle` and `bg/neutral`                                                                                                         |
+| `card/<status>`                                         | status cards and inline alerts: the lightest tint of the status                                                                                                            |
+| `ghost/<role>/hover`, `pressed`, `active`               | the only fill of transparent controls (ghost and outline buttons, menu rows, tabs); `active` marks the current row                                                         |
+| `fg/<role>`, `fg/<role>/subtle`                         | text and icons                                                                                                                                                             |
+| `fg/<role>/on-emphasized`                               | text and icons on `bg/<role>/emphasized` in every state                                                                                                                    |
+| `stroke/<role>/subtle`, `stroke/<role>`                 | decorative borders and dividers                                                                                                                                            |
+| `stroke/<role>/emphasized`                              | boundaries of controls (inputs, checkboxes, outline buttons)                                                                                                               |
+| `focus/accent`, `focus/accent/subtle`                   | the focus ring and its halo; use the `shadow-focus-ring` utility                                                                                                           |
+| `bg/disabled`, `fg/disabled`, `stroke/disabled`         | every disabled control, as a set, whatever its role                                                                                                                        |
+
+## Guaranteed pairs
+
+The generator solves these and the validator rejects a theme that breaks them. Any other pairing is not guaranteed.
+
+| Foreground                                 | On                                                                                                                                                                                                      | Minimum                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `fg/<role>`, `fg/<role>/subtle`            | `surface`, `bg/neutral/subtle`, `bg/neutral` and their states, `form/*`, `card/neutral/*`, the same role's `bg/<role>/subtle`, `bg/<role>`, `card/<role>` and states, any `ghost/*` over neutral layers | 4.5:1                                           |
+| `fg/<role>/on-emphasized`                  | `bg/<role>/emphasized` and its states                                                                                                                                                                   | 4.5:1                                           |
+| `stroke/<role>/emphasized`, `focus/accent` | neutral layers, form fields, cards                                                                                                                                                                      | 3:1                                             |
+| `fg/disabled`                              | neutral layers, form fields, `bg/disabled`                                                                                                                                                              | ≥ 2:1 and < 4.5:1, so it never reads as enabled |
+
+`stroke/<role>/subtle` and `stroke/<role>` are decorative and exempt.
+
+## Token → CSS variable → utility
+
+The CSS variable is the token name with dashes. The utility depends on the scope:
+
+| Scope                              | Utility                                                 | Example                                                     |
+| ---------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| `bg`                               | `bg-` + name without the scope                          | `bg/accent/emphasized/hover` → `bg-accent-emphasized-hover` |
+| `surface`, `form`, `card`, `ghost` | `bg-` + full name                                       | `card/neutral/emphasized` → `bg-card-neutral-emphasized`    |
+| `fg`                               | `text-` + name without the scope                        | `fg/neutral/subtle` → `text-neutral-subtle`                 |
+| `stroke`                           | `border-` + name without the scope                      | `stroke/disabled` → `border-disabled`                       |
+| `focus`                            | none; the composite `focus/ring` is `shadow-focus-ring` | —                                                           |
+
+Tailwind's default palette is removed: there are no `bg-gray-*`, `text-red-*`, `ring-*` or `outline-*` colors. `text-*` is shared with the text role utilities (`text-body`); `cn` keeps a role and a color together and resolves conflicts between roles.
+
+### Surface, neutral stack and disabled
+
+<ColorTokens prefixes={['surface', 'bg/neutral', 'bg/disabled', 'fg/disabled', 'stroke/disabled']} />
+
+### Form and cards
+
+<ColorTokens prefixes={['form', 'card']} />
+
+### Roles
+
+<ColorTokens prefixes={['bg/accent', 'bg/success', 'bg/warning', 'bg/danger', 'bg/info']} />
+
+### Ghost
+
+<ColorTokens prefixes={['ghost']} />
+
+### Text
+
+<ColorTokens prefixes={['fg']} />
+
+### Strokes
+
+<ColorTokens
+  prefixes={['stroke/neutral', 'stroke/accent', 'stroke/success', 'stroke/warning', 'stroke/danger', 'stroke/info']}
+/>
+
+### Focus
+
+<ColorTokens prefixes={['focus']} />
+
+## Palette
+
+Each mode has a role palette: one ramp per family, 15 steps from `100` to `800` by 50, from the background end (white in light, black in dark) to the text end. Steps are ordered by role, not by lightness: `150` is the surface, `200` the subtle tint, `250` the tinted background, then the emphasized fill and its states, focus, ghost, subtle text and text towards `800`. A token binds the same step in every family and both modes as long as its color sits in that order. A family with more distinct colors than steps gets extra steps.
+
+| Family                                 | Source                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `neutral`                              | the background seed: surface, layers, form fields, cards                                 |
+| `foreground`                           | the text seed: text, neutral solid fill, on-emphasized text, strokes, disabled, backdrop |
+| `accent`                               | the accent seed                                                                          |
+| `success`, `warning`, `danger`, `info` | the status base colors                                                                   |
+
+Semantic tokens alias a step exactly (opaque) or take its color with their own alpha (translucent). Palette variables (`--palette-light-accent-250`) exist for the theme build and other platforms; there are no palette utilities, and components never use them.
+
+### Light
+
+<Palette mode="light" />
+
+### Dark
+
+<Palette mode="dark" />

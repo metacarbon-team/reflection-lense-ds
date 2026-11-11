@@ -1,0 +1,99 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Dimensions" />
+
+# Dimensions
+
+Spacing, sizes, radii and border widths are Tailwind v4's values, fixed in `@reflection/tokens` (nothing here is generated). They are the same in every theme and mode.
+
+## Units
+
+- Spacing, sizes and radii are in **rem**; 1rem is **16px**, fixed. Figma and native platforms convert with `rem × 16`.
+- In **px**: `spacing/px` (1px), border widths, `radius/full` (9999px) and shadow geometry.
+- A decimal point in a name is written as a dash: `spacing/0-5` → `--spacing-0-5`. The Tailwind utility keeps the dot: `p-0.5`.
+
+## Spacing
+
+Step `n` is `n × 0.25rem`. Use it for padding, margin, gap and inset.
+
+| Steps                                                                                                | Value                       | Variable        | Utilities                                |
+| ---------------------------------------------------------------------------------------------------- | --------------------------- | --------------- | ---------------------------------------- |
+| `px`                                                                                                 | 1px                         | `--spacing-px`  | `p-px`, `gap-px`                         |
+| `0`, `0.5`, `1`, `1.5`, `2`, `2.5`, `3`, `3.5`, `4`, `4.5`, `5`                                      | `n × 0.25rem` (0 … 1.25rem) | `--spacing-<n>` | `p-<n>`, `m-<n>`, `gap-<n>`, `inset-<n>` |
+| `6`, `7`, `8`, `9`, `10`, `11`, `12`                                                                 | 1.5rem … 3rem               | `--spacing-<n>` | same                                     |
+| `14`, `16`, `20`, `24`, `28`, `32`, `36`, `40`, `44`, `48`, `52`, `56`, `60`, `64`, `72`, `80`, `96` | 3.5rem … 24rem              | `--spacing-<n>` | same                                     |
+
+Only these 36 steps exist. Tailwind's multiplier is set to step 1 (`--spacing: var(--spacing-1)`), so `p-4` = `4 × 0.25rem` = 1rem.
+
+## Size
+
+`size/<n>` mirrors every spacing step with the same value (`--size-4: 1rem`): the same scale, named for width and height. In Tailwind, `size-4`, `w-10`, `h-8` and `max-w-50` come from the spacing multiplier; the `--size-*` variables and `size/*` tokens carry the values for other platforms and Figma.
+
+Containers are named sizes for content widths: `max-w-md`, `w-xl`.
+
+| Name  | Value          | Variable     | Tailwind          |
+| ----- | -------------- | ------------ | ----------------- |
+| `3xs` | 16rem · 256px  | `--size-3xs` | `--container-3xs` |
+| `2xs` | 18rem · 288px  | `--size-2xs` | `--container-2xs` |
+| `xs`  | 20rem · 320px  | `--size-xs`  | `--container-xs`  |
+| `sm`  | 24rem · 384px  | `--size-sm`  | `--container-sm`  |
+| `md`  | 28rem · 448px  | `--size-md`  | `--container-md`  |
+| `lg`  | 32rem · 512px  | `--size-lg`  | `--container-lg`  |
+| `xl`  | 36rem · 576px  | `--size-xl`  | `--container-xl`  |
+| `2xl` | 42rem · 672px  | `--size-2xl` | `--container-2xl` |
+| `3xl` | 48rem · 768px  | `--size-3xl` | `--container-3xl` |
+| `4xl` | 56rem · 896px  | `--size-4xl` | `--container-4xl` |
+| `5xl` | 64rem · 1024px | `--size-5xl` | `--container-5xl` |
+| `6xl` | 72rem · 1152px | `--size-6xl` | `--container-6xl` |
+| `7xl` | 80rem · 1280px | `--size-7xl` | `--container-7xl` |
+
+## Radius
+
+| Name   | Value          | Variable        | Utility        |
+| ------ | -------------- | --------------- | -------------- |
+| `none` | 0              | `--radius-none` | `rounded-none` |
+| `xs`   | 0.125rem · 2px | `--radius-xs`   | `rounded-xs`   |
+| `sm`   | 0.25rem · 4px  | `--radius-sm`   | `rounded-sm`   |
+| `md`   | 0.375rem · 6px | `--radius-md`   | `rounded-md`   |
+| `lg`   | 0.5rem · 8px   | `--radius-lg`   | `rounded-lg`   |
+| `xl`   | 0.75rem · 12px | `--radius-xl`   | `rounded-xl`   |
+| `2xl`  | 1rem · 16px    | `--radius-2xl`  | `rounded-2xl`  |
+| `3xl`  | 1.5rem · 24px  | `--radius-3xl`  | `rounded-3xl`  |
+| `4xl`  | 2rem · 32px    | `--radius-4xl`  | `rounded-4xl`  |
+| `full` | 9999px         | `--radius-full` | `rounded-full` |
+
+<div className="flex flex-wrap gap-4">
+  {['rounded-xs', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-2xl', 'rounded-full'].map((r) => (
+    <div key={r} className="flex flex-col items-center gap-1">
+      <div className={`size-12 border border-neutral bg-neutral ${r}`} />
+      <span className="text-caption text-neutral-subtle">{r}</span>
+    </div>
+  ))}
+</div>
+
+Library usage: controls and rows (Button, fields, Item, Nav Item, menu rows, Tag, Tooltip) use `rounded-md`; menus, popovers and select lists `rounded-lg`; cards, item lists, dialogs and toasts `rounded-xl`.
+
+## Border width
+
+| Width | Variable           | Utility    |
+| ----- | ------------------ | ---------- |
+| 0     | `--border-width-0` | `border-0` |
+| 1px   | `--border-width-1` | `border`   |
+| 2px   | `--border-width-2` | `border-2` |
+| 4px   | `--border-width-4` | `border-4` |
+
+Components use the 1px `border`. There are no ring-width tokens: focus is a shadow (see Elevation and focus).
+
+## Tokens
+
+| DTCG path                   | Unit             | CSS variable                                    |
+| --------------------------- | ---------------- | ----------------------------------------------- |
+| `spacing/<n>`               | rem (`px`: px)   | `--spacing-<n>`                                 |
+| `size/<n>`                  | rem              | `--size-<n>`                                    |
+| `size/<3xs…7xl>`            | rem              | `--size-<name>` → Tailwind `--container-<name>` |
+| `radius/<name>`             | rem (`full`: px) | `--radius-<name>`                               |
+| `border/width/<0\|1\|2\|4>` | px               | `--border-width-<n>`                            |
+
+A DTCG dimension keeps value and unit: `{ "value": 0.375, "unit": "rem" }`. All dimension variables are on `:root`, not per mode.
+
+In TypeScript, `@reflection/tokens` exports the scales as data — `SPACING_STEPS`, `CONTAINER_SIZES`, `RADII` (rem), `BORDER_WIDTHS` (px), `REM_BASE` (16) — plus `dimensionTokens()`, which returns every token with its canonical name and `{ value, unit }`, and `toPx(dimension)` for platforms that work in px or pt.

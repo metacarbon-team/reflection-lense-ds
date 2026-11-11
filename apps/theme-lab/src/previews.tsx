@@ -363,7 +363,7 @@ export function ShadowsTab({ theme, params }: { theme: Theme; params: ShadowPara
 
 const px = (rem: number) => `${rem * REM_BASE}px`
 
-/** Spacing, size, radius and border width (ADR 0029). Static data: nothing here is tuned. */
+/** Spacing, size, radius and border width. Static data: nothing here is tuned. */
 export function DimensionsTab() {
   const spacing = SPACING_STEPS.filter((s): s is Exclude<typeof s, 'px'> => s !== 'px')
   return (
@@ -441,7 +441,7 @@ export function PreviewTab({ generated }: { generated: Generated }) {
   const [mode, setMode] = useState<Mode>('light')
   const resolved = generated.resolved[mode]
   const issues = generated.issues[mode].length
-  // Mid tones compress the text spacing (ADR 0016): a warning, not a violation.
+  // Mid tones compress the text spacing: a warning, not a violation.
   const compressed = generated.theme[mode].adjustments.filter((a) =>
     a.reason.startsWith('prominence spacing compressed'),
   )

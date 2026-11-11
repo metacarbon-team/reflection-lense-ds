@@ -7,7 +7,7 @@ const twMerge = extendTailwindMerge<'text-role'>(twMergeConfig)
 
 /**
  * Joins class names conditionally and resolves Tailwind conflicts, so a consumer's
- * `className` overrides a component class of the same property (ADR 0032).
+ * `className` overrides a component class of the same property.
  */
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))

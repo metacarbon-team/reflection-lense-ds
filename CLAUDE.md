@@ -7,10 +7,15 @@ pnpm workspace:
 - `packages/react` (`@reflection/react`) — React 19 + CVA component library. Storybook (react-vite) for docs, Vite library mode for the build.
 - `apps/theme-lab` (`@reflection/theme-lab`) — internal tool to tune generator parameters and preview themes. Its chrome is `@reflection/react` on the default theme; Lab-only pieces without a Figma component (Slider, ColorInput, Drawer, Segmented) live in `apps/theme-lab/src/ui/lab.tsx`. It resolves workspace packages to their sources through the `source` export condition (Vite `resolve.conditions`, TS `customConditions`).
 
+## Documentation
+
+- The system is documented as it is today, in Storybook (`packages/react/src/docs/`): Foundations (Tokens, Color, Typography, Dimensions, Elevation and focus) and Guides (Component conventions, Composing components, Known issues). The generator's rules are in `packages/tokens/README.md`. There are no ADRs.
+- Follow these pages; do not invent tokens outside the naming grammar or hand-pick colors.
+- A change to tokens, the generator or a convention updates the matching page in the same change. Fixing something listed in Known issues removes it from that page.
+
 ## Open decisions — do not pre-empt
 
-- **Token architecture and styling** are decided in [docs/adr](docs/adr/README.md): source of truth, naming grammar, opacity classes, palette generation, Figma sync, scales, typography. Follow them; do not invent tokens outside the grammar or hand-pick colors. Changing a decision means a new ADR, not an edit.
-- **Generator parameters** (ΔL steps, weight floors, shadow ramp) are placeholders until calibrated in the Theme Lab. Status base colors are set, except warning, which waits for a swatch.
+- **Generator parameters** (ΔL steps, weight floors, shadow ramp) are placeholders until calibrated in the Theme Lab. Status base colors are set (success, warning, danger, info).
 - **shadcn/ui** is planned as a golden reference (read-only examples to reimplement from scratch), not as a dependency. Not set up yet.
 - **Radix primitives** are allowed for complex behaviour (dialog, popover, focus trap, keyboard nav); styling and API are ours.
 
@@ -26,7 +31,7 @@ pnpm workspace:
 ## Conventions
 
 - One folder per component: `packages/react/src/components/<name>/{<name>.tsx,<name>.stories.tsx,index.ts}`; re-export from `packages/react/src/index.ts`.
-- Components are styled with Tailwind v4 utilities on the Style Dictionary theme built from the DTCG export (ADR 0032); theme utilities only, no arbitrary values.
+- Components are styled with Tailwind v4 utilities on the Style Dictionary theme built from the DTCG export; theme utilities only, no arbitrary values (see Guides/Component conventions for the allowed exceptions).
 - Variants via `cva`; join classes with `cn` from `packages/react/src/lib/cn.ts` (`twMerge(clsx())`).
 - Relative imports only — no path aliases (tsc-emitted `.d.ts` would keep them unresolved).
 - Every dependency and peer is externalised in `packages/react/vite.config.ts` automatically from its `package.json`.

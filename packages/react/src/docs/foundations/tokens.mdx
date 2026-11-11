@@ -1,0 +1,130 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Tokens" />
+
+# Tokens
+
+Every value the components use comes from one file: the DTCG export committed at `packages/theme/tokens/reflection.tokens.json`. Colors are generated from a few seeds; nothing is picked by hand.
+
+## Pipeline
+
+| Step            | Where                                                                                                  | Output                               |
+| --------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Generate        | `@reflection/tokens`: seeds and parameters → semantic colors, palette, shadows, type scale, dimensions | in memory                            |
+| Tune and export | Theme Lab (`pnpm lab`, :5174) → **Export** → DTCG, **All modes**                                       | `reflection-all-modes.tokens.json`   |
+| Commit          | replace `packages/theme/tokens/reflection.tokens.json` with the export                                 | the source of truth                  |
+| Build           | `pnpm theme` (Style Dictionary, `packages/theme/build.ts`)                                             | `dist/theme.css`, `dist/tw-merge.js` |
+| Use             | consumer CSS imports the theme; components use Tailwind utilities                                      | —                                    |
+
+`pnpm dev`, `pnpm lab`, `pnpm typecheck` and `pnpm build-storybook` run `pnpm theme` first.
+
+The defaults the generator and Theme Lab start from live in `packages/tokens/src` (`DEFAULT_SEEDS`, `DEFAULT_PARAMS`, `DEFAULT_SHADOWS`, `DEFAULT_TYPE_SCALE`). The committed export is what ships; keep the defaults and the export in step, so a fresh Lab and the tests describe the same theme.
+
+### `@reflection/theme` exports
+
+| Export                          | Content                                                                |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| `@reflection/theme/theme.css`   | CSS variables per mode, Tailwind namespaces, text role utilities       |
+| `@reflection/theme/fonts.css`   | `@font-face` for the self-hosted font files                            |
+| `@reflection/theme/tw-merge`    | `twMergeConfig` for `extendTailwindMerge`: text roles and shadow names |
+| `@reflection/theme/tokens.json` | the committed DTCG export, for other platforms and tools               |
+
+## The DTCG document
+
+DTCG format 2025.10. One document holds every mode.
+
+| Group                                                   | Content                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `palette/light/<family>/<step>`, `palette/dark/…`       | opaque palette steps per mode                                            |
+| `light/…`, `dark/…`                                     | semantic colors, shadow layer colors and composite shadows, `focus/ring` |
+| `font/…`                                                | `size`, `line-height` (rem), `tracking` (em, number), `weight`, `family` |
+| `spacing/…`, `size/…`, `radius/…`, `border/…`           | dimensions, shared by every mode                                         |
+| `typography/desktop/<role>`, `typography/mobile/<role>` | text role composites referencing `font/*`                                |
+
+- **`$root`.** A token that is also a group (`bg/neutral` next to `bg/neutral/hover`) is stored as `bg.neutral.$root`. References to it end in `.$root`.
+- **Opaque colors** are aliases of a palette step: `"{palette.light.accent.250}"`.
+- **Translucent colors** take the step's components by JSON Pointer and keep their own alpha:
+  `{ "colorSpace": "srgb", "components": { "$ref": "#/palette/light/foreground/700/$value/components" }, "alpha": 0.16 }`.
+- **Shadows** are DTCG `shadow` composites whose layer colors alias color tokens of the same mode (`{light.shadow.xs.contact}`, `{light.focus.accent.$root}`).
+- **Typography** composites hold `fontFamily`, `fontSize`, `fontWeight` as references, `letterSpacing` in rem and `lineHeight` as a ratio. The line-height step, the tracking step, underline and uppercase travel in `$extensions["com.reflection-lense"]`.
+- Theme Lab also exports one mode and viewport per file (`reflection-<mode>-<viewport>.tokens.json`) with the same structure minus the mode prefix.
+
+## CSS output
+
+`theme.css` has three parts.
+
+```css
+@theme inline reference {
+  --color-*: initial; /* every Tailwind namespace the theme fills is emptied first */
+  --background-color-accent: var(--bg-accent);
+  --shadow-focus-ring: var(--focus-ring);
+  /* … */
+}
+
+@layer theme {
+  :root {
+    /* primitives: palette, spacing, size, radius, border, font */
+  }
+  :root,
+  [data-mode='light'] {
+    /* light colors, shadows, focus ring */
+  }
+  [data-mode='dark'] {
+    /* dark colors, shadows, focus ring */
+  }
+}
+
+@utility text-body {
+  /* text roles, desktop steps from 48rem */
+}
+```
+
+- **Variable names are the canonical token names**: `bg/accent/emphasized/hover` → `--bg-accent-emphasized-hover`, `$root` dropped, a decimal point written as a dash (`spacing/4.5` → `--spacing-4-5`).
+- **Semantic colors keep their palette alias**: `--bg-accent: var(--palette-light-accent-250)`; a translucent one is `color-mix(in srgb, var(--palette-…) 16.0784%, transparent)`.
+- **Shadows and the focus ring reference their color variables**: `--focus-ring: 0 0 0 1px var(--focus-accent), 0 0 0 4px var(--focus-accent-subtle)`.
+- **Tailwind namespaces only point at the variables** (`@theme inline reference`), so utilities resolve at the element and follow its mode. Default Tailwind colors, fonts, radii, shadows and containers do not exist.
+
+## Modes
+
+Set `data-mode="light"` or `data-mode="dark"` on `<html>`. Without it, light applies.
+
+A subtree can switch mode locally: put `data-mode` on any element and every variable below it re-resolves. Portalled content (Dialog, Menu, Select, Popover, Toast) renders in `<body>` and takes the mode of `<html>`, not of the subtree that opened it. Tooltip is the exception: it sets the opposite of its trigger's mode on itself.
+
+## Runtime themes
+
+A runtime theme sets the same variables on `:root` or a subtree. Generate them from seeds with `@reflection/tokens`:
+
+```ts
+import { generateTheme, toCssVars } from '@reflection/tokens'
+
+const theme = generateTheme({ light: { bg, fg, accent }, dark: { bg, fg, accent } })
+Object.assign(element.style, toCssVars(theme.light)) // or write a [data-mode] rule per mode
+```
+
+Shadows and the focus ring follow because they reference the color variables.
+
+## Regenerating
+
+1. `pnpm lab`, adjust seeds or parameters.
+2. **Export** → DTCG → **All modes** → copy or download.
+3. Replace `packages/theme/tokens/reflection.tokens.json`.
+4. `pnpm theme`, then `pnpm test` and check Storybook in both modes.
+
+## Figma
+
+Figma is downstream of the export: change seeds and parameters in Theme Lab, never the generated variables in Figma.
+
+Theme Lab → **Export** → **Figma prompt** produces instructions plus the all-modes payload for an agent with Figma access. The file it maintains has these collections:
+
+| Collection   | Modes              | Content                                                                |
+| ------------ | ------------------ | ---------------------------------------------------------------------- |
+| Palette      | —                  | palette ramps                                                          |
+| Core         | Reflection, Custom | theme mapping                                                          |
+| Theme        | Light, Dark        | semantic colors                                                        |
+| Typography   | Desktop, Mobile    | `<role>/font-size`, `<role>/line-height`, `<role>/letter-spacing` (px) |
+| Number value | —                  | spacing, size, radius, border width, `font/*`                          |
+
+- Variables are named by the canonical token path and matched by it on update. A `$root` token repeats its last segment: `bg/neutral` → `bg/neutral/neutral`, `focus/accent` → `focus/accent/accent`.
+- Code syntax is the CSS variable of the canonical name: `var(--bg-neutral)`.
+- Figma holds px: rem values × 16. `size/<n>` aliases `spacing/<n>`.
+- Shadows are effect styles `shadow/2xs` … `shadow/2xl` and `focus/ring`; every layer color is bound to its color variable (`shadow/<level>/contact|ambient`, `focus/accent`, `focus/accent/subtle`).

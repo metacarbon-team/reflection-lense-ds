@@ -1,6 +1,6 @@
-// Dimension scales from Tailwind CSS v4 (ADR 0005, ADR 0029). Static data: nothing here is generated.
+// Dimension scales from Tailwind CSS v4. Static data: nothing here is generated.
 
-/** 1rem in px. Fixed: Figma and native adapters multiply rem by it (ADR 0029). */
+/** 1rem in px. Fixed: Figma and native adapters multiply rem by it. */
 export const REM_BASE = 16
 
 export interface Dimension {
@@ -16,7 +16,7 @@ export interface DimensionToken {
   alias?: string
 }
 
-/** Explicit spacing steps in multiples of 0.25rem; `px` is 1px. New steps are added here (ADR 0029). */
+/** Explicit spacing steps in multiples of 0.25rem; `px` is 1px. New steps are added here. */
 export const SPACING_STEPS = [
   'px',
   0,

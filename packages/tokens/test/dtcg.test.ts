@@ -32,10 +32,16 @@ function flatten(group: DtcgGroup, prefix = ''): Record<string, DtcgToken> {
 
 type Color = { colorSpace: string; components: [number, number, number]; alpha: number }
 
-/** A color through the palette of its document: an alias, or components by JSON Pointer `$ref` (ADR 0034). */
+/** A color through the palette of its document: an alias, or components by JSON Pointer `$ref`. */
 function resolveColor(tokens: Record<string, DtcgToken>, value: unknown): Color {
   if (typeof value === 'string') {
-    const target = tokens[value.slice(1, -1).replaceAll('.', '/')]
+    const target =
+      tokens[
+        value
+          .slice(1, -1)
+          .replaceAll('.', '/')
+          .replace(/\/\$root$/, '')
+      ]
     expect(target, value).toBeDefined()
     return resolveColor(tokens, target!.$value)
   }
@@ -48,7 +54,14 @@ function resolveColor(tokens: Record<string, DtcgToken>, value: unknown): Color 
   return { ...resolveColor(tokens, step!.$value), alpha: v.alpha }
 }
 const resolved = (tokens: Record<string, DtcgToken>, token: DtcgToken) =>
-  token.$type === 'color' ? { ...token, $value: resolveColor(tokens, token.$value) } : token
+  token.$type === 'color'
+    ? { ...token, $value: resolveColor(tokens, token.$value) }
+    : token.$type === 'shadow'
+      ? {
+          ...token,
+          $value: (token.$value as { color: unknown }[]).map((l) => ({ ...l, color: resolveColor(tokens, l.color) })),
+        }
+      : token
 
 describe('DTCG export', () => {
   it('includes every mode without overwriting colors or duplicating shared font families', () => {
@@ -106,10 +119,11 @@ describe('DTCG export', () => {
 
   it('exports layered shadows with dimensions, alpha and negative spread', () => {
     const tokens = flatten(toDtcg(theme.dark, { shadows: { ...DEFAULT_SHADOWS, hairline: 0.2, darkAlphaScale: 2 } }))
-    const small = tokens['shadow/2xs']!.$value as { color: { alpha: number }; offsetY: unknown }[]
+    const small = tokens['shadow/2xs']!.$value as { color: unknown; offsetY: unknown }[]
     expect(small).toHaveLength(1)
     expect(small[0]!.offsetY).toEqual({ value: 1, unit: 'px' })
-    expect(small[0]!.color.alpha).toBeCloseTo(0.4)
+    expect(small[0]!.color).toBe('{shadow.2xs.contact}')
+    expect(resolveColor(tokens, small[0]!.color).alpha).toBeCloseTo(0.4)
     const large = tokens['shadow/2xl']!.$value as { spread: { value: number; unit: string } }[]
     expect(large).toHaveLength(2)
     expect(large[1]!.spread.value).toBeLessThan(0)
@@ -118,6 +132,7 @@ describe('DTCG export', () => {
 
   it.each(['light', 'dark'] as const)('exports the %s focus ring as a 1px ring over a 4px halo', (mode) => {
     const tokens = flatten(toDtcg(theme[mode]))
+    const all = flatten(toDtcgAllModes(theme))
     const ring = tokens['focus/ring']!
     expect(ring.$type).toBe('shadow')
     const layers = ring.$value as { color: unknown; spread: { value: number }; blur: { value: number } }[]
@@ -125,8 +140,12 @@ describe('DTCG export', () => {
       [1, 0],
       [4, 0],
     ])
-    expect(layers[0]!.color).toEqual(resolveColor(tokens, tokens['focus/accent']!.$value))
-    expect(layers[1]!.color).toEqual(resolveColor(tokens, tokens['focus/accent/subtle']!.$value))
+    // Aliases, so a runtime theme that sets the focus colors also sets the ring.
+    expect(layers.map((l) => l.color)).toEqual(['{focus.accent.$root}', '{focus.accent.subtle}'])
+    expect(all[`${mode}/focus/ring`]!.$value).toMatchObject([
+      { color: `{${mode}.focus.accent.$root}` },
+      { color: `{${mode}.focus.accent.subtle}` },
+    ])
   })
 
   it.each(['light', 'dark'] as const)('aliases every %s semantic color to an opaque palette step', (mode) => {
@@ -149,7 +168,7 @@ describe('DTCG export', () => {
   it('exports one type scale and composite styles that reference it, per viewport', () => {
     const desktop = flatten(toDtcg(theme.light, { viewport: 'desktop' }))
     const mobile = flatten(toDtcg(theme.light, { viewport: 'mobile' }))
-    // Primitives: Tailwind v4 steps in rem, the same in every viewport (ADR 0030).
+    // Primitives: Tailwind v4 steps in rem, the same in every viewport.
     expect(desktop['font/size/lg']!.$value).toEqual({ value: 1.125, unit: 'rem' })
     expect(desktop['font/line-height/lg']!.$value).toEqual({ value: 1.75, unit: 'rem' })
     expect(desktop['font/size/sm']!.$value).toEqual({ value: 0.8125, unit: 'rem' })
@@ -168,7 +187,7 @@ describe('DTCG export', () => {
       lineHeight: '{font.line-height.3xl}',
       letterSpacing: '{font.tracking.tight}',
     })
-    // Tracking primitives are em numbers; the composite resolves them against its size (ADR 0031).
+    // Tracking primitives are em numbers; the composite resolves them against its size.
     expect(desktop['font/tracking/tight']).toEqual({ $type: 'number', $value: -0.025 })
     expect(desktop['font/weight/light']).toEqual({ $type: 'fontWeight', $value: 300 })
     expect(heading.$value).toMatchObject({ letterSpacing: { value: -0.046875, unit: 'rem' } })

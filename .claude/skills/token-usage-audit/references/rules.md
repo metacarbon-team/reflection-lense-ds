@@ -4,12 +4,12 @@ Rule ids are stable across runs and reports. A4 is retired: modes on documentati
 
 Every rule runs on own layers, and on instance layers only for the fields an instance overrides (SKILL.md, "Own layers and overrides"). Rendered checks (B7, C10, C11) therefore follow the main component: an instance without an override is not re-checked on the background it is placed on.
 
-Token grammar (ADR 0002): `scope/role/[prominence]/[context]/[state]`.
+Token grammar: `scope/role/[prominence]/[context]/[state]`.
 
 - **Scopes**: `surface`, `bg`, `form`, `card`, `fg`, `stroke`, `ghost`, `focus`.
-- **Form and card** (ADR 0026, 0027): `form/neutral` (+ `hover`, `pressed`) is translucent, neutral only, with no prominence. Cards are opaque: `card/neutral/subtle`, `card/neutral`, `card/neutral/emphasized`, and one card per status role, `card/{success,warning,danger,info}` — the role's lightest tint (formerly `bg/<status>/subtle`). Each has `hover` and `pressed`. Status roles keep `bg/<status>` and `bg/<status>/emphasized`; accent keeps `bg/accent/subtle`.
-- **Focus** (ADR 0025): `focus/accent` (opaque ring) and `focus/accent/subtle` (translucent halo). Components use the single `focus/ring` effect style: halo spread 4px, ring spread 1px.
-- **Surface group** (ADR 0024): no roles, exactly `surface` (window canvas; Figma `surface/surface`) and `surface/backdrop` (translucent).
+- **Form and card**: `form/neutral` (+ `hover`, `pressed`) is translucent, neutral only, with no prominence. Cards are opaque: `card/neutral/subtle`, `card/neutral`, `card/neutral/emphasized`, and one card per status role, `card/{success,warning,danger,info}` — the role's lightest tint (formerly `bg/<status>/subtle`). Each has `hover` and `pressed`. Status roles keep `bg/<status>` and `bg/<status>/emphasized`; accent keeps `bg/accent/subtle`.
+- **Focus**: `focus/accent` (opaque ring) and `focus/accent/subtle` (translucent halo). Components use the single `focus/ring` effect style: halo spread 4px, ring spread 1px.
+- **Surface group**: no roles, exactly `surface` (window canvas; Figma `surface/surface`) and `surface/backdrop` (translucent).
 - **Roles**: `neutral`, `accent`, `success`, `warning`, `danger`, `info`.
 - **Prominences**: `subtle`, normal (omitted), `emphasized`.
 - **Context**: `on-emphasized`.
@@ -26,10 +26,10 @@ Product decisions clarified on 2026-11-03. Use these during contextual review al
 | --- | --- | --- |
 | `surface` | Window background only. | A confirmed content fill above the window background should use `bg/*`. A root frame alone does not prove a window background. |
 | `bg/*` | Backgrounds of anything above the window background. | Choose role and strength for the content; nesting alone does not prescribe every choice. |
-| `bg/neutral/subtle` / `bg/neutral` | Subtle shares the surface color; normal is one layer step away (ADR 0019). | Equal surface/subtle values are intentional. Keep bindings distinct by purpose: window versus content. |
+| `bg/neutral/subtle` / `bg/neutral` | Subtle shares the surface color; normal is one layer step away. | Equal surface/subtle values are intentional. Keep bindings distinct by purpose: window versus content. |
 | `form/neutral` | Inputs, text areas, selects and other form fields; translucent. | Review the element's purpose and rendered background. |
 | `card/neutral/*` | Cards, modals, menus, popovers and other lifted surfaces; opaque. `subtle` and normal currently equal `bg/neutral/subtle` and `bg/neutral`; `emphasized` is the white/black endpoint, mainly for modals. | Equal card/bg values are intentional; keep bindings distinct by purpose. Mainly is a preference, not an exclusive restriction. |
-| `card/<status>` | Informative cards, callouts and status panels (ADR 0027). | Text uses the role's `fg`; contrast is validated as on any tinted background. |
+| `card/<status>` | Informative cards, callouts and status panels. | Text uses the role's `fg`; contrast is validated as on any tinted background. |
 | `fg/<role>` and `fg/<role>/subtle` | Text and icon hierarchy. | The designer chooses the hierarchy; validate scope, pairing and contrast rather than imposing a token on every label type. |
 | `stroke/*` | Boundaries and dividers, with strength chosen by the designer. | Do not report a prominence choice alone as misuse. Existing binding, scope and contrast checks still apply. |
 | `surface/backdrop` | Backdrop behind a modal, covering the underlying interface. | Distinguish the backdrop from the modal body, which uses a background token. |
@@ -67,7 +67,7 @@ The paint is bound to one of these:
 - a hidden semantic token (deprecated);
 - a variable outside the `Theme` collection, such as `Palette` (`reflection/light/...`) or `Core`.
 
-- **Why**: components bind semantic tokens only (ADR 0001, 0004). Primitives do not switch with the mode and skip the generator's guarantees.
+- **Why**: components bind semantic tokens only. Primitives do not switch with the mode and skip the generator's guarantees.
 - **Fix**: the semantic token that resolves to this primitive in this context. For a deprecated token, use the replacement named in its description.
 
 ### A5 role-mismatch
@@ -114,13 +114,13 @@ The background is the nearest opaque fill behind the text, translucent layers co
 - **disabled**: every bound paint in the variant uses `bg/disabled`, `fg/disabled` or `stroke/disabled`, whatever the control's role (error otherwise). `focus/*` and `shadow/*` are exempt.
   - Only a ghost control keeps no fill when disabled (warning if it has one).
   - Outline and filled controls take `bg/disabled`.
-- **focus**: the variant applies the `focus/ring` effect style (ADR 0025), on itself or a child; a recolored stroke is not a focus indicator (warning otherwise).
+- **focus**: the variant applies the `focus/ring` effect style, on itself or a child; a recolored stroke is not a focus indicator (warning otherwise).
 
 ### B9 form-ghost (warning)
 
 `form/neutral` on a tinted role background (`bg/accent`, `bg/success`, `card/danger`, …).
 
-- **Why**: form fields step away from the neutral stack (ADR 0007, 0026). On a tint they read as a hole.
+- **Why**: form fields step away from the neutral stack. On a tint they read as a hole.
 - **Fix**: put form fields on a neutral layer, or use the role's own steps.
 
 ## C — Rendered result
@@ -145,7 +145,7 @@ These need 3:1 against their background:
 - A drop or inner shadow without an effect style.
 - A shadow whose style is not a `shadow/*` or focus style.
 
-Shadow colors come from the shadow tokens (ADR 0010) through the styles.
+Shadow colors come from the shadow tokens through the styles.
 
 ## Not in scope
 
