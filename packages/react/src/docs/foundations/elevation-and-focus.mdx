@@ -47,13 +47,13 @@ Each layer has its own translucent color per mode, `shadow/<level>/<layer>`:
 
 - The color is a dark shade in the hue of the mode's `surface`, not pure black.
 - Dark mode uses the same geometry with about four times the opacity, so shadows still read on dark surfaces.
-- The composite `--shadow-<level>` references its layer variables; Tailwind's `shadow-<level>` uses the composite.
+- The composite `--shadow-<level>` references its layer variables. Tailwind's `shadow-<level>` writes the same composite into the utility, so the layer colors resolve at the element and a theme set on a subtree reaches them.
 
 ### Rules
 
 - A shadow never draws an edge. Every lifted surface also has a stroke (`border border-neutral-subtle` or `border-neutral`).
 - Pick the level by what the surface is, not by taste: resting surfaces and small controls `xs`–`sm`, floating layers (lists, popovers, toasts) `md`, modal `xl`.
-- **A disabled control has no shadow.** Components drop it with `disabled:shadow-none` / `data-disabled:shadow-none`, `has-disabled:shadow-none` on wrapping frames, or by applying the shadow only to `enabled:` states (Checkbox, Radio, Tabs pill). The Figma variants match.
+- **A disabled control has no shadow.** Components drop it with `disabled:shadow-none` / `data-disabled:shadow-none`, `has-disabled:shadow-none` on wrapping frames, or by applying the shadow only to enabled states: `enabled:` on a native control (Checkbox, Radio), `not-disabled:not-data-disabled:` on one that can render as a link (Tabs pill). The Figma variants match.
 
 ## Focus ring
 

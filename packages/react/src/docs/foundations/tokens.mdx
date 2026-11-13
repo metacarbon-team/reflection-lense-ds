@@ -8,13 +8,13 @@ Every value the components use comes from one file: the DTCG export committed at
 
 ## Pipeline
 
-| Step            | Where                                                                                                  | Output                               |
-| --------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| Generate        | `@reflection/tokens`: seeds and parameters → semantic colors, palette, shadows, type scale, dimensions | in memory                            |
-| Tune and export | Theme Lab (`pnpm lab`, :5174) → **Export** → DTCG, **All modes**                                       | `reflection-all-modes.tokens.json`   |
-| Commit          | replace `packages/theme/tokens/reflection.tokens.json` with the export                                 | the source of truth                  |
-| Build           | `pnpm theme` (Style Dictionary, `packages/theme/build.ts`)                                             | `dist/theme.css`, `dist/tw-merge.js` |
-| Use             | consumer CSS imports the theme; components use Tailwind utilities                                      | —                                    |
+| Step            | Where                                                                                                  | Output                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Generate        | `@reflection/tokens`: seeds and parameters → semantic colors, palette, shadows, type scale, dimensions | in memory                                                   |
+| Tune and export | Theme Lab (`pnpm lab`, :5174) → **Export** → DTCG, **All modes**                                       | `reflection-all-modes.tokens.json`                          |
+| Commit          | replace `packages/theme/tokens/reflection.tokens.json` with the export                                 | the source of truth                                         |
+| Build           | `pnpm theme` (Style Dictionary, `packages/theme/build.ts`)                                             | `dist/theme.css`, `dist/tw-merge.js`, `dist/utilities.json` |
+| Use             | consumer CSS imports the theme; components use Tailwind utilities                                      | —                                                           |
 
 `pnpm dev`, `pnpm lab`, `pnpm typecheck` and `pnpm build-storybook` run `pnpm theme` first.
 
@@ -22,12 +22,13 @@ The defaults the generator and Theme Lab start from live in `packages/tokens/src
 
 ### `@reflection/theme` exports
 
-| Export                          | Content                                                                |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `@reflection/theme/theme.css`   | CSS variables per mode, Tailwind namespaces, text role utilities       |
-| `@reflection/theme/fonts.css`   | `@font-face` for the self-hosted font files                            |
-| `@reflection/theme/tw-merge`    | `twMergeConfig` for `extendTailwindMerge`: text roles and shadow names |
-| `@reflection/theme/tokens.json` | the committed DTCG export, for other platforms and tools               |
+| Export                             | Content                                                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `@reflection/theme/theme.css`      | CSS variables per mode, Tailwind namespaces, text role utilities                                                  |
+| `@reflection/theme/fonts.css`      | `@font-face` for the self-hosted font files                                                                       |
+| `@reflection/theme/tw-merge`       | `twMergeConfig` for `extendTailwindMerge`: text roles and shadow names                                            |
+| `@reflection/theme/tokens.json`    | the committed DTCG export, for other platforms and tools                                                          |
+| `@reflection/theme/utilities.json` | token name → Tailwind utility (`bg/accent` → `bg-accent`, `focus/ring` → `shadow-focus-ring`), for docs and tools |
 
 ## The DTCG document
 
@@ -57,7 +58,7 @@ DTCG format 2025.10. One document holds every mode.
 @theme inline reference {
   --color-*: initial; /* every Tailwind namespace the theme fills is emptied first */
   --background-color-accent: var(--bg-accent);
-  --shadow-focus-ring: var(--focus-ring);
+  --shadow-focus-ring: 0px 0px 0px 1px var(--focus-accent), 0px 0px 0px 4px var(--focus-accent-subtle);
   /* … */
 }
 
@@ -82,7 +83,7 @@ DTCG format 2025.10. One document holds every mode.
 - **Variable names are the canonical token names**: `bg/accent/emphasized/hover` → `--bg-accent-emphasized-hover`, `$root` dropped, a decimal point written as a dash (`spacing/4.5` → `--spacing-4-5`).
 - **Semantic colors keep their palette alias**: `--bg-accent: var(--palette-light-accent-250)`; a translucent one is `color-mix(in srgb, var(--palette-…) 16.0784%, transparent)`.
 - **Shadows and the focus ring reference their color variables**: `--focus-ring: 0 0 0 1px var(--focus-accent), 0 0 0 4px var(--focus-accent-subtle)`.
-- **Tailwind namespaces only point at the variables** (`@theme inline reference`), so utilities resolve at the element and follow its mode. Default Tailwind colors, fonts, radii, shadows and containers do not exist.
+- **Tailwind namespaces only point at the variables** (`@theme inline reference`), so utilities resolve at the element and follow its mode. Shadow utilities carry the composite itself (`shadow-focus-ring` → `0px 0px 0px 1px var(--focus-accent), …`), so their colors also resolve at the element: a `var()` inside `--focus-ring` would resolve where `--focus-ring` is declared. Default Tailwind colors, fonts, radii, shadows and containers do not exist.
 
 ## Modes
 

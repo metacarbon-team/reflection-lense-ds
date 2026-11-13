@@ -1,4 +1,5 @@
 import tokens from '@reflection/theme/tokens.json'
+import utilities from '@reflection/theme/utilities.json'
 
 // Shared by the Foundations pages. Stories only: excluded from the library build.
 // Token names come from the committed DTCG export; colors render through their CSS variables, so the
@@ -20,27 +21,8 @@ const LIGHT = names((tokens as Group).light as Group).filter((n) => !n.startsWit
 
 const cssVar = (name: string) => `--${name.replaceAll('/', '-')}`
 
-/** The Tailwind utility of a color token, as the theme build names it. */
-export function utilityOf(name: string): string | null {
-  const [scope, ...rest] = name.split('/')
-  const tail = rest.join('-')
-  switch (scope) {
-    case 'surface':
-      return `bg-${name.replaceAll('/', '-')}`
-    case 'bg':
-      return `bg-${tail}`
-    case 'form':
-    case 'card':
-    case 'ghost':
-      return `bg-${name.replaceAll('/', '-')}`
-    case 'fg':
-      return `text-${tail}`
-    case 'stroke':
-      return `border-${tail}`
-    default:
-      return null
-  }
-}
+/** The Tailwind utility of a token, from the map the theme build writes next to `theme.css`. */
+export const utilityOf = (name: string): string | null => (utilities as Record<string, string>)[name] ?? null
 
 function Sample({ name }: { name: string }) {
   const color = `var(${cssVar(name)})`

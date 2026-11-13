@@ -10,7 +10,8 @@
       "types": "./dist/tw-merge.d.ts",
       "import": "./dist/tw-merge.js"
     },
-    "./tokens.json": "./tokens/reflection.tokens.json"
+    "./tokens.json": "./tokens/reflection.tokens.json",
+    "./utilities.json": "./dist/utilities.json"
   },
   "files": [
     "dist",

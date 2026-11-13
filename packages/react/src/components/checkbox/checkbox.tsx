@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
+import { CheckboxCheckMark, checkboxBoxClass, CheckboxIndeterminateMark } from '../../lib/checkbox'
 import { cn } from '../../lib/cn'
 import { useFieldControl } from '../field/field'
 
@@ -10,19 +11,10 @@ import { useFieldControl } from '../field/field'
  * and focus-visible come from the browser in `default`; the `hover` and `focus` variants freeze them
  * for docs and tests; `error` comes from `aria-invalid`, a Field error or `state="error"`.
  */
-const markProps = {
-  viewBox: '0 0 16 16',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.333,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-  'aria-hidden': true,
-} as const
-
 const checkboxVariants = cva(
   [
-    'group peer inline-flex size-5 shrink-0 items-center justify-center rounded-md border align-middle outline-none',
+    checkboxBoxClass,
+    'group peer align-middle outline-none',
     // Disabled from the DOM, so a `disabled` prop and a `<fieldset disabled>` look the same.
     'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
     'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
@@ -88,12 +80,8 @@ export function Checkbox({ state = 'default', className, ...props }: CheckboxPro
       className={cn(checkboxVariants({ state: state === 'error' ? 'default' : state }), className)}
     >
       <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex size-4 items-center justify-center">
-        <svg {...markProps} className="size-4 group-data-[state=indeterminate]:hidden">
-          <path d="M2.667 8l3.333 3.333 7.333-7.333" />
-        </svg>
-        <svg {...markProps} className="hidden size-4 group-data-[state=indeterminate]:block">
-          <path d="M2.667 8h10.667" />
-        </svg>
+        <CheckboxCheckMark className="size-4 group-data-[state=indeterminate]:hidden" />
+        <CheckboxIndeterminateMark className="hidden size-4 group-data-[state=indeterminate]:block" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

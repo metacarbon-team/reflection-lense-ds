@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
+import { CheckboxCheckMark, checkboxBoxClass, CheckboxIndeterminateMark } from '../../lib/checkbox'
 import { cn } from '../../lib/cn'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
 import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
@@ -87,9 +88,9 @@ export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof 
 
 // The look of Checkbox, drawn from the row's `data-state` because the row is the control: a real
 // Checkbox would put a second focusable control inside the menu item. Disabled has no shadow.
-const checkboxBoxClass = [
-  'inline-flex size-5 shrink-0 items-center justify-center rounded-md border shadow-sm',
-  'border-neutral-emphasized bg-form-neutral',
+const menuCheckboxClass = [
+  checkboxBoxClass,
+  'border-neutral-emphasized bg-form-neutral shadow-sm',
   // Selection colors only while enabled, so the disabled look below always wins, as in Checkbox.
   'group-not-data-disabled/item:group-data-[state=checked]/item:border-transparent group-not-data-disabled/item:group-data-[state=checked]/item:bg-neutral-emphasized group-not-data-disabled/item:group-data-[state=checked]/item:text-neutral-on-emphasized',
   'group-not-data-disabled/item:group-data-[state=indeterminate]/item:bg-neutral group-not-data-disabled/item:group-data-[state=indeterminate]/item:text-neutral',
@@ -97,16 +98,6 @@ const checkboxBoxClass = [
   'group-data-disabled/item:group-data-[state=unchecked]/item:border-disabled',
   'group-data-disabled/item:group-data-[state=checked]/item:border-transparent group-data-disabled/item:group-data-[state=indeterminate]/item:border-transparent',
 ]
-
-const markProps = {
-  viewBox: '0 0 16 16',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.333,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-  'aria-hidden': true,
-} as const
 
 export type DropdownMenuCheckboxItemProps = ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
   /** Close the menu when the item is toggled. Off by default, so several items can be toggled in a row. */
@@ -134,14 +125,10 @@ export function DropdownMenuCheckboxItem({
       }}
       {...props}
     >
-      <span data-slot="dropdown-menu-checkbox" className={cn(checkboxBoxClass)}>
+      <span data-slot="dropdown-menu-checkbox" className={cn(menuCheckboxClass)}>
         <DropdownMenuPrimitive.ItemIndicator className="flex items-center">
-          <svg {...markProps} className="group-data-[state=indeterminate]/item:hidden">
-            <path d="M2.667 8l3.333 3.333 7.333-7.333" />
-          </svg>
-          <svg {...markProps} className="hidden group-data-[state=indeterminate]/item:block">
-            <path d="M2.667 8h10.667" />
-          </svg>
+          <CheckboxCheckMark className="group-data-[state=indeterminate]/item:hidden" />
+          <CheckboxIndeterminateMark className="hidden group-data-[state=indeterminate]/item:block" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}

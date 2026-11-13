@@ -37,7 +37,8 @@ export const tabsTriggerVariants = cva(
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
-    'disabled:pointer-events-none disabled:text-disabled',
+    // Radix sets `data-disabled` too, so a disabled tab rendered as a link (`asChild`) looks the same.
+    'disabled:pointer-events-none disabled:text-disabled data-disabled:pointer-events-none data-disabled:text-disabled',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
   {
@@ -51,8 +52,8 @@ export const tabsTriggerVariants = cva(
         ],
         pill: [
           'gap-1 border border-transparent',
-          // A disabled control has no shadow, active or not.
-          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle enabled:data-[state=active]:shadow-sm',
+          // A disabled control has no shadow, active or not. Not `enabled:`, which matches only form controls.
+          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle not-disabled:not-data-disabled:data-[state=active]:shadow-sm',
           'focus-visible:bg-neutral-subtle',
         ],
       },

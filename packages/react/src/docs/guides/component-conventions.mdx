@@ -29,7 +29,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
   - Layout of docs-only grids inside stories.
 - Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
 - Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
-- One-line controls (Button, Icon Button, Tag, Badge, Tabs, the field frames) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Rows that can hold a description, such as Item, size by padding instead.
+- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
 
 ### Variants and class merging
 
@@ -84,7 +84,7 @@ One rule for every component, in `lib/disabled.ts`:
 - Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control uses `has-disabled:`.
 - Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
 - Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
-- A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`.
+- A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild` use `not-disabled:not-data-disabled:`.
 
 ## Forms
 
