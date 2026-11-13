@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button } from '../button/button'
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '../menu/menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../dropdown-menu/dropdown-menu'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../select/select'
 import { MenuLabel } from './menu-label'
 
@@ -20,24 +25,24 @@ export const Default: Story = {
 }
 
 /** The same component in both dropdowns; in a Select it goes inside a SelectGroup. */
-export const InMenuAndSelect: Story = {
-  decorators: [(Story) => <div className="flex gap-3">{Story()}</div>],
+export const InDropdownMenuAndSelect: Story = {
+  decorators: [(Story) => <div className="flex items-center gap-3">{Story()}</div>],
   render: () => (
     <>
-      <Menu>
-        <MenuTrigger asChild>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button tone="default" variant="outline" size="sm">
-            Menu
+            Dropdown Menu
           </Button>
-        </MenuTrigger>
-        <MenuContent>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
           <MenuLabel>Actions</MenuLabel>
-          <MenuItem>Rename</MenuItem>
-          <MenuItem>Duplicate</MenuItem>
-        </MenuContent>
-      </Menu>
+          <DropdownMenuItem>Rename</DropdownMenuItem>
+          <DropdownMenuItem>Duplicate</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Select defaultValue="bold">
-        <SelectTrigger appearance="button" aria-label="Text style">
+        <SelectTrigger className="w-40" aria-label="Text style">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

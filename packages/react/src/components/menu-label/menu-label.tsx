@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn'
 import { MenuSurfaceContext } from '../../lib/menu'
 
 /**
- * Menu Label: the group label of every dropdown (Select, Menu). 12px at the sides like the menu
+ * Menu Label: the group label of every dropdown (Select, DropdownMenu). 12px at the sides like the menu
  * items (Item sm), 8px above and 4px below. Inside SelectContent it labels its SelectGroup for assistive tech.
  */
 export function MenuLabel({ className, ...props }: ComponentProps<'div'>) {

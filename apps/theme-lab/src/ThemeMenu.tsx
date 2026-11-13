@@ -12,14 +12,14 @@ import {
   DialogTitle,
   Field,
   Input,
-  Menu,
-  MenuContent,
-  MenuItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   MenuLabel,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuSeparator,
-  MenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Textarea,
 } from '@reflection/react'
 import { useRef, useState, type ReactNode } from 'react'
@@ -102,8 +102,8 @@ export function ThemeMenu(props: {
 
   return (
     <>
-      <Menu>
-        <MenuTrigger asChild>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button tone="default" variant="outline" size="sm">
             <span className="text-neutral-subtle">Theme</span> {active.name}
             {props.modified && (
@@ -114,32 +114,32 @@ export function ThemeMenu(props: {
             )}
             <ChevronDown />
           </Button>
-        </MenuTrigger>
-        <MenuContent className="min-w-64">
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="min-w-64">
           <MenuLabel>Themes</MenuLabel>
-          <MenuRadioGroup value={active.id} onValueChange={switchTo}>
+          <DropdownMenuRadioGroup value={active.id} onValueChange={switchTo}>
             {props.themes.map((t) => (
-              <MenuRadioItem key={t.id} value={t.id}>
+              <DropdownMenuRadioItem key={t.id} value={t.id}>
                 <span className="flex-1">{t.name}</span>
                 {t.id === active.id && props.modified ? <Hint>Edited</Hint> : t.builtIn ? <Hint>Built-in</Hint> : null}
-              </MenuRadioItem>
+              </DropdownMenuRadioItem>
             ))}
-          </MenuRadioGroup>
-          <MenuSeparator />
-          <MenuItem disabled={active.builtIn || !props.modified} onSelect={props.onSave}>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled={active.builtIn || !props.modified} onSelect={props.onSave}>
             <span className="flex-1">Save changes</span>
             {active.builtIn && <Hint>Read-only</Hint>}
-          </MenuItem>
-          <MenuItem onSelect={() => ask('save-as')}>Save as new theme…</MenuItem>
-          <MenuItem onSelect={() => setDialog({ kind: 'import' })}>Import theme…</MenuItem>
-          <MenuItem disabled={active.builtIn} onSelect={() => ask('rename')}>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => ask('save-as')}>Save as new theme…</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDialog({ kind: 'import' })}>Import theme…</DropdownMenuItem>
+          <DropdownMenuItem disabled={active.builtIn} onSelect={() => ask('rename')}>
             Rename…
-          </MenuItem>
-          <MenuItem disabled={active.builtIn} onSelect={() => setDialog({ kind: 'delete' })}>
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={active.builtIn} onSelect={() => setDialog({ kind: 'delete' })}>
             Delete
-          </MenuItem>
-        </MenuContent>
-      </Menu>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Confirm
         open={dialog?.kind === 'save-as' || dialog?.kind === 'rename'}

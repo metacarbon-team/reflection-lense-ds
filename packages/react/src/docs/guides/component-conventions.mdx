@@ -94,7 +94,7 @@ One rule for every component, in `lib/disabled.ts`:
 ## Color modes and portals
 
 - `data-mode="light|dark"` on `<html>` or any subtree switches every token below it.
-- Dialog, Menu, Select, Popover and Toast render in `<body>` through a portal, so they follow the mode on `<html>`, not a subtree's.
+- Dialog, Dropdown Menu, Select, Popover and Toast render in `<body>` through a portal, so they follow the mode on `<html>`, not a subtree's.
 - Tooltip always renders in the opposite mode of its anchor's closest `data-mode` and follows it when it changes.
 - An inverse element is a local mode switch (`data-mode` on the element), not a set of inverse tokens.
 

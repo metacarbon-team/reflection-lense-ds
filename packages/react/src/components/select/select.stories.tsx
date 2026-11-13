@@ -69,15 +69,3 @@ export const Disabled: Story = {
     </Field>
   ),
 }
-
-/** Button trigger, for toolbars. */
-export const ButtonTrigger: Story = {
-  render: (args) => (
-    <Select {...args} defaultValue="reflection">
-      <SelectTrigger appearance="button" aria-label="Theme">
-        <SelectValue />
-      </SelectTrigger>
-      <Options />
-    </Select>
-  ),
-}

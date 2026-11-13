@@ -88,7 +88,7 @@ DTCG format 2025.10. One document holds every mode.
 
 Set `data-mode="light"` or `data-mode="dark"` on `<html>`. Without it, light applies.
 
-A subtree can switch mode locally: put `data-mode` on any element and every variable below it re-resolves. Portalled content (Dialog, Menu, Select, Popover, Toast) renders in `<body>` and takes the mode of `<html>`, not of the subtree that opened it. Tooltip is the exception: it sets the opposite of its trigger's mode on itself.
+A subtree can switch mode locally: put `data-mode` on any element and every variable below it re-resolves. Portalled content (Dialog, Dropdown Menu, Select, Popover, Toast) renders in `<body>` and takes the mode of `<html>`, not of the subtree that opened it. Tooltip is the exception: it sets the opposite of its trigger's mode on itself.
 
 ## Runtime themes
 
