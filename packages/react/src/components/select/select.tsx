@@ -79,7 +79,7 @@ export function SelectContent({
   )
 }
 
-/** One option, an Item sm: label on the left, a check on the right when selected. */
+/** One option, an Item md: label on the left, a check on the right when selected. */
 export function SelectItem({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
     <SelectPrimitive.Item data-slot="select-item" className={cn(menuItemVariants(), className)} {...props}>

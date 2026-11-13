@@ -8,7 +8,7 @@ import { cn } from '../../lib/cn'
  * emphasized neutral. `ghost` drops the fill and stroke.
  */
 export const badgeVariants = cva(
-  'inline-flex shrink-0 items-center justify-center rounded-full border border-transparent tabular-nums',
+  'inline-flex shrink-0 items-center justify-center rounded-full border border-transparent whitespace-nowrap tabular-nums',
   {
     variants: {
       tone: {

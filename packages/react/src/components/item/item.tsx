@@ -16,8 +16,7 @@ const itemVariants = cva(
   {
     variants: {
       size: {
-        sm: 'px-3 py-1',
-        md: 'px-4 py-1.5',
+        md: 'px-3 py-1',
         lg: 'px-4 py-3',
       },
       state: {
@@ -35,11 +34,11 @@ const itemVariants = cva(
 
 // Text roles of the parts per size. The meta and the error label share the meta role.
 const itemTitleVariants = cva('min-w-0 flex-1 truncate text-neutral group-data-disabled/item:text-disabled', {
-  variants: { size: { sm: 'text-label-small', md: 'text-label', lg: 'text-label-large' } },
+  variants: { size: { md: 'text-label', lg: 'text-label-large' } },
   defaultVariants: { size: 'md' },
 })
 
-const metaRole = { sm: 'text-caption', md: 'text-body-small', lg: 'text-body-small' }
+const metaRole = { md: 'text-body-small', lg: 'text-body-small' }
 
 const itemMetaVariants = cva('shrink-0 whitespace-nowrap text-neutral-subtle group-data-disabled/item:text-disabled', {
   variants: { size: metaRole },
@@ -52,7 +51,7 @@ const itemErrorVariants = cva('block truncate text-danger group-data-disabled/it
 })
 
 const itemDescriptionVariants = cva('line-clamp-2 text-neutral-subtle group-data-disabled/item:text-disabled', {
-  variants: { size: { sm: 'text-caption', md: 'text-body-xsmall', lg: 'text-body-small' } },
+  variants: { size: { md: 'text-body-xsmall', lg: 'text-body-small' } },
   defaultVariants: { size: 'md' },
 })
 
@@ -78,7 +77,7 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
   trailingSlot?: ReactNode
   /** Adds a thin line under the row. */
   divider?: boolean
-  /** L fits a title with a description. M is tighter and fits one-line rows. S is the densest. */
+  /** L fits a title with a description. M is the dense one-line row, also used by every dropdown. */
   size?: VariantProps<typeof itemVariants>['size']
   /** Freezes `hover`, `pressed` or `focus` for docs and tests. `active` marks the current row. */
   state?: VariantProps<typeof itemVariants>['state']

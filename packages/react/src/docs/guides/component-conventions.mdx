@@ -29,6 +29,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
   - Layout of docs-only grids inside stories.
 - Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
 - Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
+- One-line controls (Button, Icon Button, Tag, Badge, Tabs, the field frames) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Rows that can hold a description, such as Item, size by padding instead.
 
 ### Variants and class merging
 

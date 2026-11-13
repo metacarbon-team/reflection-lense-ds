@@ -59,7 +59,7 @@ const meta = {
     leadingSlot: { control: 'select', options: Object.keys(leadingSlots), mapping: leadingSlots },
     trailingSlot: { control: 'select', options: Object.keys(trailingSlots), mapping: trailingSlots },
     divider: { control: 'boolean' },
-    size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
+    size: { control: 'inline-radio', options: ['md', 'lg'] },
     state: { control: 'select', options: ['default', 'hover', 'pressed', 'active', 'focus'] },
     disabled: { control: 'boolean' },
   },
@@ -97,9 +97,9 @@ const stateRows: { name: string; props: Partial<ComponentProps<typeof Item>> }[]
 /** Every state at each size, plus the divider and the error label. Hover, pressed and focus are frozen with `state`. */
 export const States: Story = {
   render: (args) => (
-    <div className="inline-grid grid-cols-[auto_repeat(3,20rem)] items-center gap-x-3 gap-y-2">
+    <div className="inline-grid grid-cols-[auto_repeat(2,20rem)] items-center gap-x-3 gap-y-2">
       <span />
-      {(['sm', 'md', 'lg'] as const).map((size) => (
+      {(['md', 'lg'] as const).map((size) => (
         <span key={size} className="text-caption text-neutral-subtle">
           {size}
         </span>
@@ -107,7 +107,7 @@ export const States: Story = {
       {stateRows.map(({ name, props }) => (
         <div key={name} className="contents">
           <span className="text-caption text-neutral-subtle">{name}</span>
-          {(['sm', 'md', 'lg'] as const).map((size) => (
+          {(['md', 'lg'] as const).map((size) => (
             <Item
               key={size}
               {...args}
