@@ -32,7 +32,7 @@ export const DropdownMenuSub = (props: ComponentProps<typeof DropdownMenuPrimiti
 
 // `content` is the main list and scrolls when the screen is short; `sub` is a submenu.
 const menuSurfaceVariants = cva(
-  'z-50 flex min-w-48 flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-sm outline-none',
+  'z-50 flex min-w-48 flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-md outline-none',
   {
     variants: {
       kind: {

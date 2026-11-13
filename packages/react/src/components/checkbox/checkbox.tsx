@@ -30,19 +30,19 @@ const checkboxVariants = cva(
     variants: {
       state: {
         default: [
-          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-sm',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral enabled:data-[state=unchecked]:shadow-xs',
           'enabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-sm',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
           'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
-          'enabled:data-[state=indeterminate]:border-neutral-emphasized enabled:data-[state=indeterminate]:bg-neutral enabled:data-[state=indeterminate]:text-neutral enabled:data-[state=indeterminate]:shadow-sm',
+          'enabled:data-[state=indeterminate]:border-neutral-emphasized enabled:data-[state=indeterminate]:bg-neutral enabled:data-[state=indeterminate]:text-neutral enabled:data-[state=indeterminate]:shadow-xs',
           'enabled:data-[state=indeterminate]:hover:bg-neutral-hover',
           'enabled:data-[state=unchecked]:focus-visible:border-transparent enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
           'enabled:data-[state=checked]:focus-visible:shadow-focus-ring enabled:data-[state=indeterminate]:focus-visible:border-transparent enabled:data-[state=indeterminate]:focus-visible:shadow-focus-ring',
         ],
         hover: [
-          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral-hover enabled:data-[state=unchecked]:shadow-sm',
-          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-sm',
-          'enabled:data-[state=indeterminate]:border-neutral-emphasized enabled:data-[state=indeterminate]:bg-neutral-hover enabled:data-[state=indeterminate]:text-neutral enabled:data-[state=indeterminate]:shadow-sm',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral-hover enabled:data-[state=unchecked]:shadow-xs',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
+          'enabled:data-[state=indeterminate]:border-neutral-emphasized enabled:data-[state=indeterminate]:bg-neutral-hover enabled:data-[state=indeterminate]:text-neutral enabled:data-[state=indeterminate]:shadow-xs',
         ],
         focus: [
           'enabled:border-transparent enabled:shadow-focus-ring',

@@ -8,8 +8,8 @@ import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * Button: tone × variant × size. Solid fills with the tone's emphasized background; outline and ghost
- * are transparent and take `ghost/<tone>` on hover and press. Focus replaces the border and shadow
- * with the focus ring. Hover, press and focus-visible come from the browser in `default`; the `hover`,
+ * are transparent and take `ghost/<tone>` on hover and press. Focus replaces the shadow with the
+ * focus ring and keeps the border. Hover, press and focus-visible come from the browser in `default`; the `hover`,
  * `pressed` and `focus` states freeze them for docs and tests.
  */
 export const buttonVariants = cva(
@@ -17,7 +17,7 @@ export const buttonVariants = cva(
     'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap',
     // A popup trigger (`aria-expanded`: menu, Select, popover, dialog) keeps the pressed fill while open.
     'rounded-md border border-transparent outline-none select-none',
-    'focus-visible:border-transparent focus-visible:shadow-focus-ring',
+    'focus-visible:shadow-focus-ring',
     'disabled:pointer-events-none data-disabled:pointer-events-none disabled:text-disabled data-disabled:text-disabled disabled:shadow-none data-disabled:shadow-none',
     '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   ],
@@ -26,7 +26,7 @@ export const buttonVariants = cva(
       tone: { default: '', accent: '', danger: '' },
       variant: {
         solid:
-          'shadow-sm disabled:border-disabled data-disabled:border-disabled disabled:bg-transparent data-disabled:bg-transparent',
+          'shadow-sm disabled:border-disabled data-disabled:border-disabled disabled:bg-disabled data-disabled:bg-disabled',
         outline: 'bg-transparent disabled:border-disabled data-disabled:border-disabled',
         ghost: 'bg-transparent',
       },
@@ -39,7 +39,7 @@ export const buttonVariants = cva(
         default: '',
         hover: '',
         pressed: '',
-        focus: 'border-transparent! shadow-focus-ring!',
+        focus: 'shadow-focus-ring!',
       },
     },
     compoundVariants: [

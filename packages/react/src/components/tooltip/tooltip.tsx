@@ -14,11 +14,11 @@ import { composeRefs } from '../../lib/compose-refs'
 import { hasContent } from '../../lib/has-content'
 
 /**
- * The bubble: 28px high, the emphasized card surface, one line of caption text. Width hugs the label
- * and the visible slots up to 200px; a longer label is cut with an ellipsis.
+ * The bubble: at least 28px high, the emphasized card surface, caption text. Width hugs the label
+ * and the visible slots up to 200px; a longer label wraps and the bubble grows in height.
  */
 const tooltipClass = [
-  'relative z-50 flex h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
+  'relative z-50 flex min-h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
   'bg-card-neutral-emphasized text-caption text-neutral select-none',
   '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
 ]
@@ -47,7 +47,7 @@ function TooltipParts({ label, leadingSlot, trailingSlot }: Omit<TooltipOwnProps
           {leadingSlot}
         </span>
       )}
-      <span data-slot="tooltip-label" className="min-w-0 flex-1 truncate">
+      <span data-slot="tooltip-label" className="min-w-0 flex-1 wrap-break-word">
         {label}
       </span>
       {hasContent(trailingSlot) && (
