@@ -1,4 +1,4 @@
-// Checks a generated mode against the rules of ADR 0002 and ADR 0003. Deliberately independent of
+// Checks a generated mode against the naming and accessibility rules. Deliberately independent of
 // the generator: it only reads token names and hex values, so it can validate any theme payload.
 
 import { composite, contrast, hexToRgba, perceivedLightness, rgbaToHex, type Rgb, type Rgba } from './color'
@@ -39,11 +39,11 @@ const MODIFIERS: Record<string, number> = {
 }
 
 const TOLERANCE = 1e-3
-/** Smallest spacing between text prominences when primary text is at white or black (ADR 0016). */
+/** Smallest spacing between text prominences when primary text is at white or black. */
 const MIN_COMPRESSED_STEP = 0.01
 
 export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARAMS): Issue[] {
-  // Every ΔL rule is measured on screen lightness (ADR 0014).
+  // Every ΔL rule is measured on screen lightness.
   const L = (c: Rgb | undefined) => perceivedLightness(c!, p.flare)
   const issues: Issue[] = []
   const color = new Map<string, Rgba>()
@@ -57,23 +57,23 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
   for (const [name, c] of color) {
     const [scope, role, ...rest] = name.split('/')
     const okScope = SCOPES.includes(scope as Scope)
-    // The disabled role has exactly one token per scope: bg/, fg/ and stroke/disabled (ADR 0008).
+    // The disabled role has exactly one token per scope: bg/, fg/ and stroke/disabled.
     const okRole =
       (ROLES as readonly string[]).includes(role ?? '') ||
       (role === DISABLED && ['bg', 'fg', 'stroke'].includes(scope!) && rest.length === 0)
     const order = rest.map((m) => MODIFIERS[m])
     const okRest = order.every((o, i) => o !== undefined && (i === 0 || o > order[i - 1]!))
-    // Text has two prominences, normal and subtle (ADR 0012).
+    // Text has two prominences, normal and subtle.
     const okFg = scope !== 'fg' || !rest.includes('emphasized')
     // `active` marks the current row of a transparent control: a ghost state only.
     const okActive = scope === 'ghost' || !rest.includes('active')
-    // Form and card exist only in the neutral role; form has no prominence (ADR 0026).
+    // Form and card exist only in the neutral role; form has no prominence.
     const statesOnly = rest.every((m) => m === 'hover' || m === 'pressed')
     const okNeutralOnly = !NEUTRAL_ONLY_SCOPES.includes(scope as Scope) || role === 'neutral'
     const okForm = scope !== 'form' || statesOnly
-    // Cards: neutral in three strengths; a status card is its role's lightest tint, no prominence (ADR 0027).
+    // Cards: neutral in three strengths; a status card is its role's lightest tint, no prominence.
     const okCard = scope !== 'card' || (CARD_ROLES.includes(role ?? '') && (role === 'neutral' || statesOnly))
-    // The surface group has no roles: exactly `surface` and `surface/backdrop` (ADR 0024).
+    // The surface group has no roles: exactly `surface` and `surface/backdrop`.
     const okGrammar =
       scope === SURFACE
         ? SURFACE_TOKENS.includes(name)
@@ -84,7 +84,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       fail(translucent ? 'opacity: must be translucent' : 'opacity: must be opaque', name, c.a, translucent ? 0 : 1)
   }
 
-  // Neutral subtle shares the surface color; normal sits one layer step away (ADR 0019).
+  // Neutral subtle shares the surface color; normal sits one layer step away.
   const stack = [SURFACE, 'bg/neutral/subtle', 'bg/neutral'].filter(has)
   const surface = get(SURFACE)
   const subtle = get('bg/neutral/subtle')
@@ -97,7 +97,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
     if (d < p.layerStep - TOLERANCE) fail('layer separation', 'bg/neutral', d, p.layerStep, SURFACE)
   }
 
-  // Form fields (ADR 0007, 0015, 0026): on one side of every neutral layer, the same side for all of them; its
+  // Form fields: on one side of every neutral layer, the same side for all of them; its
   // states a state step each along the stack. Composites over the stack count as layers.
   const formOver = (name: string): [string, Rgb][] =>
     has(name) ? stack.map((b) => [`${name} over ${b}`, composite(get(name)!, get(b)!)]) : []
@@ -125,16 +125,21 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
   const layerNames = [...color.keys()].filter((n) =>
     /^(surface|bg\/neutral(\/subtle)?(\/hover|\/pressed)?)$/.test(n),
   )
+  // Opaque cards (menus, popovers, toasts) carry text and controls as well.
+  const cards = ['card/neutral/emphasized', 'card/neutral/emphasized/hover', 'card/neutral/emphasized/pressed']
+    .filter(has)
+    .map((n): [string, Rgb] => [n, get(n)!])
   const layers: [string, Rgb][] = [
     ...layerNames.map((n): [string, Rgb] => [n, get(n)!]),
     ...form,
     ...formHover,
     ...formPressed,
+    ...cards,
   ]
   const ghostBases: [string, Rgb][] = [...stack.map((n): [string, Rgb] => [n, get(n)!]), ...form]
   const ghostNames = [...color.keys()].filter((n) => n.startsWith('ghost/'))
 
-  // Disabled (ADR 0008): the fill is barely visible on every neutral layer; the text reaches its
+  // Disabled: the fill is barely visible on every neutral layer; the text reaches its
   // (non-AA) contrast on every layer, form and the disabled fill, and never reads as enabled.
   const disabledBg = get(`bg/${DISABLED}`)
   const disabledFg = get(`fg/${DISABLED}`)
@@ -170,7 +175,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       }
     }
     // Prominence separation. Compressed spacing is allowed only where there is no room for more:
-    // primary text at white or black, still distinct from subtle (ADR 0016).
+    // primary text at white or black, still distinct from subtle.
     const fgSteps = [`fg/${role}/subtle`, `fg/${role}`].filter(has)
     for (let i = 1; i < fgSteps.length; i++) {
       const d = Math.abs(L(get(fgSteps[i]!)) - L(get(fgSteps[i - 1]!)))
@@ -208,7 +213,7 @@ export function validateMode(theme: ModeTheme, p: GeneratorParams = DEFAULT_PARA
       if (r < p.nonTextContrast) fail('focus contrast', 'focus/accent', r, p.nonTextContrast, n)
     }
   }
-  // The halo is the ring's color, translucent (ADR 0025).
+  // The halo is the ring's color, translucent.
   const ring = get(FOCUS)
   const halo = get(FOCUS_HALO)
   if (ring && halo && rgbaToHex({ ...halo, a: 1 }) !== rgbaToHex({ ...ring, a: 1 }))

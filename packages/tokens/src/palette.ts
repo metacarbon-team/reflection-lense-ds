@@ -53,7 +53,7 @@ export function familyOf(name: string): string {
   if (name === SURFACE) return 'neutral'
   if (name === BACKDROP || role === 'disabled' || rest.includes('on-emphasized')) return 'foreground'
   if (role !== 'neutral') return role!
-  // Form fields and cards are neutral surfaces in every strength (ADR 0026).
+  // Form fields and cards are neutral surfaces in every strength.
   if (scope === 'form' || scope === 'card') return 'neutral'
   if (scope === 'bg' && !rest.includes('emphasized')) return 'neutral'
   return 'foreground'
@@ -222,7 +222,7 @@ function slotOf(name: string): number | null {
       'emphasized/hover': 7,
       'emphasized/pressed': 8,
     }
-    // A status card is its role's lightest tint, the slot of a subtle background (ADR 0027).
+    // A status card is its role's lightest tint, the slot of a subtle background.
     const key = scope === 'card' && role !== 'neutral' ? ['subtle', ...rest].join('/') : modifiers
     return bg[key] ?? null
   }

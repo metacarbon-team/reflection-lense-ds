@@ -12,7 +12,7 @@ export function toCssVars(theme: ModeTheme): Record<string, string> {
 }
 
 /**
- * Spacing, size, radius and border-width custom properties, shared by every mode (ADR 0029).
+ * Spacing, size, radius and border-width custom properties, shared by every mode.
  * `size/<n>` refers to its spacing step: `--size-4: var(--spacing-4)`.
  */
 export function dimensionCssVars(): Record<string, string> {

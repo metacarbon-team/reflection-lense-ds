@@ -1,6 +1,6 @@
-// Seeds → semantic color tokens for one theme (ADR 0003). Contrast-targeted: hue and chroma come from
+// Seeds → semantic color tokens for one theme. Contrast-targeted: hue and chroma come from
 // the seeds, lightness is solved until every rule holds. Accent and status fills are their seeds
-// exactly (ADR 0011); the generator never rejects a theme, it shifts derived colors (and, in edge
+// exactly; the generator never rejects a theme, it shifts derived colors (and, in edge
 // cases, the background and text seeds) and reports what it shifted.
 
 import {
@@ -47,7 +47,7 @@ const CONTRAST_MARGIN = 0.05
 const NUDGE = 0.002
 const WHITE: Rgb = { r: 1, g: 1, b: 1 }
 const BLACK: Rgb = { r: 0, g: 0, b: 0 }
-/** Smallest compressed spacing between the two text prominences on mid tones (ADR 0016). */
+/** Smallest compressed spacing between the two text prominences on mid tones. */
 const MIN_TEXT_SPREAD = 0.01
 /** Translucent tokens must stay below 1. */
 const MAX_ALPHA = 254 / 255
@@ -83,7 +83,7 @@ export function generateMode(mode: Mode, seeds: ModeSeeds, params: GeneratorPara
   const solve = (dir: 1 | -1, layerDir: 1 | -1, formDir: 1 | -1) =>
     build(mode, bg.l, dir, layerDir, formDir, bg, fg, accent, params)
 
-  // The background never moves (ADR 0015): everything else adapts to it. In order, the text on its
+  // The background never moves: everything else adapts to it. In order, the text on its
   // seeded side, then on the other; the layers towards the text, then away from it; form fields opposite
   // the layers, then on their side when there is no room beyond the background. The first build that
   // passes every rule wins; ordinary themes take the first. When none passes (mid-tone backgrounds,
@@ -148,7 +148,7 @@ function build(
   const text = p.textContrast + CONTRAST_MARGIN
   const nonText = p.nonTextContrast + CONTRAST_MARGIN
 
-  /** Screen lightness (ADR 0014): every ΔL rule is measured on it. */
+  /** Screen lightness: every ΔL rule is measured on it. */
   const seen = (c: Rgb) => perceivedLightness(c, p.flare)
   const shippedL = (tone: Tone, l: number) => seen(quantize(paint(tone, l)))
 
@@ -166,8 +166,8 @@ function build(
     return l
   }
 
-  // Tone of each role: the text seed for neutral, the accent seed and the status base colors
-  // (ADR 0011); constant hue and chroma, or the family's curve when curves are on.
+  // Tone of each role: the text seed for neutral, the accent seed and the status base colors;
+  // constant hue and chroma, or the family's curve when curves are on.
   const statusSeed = Object.fromEntries(
     STATUS_ROLES.map((r) => [r, rgbToOklch(hexToRgba(p.statusSeeds[r]))]),
   ) as Record<StatusRole, Oklch>
@@ -199,7 +199,7 @@ function build(
     return quantize(base)
   }
 
-  // 1. Neutral stack (ADR 0019): surface = subtle; normal is one layer step away.
+  // 1. Neutral stack: surface = subtle; normal is one layer step away.
   const surface = quantize(paint(bgTone, l0))
   put(SURFACE, surface)
   const subtleL = l0
@@ -209,8 +209,8 @@ function build(
   neutralBases.push(withStates('bg/neutral/subtle', subtleL, bgTone, layers))
   neutralBases.push(withStates('bg/neutral', normalL, bgTone, layers))
 
-  // 1b. Form fields (ADR 0007, 0026): translucent, on one side of every neutral layer, opposite the layers where
-  //     the background leaves room and on their side where it does not (ADR 0015). Its states move
+  // 1b. Form fields: translucent, on one side of every neutral layer, opposite the layers where
+  //     the background leaves room and on their side where it does not. Its states move
   //     along the layers like every other state. The text contrast rule counts form fields as a layer.
   const awayPole = quantize(rgb(formDir > 0 ? 1 : 0, 0, 0))
   const layerPole = quantize(rgb(layerDir < 0 ? 0 : 1, 0, 0))
@@ -235,16 +235,21 @@ function build(
   put('form/neutral/pressed', layerPole, formPressed.a ?? MAX_ALPHA)
   layers.push(...formOver, ...formHover.over, ...formPressed.over)
 
-  // 1c. Cards (ADR 0026). Emphasized is the form fields' RGB at 100%: the white/black endpoint, with
-  //     opaque states that move inward to stay distinct. Subtle and normal take the background
-  //     stack's values for now, so cards can diverge later without renaming consumers.
-  const cardSolidL = formDir > 0 ? 1 : 0
+  // 1c. Cards. Emphasized is white or black, whichever is away from the text, so text reads best on
+  //     it. It never swaps sides: on a white (or black) background there is no room beyond it, so the
+  //     card is the background color and its stroke and shadow lift it. Opaque states move inward,
+  //     towards the text, to stay distinct. Subtle and normal take the background stack's values for
+  //     now, so cards can diverge later without renaming consumers.
+  const cardSolidL = dir > 0 ? 0 : 1
   const cardSolidTone = flat(0, 0)
-  const cardSolidHover = stepped(cardSolidL, cardSolidTone, p.stateStep, formDir > 0 ? -1 : 1)
-  const cardSolidPressed = stepped(cardSolidHover, cardSolidTone, p.stateStep, formDir > 0 ? -1 : 1)
-  put('card/neutral/emphasized', awayPole)
-  put('card/neutral/emphasized/hover', paint(cardSolidTone, cardSolidHover))
-  put('card/neutral/emphasized/pressed', paint(cardSolidTone, cardSolidPressed))
+  const cardSolidHover = stepped(cardSolidL, cardSolidTone, p.stateStep, dir)
+  const cardSolidPressed = stepped(cardSolidHover, cardSolidTone, p.stateStep, dir)
+  const cardSolid = [cardSolidL, cardSolidHover, cardSolidPressed].map((l) => quantize(paint(cardSolidTone, l)))
+  put('card/neutral/emphasized', cardSolid[0]!)
+  put('card/neutral/emphasized/hover', cardSolid[1]!)
+  put('card/neutral/emphasized/pressed', cardSolid[2]!)
+  // Text and controls sit on cards (menus, popovers, toasts), so cards count as layers.
+  layers.push(...cardSolid)
   for (const prominence of ['/subtle', ''])
     for (const state of ['', '/hover', '/pressed']) {
       const name = `card/neutral${prominence}${state}`
@@ -252,7 +257,7 @@ function build(
     }
 
   // 2. Tinted role backgrounds: the lightest tint (`bg/accent/subtle`, or the status card
-  //    `card/<status>`, ADR 0027), then `bg/<role>` one layer step further.
+  //    `card/<status>`), then `bg/<role>` one layer step further.
   const tinted: Rgb[] = []
   for (const r of ROLES) {
     if (r === 'neutral') continue
@@ -267,7 +272,7 @@ function build(
   //    every base, pressed one step past hover, active (the current row) one step past pressed.
   const ghostBases = [...neutralBases, ...formOver]
   // Role ghosts tint towards a mid tone; when the layers move away from the text, towards the layers'
-  // side instead, so a hovered ghost never costs text contrast (ADR 0015).
+  // side instead, so a hovered ghost never costs text contrast.
   const ghostL = layerDir === dir ? 0.5 : layerDir > 0 ? 0.9 : 0.1
   const ghostComposites: Rgb[] = []
   for (const r of ROLES) {
@@ -292,12 +297,12 @@ function build(
       for (const a of [hoverA, pressedA, activeA]) ghostComposites.push(composite({ ...base, a }, L))
   }
 
-  // 4. Text (ADR 0012): subtle is the 4.5:1 floor on the worst background; contrast depends on
+  // 4. Text: subtle is the 4.5:1 floor on the worst background; contrast depends on
   //    luminance only, so the worst background is the one nearest the text. Neutral primary text is
   //    the seed, at least fgStep beyond its floor; every other role's primary text is roleTextStep
   //    beyond its floor, so it keeps its color. On mid tones the band between the floor and white or
   //    black is narrower than the step: primary text then sits at the pole and the spacing is
-  //    compressed, as long as the two stay distinct (ADR 0016, after theme-contract-v1).
+  //    compressed, as long as the two stay distinct.
   const textBackgrounds = [...layers, ...tinted, ...ghostComposites]
   const worst = textBackgrounds.reduce((a, b) => (dir * (luminance(b) - luminance(a)) > 0 ? b : a))
   const fgPrimary: Partial<Record<Role, Rgb>> = {}
@@ -328,7 +333,7 @@ function build(
     fgPrimary[r] = primary
   }
 
-  // 5. Emphasized fills (ADR 0011): the fill never moves. States move away from the on-emphasized
+  // 5. Emphasized fills: the fill never moves. States move away from the on-emphasized
   //    text when they fit; the text is the better of a light and a dark color, pushed towards white
   //    or black until it reaches 4.5:1 on the fill and both states (pure white or black always can).
   const onLight = quantize(rgb(0.985, Math.min(fg.c, 0.01), fg.h))
@@ -339,7 +344,7 @@ function build(
     const light = contrast(fill, WHITE) >= contrast(fill, BLACK)
     const away: 1 | -1 = light ? -1 : 1
     // Both states must fit on screen lightness; near black that can take far more than two steps of
-    // OKLCH lightness (ADR 0014), so the side is checked by solving them, not by counting room.
+    // OKLCH lightness, so the side is checked by solving them, not by counting room.
     const statesOn = (d: 1 | -1) => {
       const h1 = nextStep(l, tone, p.stateStep, d)
       const p1 = nextStep(h1, tone, p.stateStep, d)
@@ -363,7 +368,7 @@ function build(
   }
 
   // Accent and status fills are their seeds. Neutral has none: it takes the larger of the accent's
-  // contrast against surface and its own floor (ADR 0009), so the neutral solid fill stays strong.
+  // contrast against surface and its own floor, so the neutral solid fill stays strong.
   const accentFill = emphasized('accent', accent.l, roleTone.accent)
   for (const r of STATUS_ROLES) emphasized(r, statusSeed[r].l, roleTone[r])
   const neutralWeight = Math.max(contrast(accentFill, surface), p.neutralWeightFloor)
@@ -380,7 +385,7 @@ function build(
   }
   const focus = paint(roleTone.accent, focusL)
   put(FOCUS, focus)
-  // The halo around the ring (ADR 0025): the same color, translucent and decorative.
+  // The halo around the ring: the same color, translucent and decorative.
   put(FOCUS_HALO, focus, p.focusHaloAlpha)
 
   // 7. Strokes: translucent, on the role's primary text color. Emphasized carries control
@@ -394,7 +399,7 @@ function build(
     put(`stroke/${r}/emphasized`, base, a ?? MAX_ALPHA)
   }
 
-  // 8. Disabled role (ADR 0008): the neutral text color with alpha. The fill is barely visible on
+  // 8. Disabled role: the neutral text color with alpha. The fill is barely visible on
   //    every neutral layer; the text reaches its (non-AA) contrast on every layer, form fields and the
   //    disabled fill, and stays below the text target.
   const ink = fgPrimary.neutral!

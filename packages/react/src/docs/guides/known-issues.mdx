@@ -1,0 +1,60 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Guides/Known issues" />
+
+# Known issues
+
+Where the code does not yet do what the other pages describe, and what is planned. Fixing an item removes it from this page in the same change.
+
+## Components
+
+| Issue                                                                                                                                                                                                                                                                             | Where                                     | Effect                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| Tooltip has a fixed height (`h-7`) but allows wrapping (`max-w-50`)                                                                                                                                                                                                               | `tooltip.tsx`                             | A tooltip longer than one line overflows its bubble                           |
+| Solid Button disabled is transparent; solid IconButton disabled uses `bg-disabled`                                                                                                                                                                                                | `button.tsx`, `icon-button.tsx`           | The two buttons look different when disabled                                  |
+| Dropdown Menu and the Select list share one dropdown surface but not the shadow: `shadow-sm` vs `shadow-md`                                                                                                                                                                       | `dropdown-menu.tsx`, `select.tsx`         | Two elevations for the same surface                                           |
+| Checkbox uses `shadow-sm`, Radio `shadow-xs`                                                                                                                                                                                                                                      | `checkbox.tsx`, `radio.tsx`               | Two elevations for the same kind of control                                   |
+| Focus differs between controls: the ring replaces the border on buttons and choice controls, fields keep their stroke, Dropdown Menu and Select rows show only a highlight, Item `state="active"` has no ring while NavItem active does, the Tabs pill also changes fill and text | several                                   | Focus does not look the same everywhere                                       |
+| `form` surface used outside form fields: Tag, Badge `default`, neutral solid IconButton                                                                                                                                                                                           | `tag.tsx`, `badge.tsx`, `icon-button.tsx` | These follow the field fill instead of a surface of their own                 |
+| Input, Textarea and the Select trigger rest on `stroke/neutral`, a decorative stroke; the emphasized stroke comes only on hover. The Switch off position uses `stroke/neutral/subtle`                                                                                             | `control-frame.ts`, `switch.tsx`          | The 3:1 boundary contrast (WCAG 1.4.11) is not guaranteed for a field at rest |
+
+## Tokens and theme
+
+| Issue                                                                                                             | Where                                      | Effect                                                                    |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
+| `cn('text-label', 'text-sm')` keeps both classes: a text role removes a later raw size, not the reverse           | `build.ts` (`conflictingClassGroups`)      | A raw font-size override depends on CSS order. Use a role instead.        |
+| `--size-<n>` is written as a value, not as `var(--spacing-<n>)`; the unused `dimensionCssVars()` writes the alias | `dtcg.ts`, `css.ts`                        | Two CSS outputs disagree; Figma code syntax for sizes resolves to a value |
+| The mono family falls back to generic `monospace` only                                                            | `build.ts`                                 | No system monospace fonts before the generic one                          |
+| Theme Lab preview uses `var(--font-mono)`, which the theme does not emit                                          | `apps/theme-lab/src/ui-preview/mirror.css` | Mono text in the Lab preview renders in the sans family                   |
+| Display and heading roles have no upper cap when users scale text                                                 | `theme.css`                                | Large text grows without limit                                            |
+| Theme Lab cannot edit the weights of a text role, only steps and tracking                                         | `TypeScaleEditor.tsx`                      | Weights change only in code                                               |
+| `shadow-2xs`, `shadow-lg` and `shadow-2xl` are not used by any component                                          | —                                          | Levels without a consumer                                                 |
+| `toCssVars` returns semantic colors only, not shadow layer colors or palette steps                                | `css.ts`                                   | A runtime theme built with it keeps the default shadow colors             |
+| Dialog, Dropdown Menu, Select, Popover and Toast portal to `<body>` and take the mode of `<html>`                 | portals                                    | A local `data-mode` on a subtree does not reach them (Tooltip carries it) |
+| Nothing checks that the committed export matches the code defaults                                                | `reflection.tokens.json`                   | Defaults and the shipped theme can drift apart                            |
+| The Figma prompt names only the `focus/ring` layer bindings, not the shadow levels'                               | `apps/theme-lab/src/figmaPrompt.ts`        | A fresh sync may write shadow colors as values                            |
+
+## Generator and validator
+
+| Issue                                                                                                                                      | Where                        | Effect                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------------------- |
+| Nothing validates the committed export: `pnpm theme` builds without validating, there is no CI, Theme Lab exports a theme that fails rules | `build.ts`, Theme Lab        | A theme with violations can ship                                    |
+| `bg/<role>` against `bg/<role>/emphasized` is not checked                                                                                  | `validate.ts`                | With a pale accent the tint and the solid fill look almost the same |
+| `fg/neutral` on status cards and role tints is not checked by the validator (the generator does solve it)                                  | `validate.ts`                | A hand-edited payload could pass with unreadable text               |
+| Ghost fills over `card/neutral/emphasized` (menu rows) are not measured                                                                    | `generate.ts`, `validate.ts` | Hover and text contrast on menu rows are not guaranteed             |
+| Tinted backgrounds use a fixed chroma (`tintChroma`) instead of the role's                                                                 | `generate.ts`                | Tints of very saturated and very muted seeds look alike             |
+| Palette ramps are not monotonic in lightness (light neutral 400 / 450 / 500 = L 0.92 / 0.97 / 0.93)                                        | `palette.ts`                 | A step number does not tell lighter from darker                     |
+| The grammar check accepts `bg/<status>/subtle` and `bg/<role>/on-emphasized`                                                               | `validate.ts`                | Names outside the grammar can pass                                  |
+| The opacity class is not written to the DTCG `$extensions`                                                                                 | `dtcg.ts`                    | Consumers of the export read opacity from the name only             |
+| Generator parameters (ΔL steps, weight floors, shadow ramp) are placeholders                                                               | `types.ts`                   | Values change once calibrated in Theme Lab                          |
+
+## Future improvements
+
+| Improvement                                                                                                                | Why                                            |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| CSS scoped by `[data-theme]` as well as `[data-mode]`                                                                      | Several themes on one page                     |
+| TypeScript constants and a union type of token names                                                                       | Typed token names in code and tests            |
+| Portable test vectors: fixed seeds → expected tokens                                                                       | Any port of the generator can prove it matches |
+| Validate the export in `pnpm theme` and in CI                                                                              | Violations fail the build instead of shipping  |
+| Figma sync keyed by a stable variable id in `$extensions`, with deprecation instead of deletion and a periodic drift check | Idempotent sync, safe renames, no silent drift |
+| A JSON Schema for the native payload                                                                                       | Validation on native platforms                 |

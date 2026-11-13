@@ -1,0 +1,162 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Guides/Composing components" />
+
+# Composing components
+
+How to build what the library does not have yet from tokens and existing components, and when to propose it into the system.
+
+## 1. Pick the cheapest step that works
+
+Go down the list and stop at the first step that solves the problem.
+
+| #   | Step                                                                                                                                                                          | Example                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | **Use a component as is.**                                                                                                                                                    | A secondary action is `<Button tone="default" variant="outline">`.                                        |
+| 2   | **Compose existing components.**                                                                                                                                              | A list of changed files is `ItemList` + `Item` + `DiffStat` + `IconButton`.                               |
+| 3   | **Extend one** through its public surface: `className` (merged by `cn`, yours wins), an exported `*Variants`, `asChild`, `data-slot` selectors, slots.                        | A router link that looks like a button: `<Button asChild><RouterLink to="/x">Open</RouterLink></Button>`. |
+| 4   | **Build a local component** in the product from tokens, `lib/` atoms and Radix primitives, following [Component conventions](?path=/docs/guides-component-conventions--docs). | A pricing tier card specific to one page.                                                                 |
+| 5   | **Propose it to the system.** See section 5.                                                                                                                                  | The same row pattern built in three products.                                                             |
+
+Never fork a library component into the product to change one class: pass `className`, or propose a variant.
+
+## 2. Building blocks
+
+| Block                         | Where                                                                                                   | Use for                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Color tokens                  | [Color](?path=/docs/foundations-color--docs)                                                            | Every fill, text and stroke, picked by scope and role                               |
+| Text roles                    | [Typography](?path=/docs/foundations-typography--docs)                                                  | Every piece of text: `text-<role>`                                                  |
+| Spacing, size, radius, border | [Dimensions](?path=/docs/foundations-dimensions--docs)                                                  | Layout and shape                                                                    |
+| Shadows, focus ring           | [Elevation and focus](?path=/docs/foundations-elevation-and-focus--docs)                                | Lifted surfaces, keyboard focus                                                     |
+| `cn`                          | `@reflection/react`                                                                                     | Joining and overriding classes                                                      |
+| `*Variants`                   | `@reflection/react` (`buttonVariants`, `badgeVariants`, `cardVariants`, `tabsTriggerVariants`…)         | Styling another element exactly like a component                                    |
+| `Field` + `useFieldControl`   | `@reflection/react`                                                                                     | Wiring a custom control to a label, caption, invalid and disabled state             |
+| Radix primitives              | `radix-ui`                                                                                              | Behaviour: focus trap, roving focus, keyboard navigation, positioning, dismiss      |
+| `lib/` atoms                  | inside the library only: `control-frame`, `checkbox`, `disabled`, `menu`, `compose-refs`, `has-content` | Reuse when you contribute to the library; copy the rule, not the file, in a product |
+
+## 3. Rules for anything you compose
+
+1. Theme utilities only. No hex, no arbitrary values, no Tailwind palette colors, no `/50` opacity modifiers.
+2. Pick a token by what it means, not what it looks like. `danger` is for destructive or failed things, not for "something red". A lifted surface is `card`, a form field is `form`, a transparent control's hover is `ghost`.
+3. Text is a role (`text-body-small`), its color a `text-<role>` token (`text-neutral-subtle`). Text on a tinted or emphasized fill uses that role's pair (`text-accent` on `bg-accent`, `text-accent-on-emphasized` on `bg-accent-emphasized`).
+4. Every interactive element has hover, pressed, focus-visible and disabled, from the same token ladder as the library. Disabled has no shadow.
+5. Every part gets a `data-slot`. The caller's `className` goes last through `cn`.
+6. Check it in both modes (Mode toolbar, or `data-mode` on a wrapper), with long content, with the keyboard only, and inside `<fieldset disabled>` if it holds controls.
+
+## 4. Example
+
+A panel listing changed files, built only from library components and roles.
+
+```tsx
+import { DiffStat, IconButton, Item, ItemList } from '@reflection/react'
+import { FileIcon } from './icons' // the product's icon set
+
+type ChangedFile = { path: string; added: number; removed: number }
+
+export function ChangedFiles({ files, onOpen }: { files: ChangedFile[]; onOpen: (path: string) => void }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h3 className="text-label text-neutral-subtle">Changed files</h3>
+      <ItemList variant="card" role="list">
+        {files.map((file) => (
+          <Item
+            key={file.path}
+            role="listitem"
+            label={file.path}
+            metaLabel={
+              <DiffStat
+                added={file.added}
+                removed={file.removed}
+                role="group"
+                aria-label={`${file.added} lines added, ${file.removed} lines removed`}
+              />
+            }
+            trailingSlot={
+              <IconButton
+                aria-label={`Open ${file.path}`}
+                variant="ghost"
+                tone="default"
+                size="sm"
+                onClick={() => onOpen(file.path)}
+              >
+                <FileIcon />
+              </IconButton>
+            }
+          />
+        ))}
+      </ItemList>
+    </section>
+  )
+}
+```
+
+The card surface, row heights, truncation, hover, focus and disabled states all come from the components. The only classes written by hand are layout (`flex`, `gap-2`) and a text role with its color.
+
+### The same thing, done wrong
+
+```tsx
+// Don't
+<div className="rounded-[10px] bg-white p-1 shadow-md">
+  {files.map((file) => (
+    <div className="flex h-8 items-center px-3 text-sm hover:bg-gray-100">
+      {file.path}
+      <span className="ml-auto text-[#22a06b]">+{file.added}</span>
+      <button className="opacity-50 disabled:shadow-sm">…</button>
+    </div>
+  ))}
+</div>
+```
+
+| Problem                                                           | Why it breaks                                                                      |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `bg-white`, `bg-gray-100`, `text-[#22a06b]`                       | Not theme colors: wrong in dark mode, ignores custom themes                        |
+| `rounded-[10px]`, `text-sm`, `h-8` on a text row                  | Off-scale values; raw font size instead of a role; fixed height clips wrapped text |
+| `shadow-md` on a list                                             | The list surface is `shadow-xs` in the system; `md` is for floating surfaces       |
+| `opacity-50` for disabled, a shadow on a disabled button          | Disabled uses the `disabled` tokens and never has a shadow                         |
+| No focus style, no `data-slot`, no accessible name for the counts | Unusable with a keyboard, untestable, color-only meaning                           |
+
+## 5. When to propose a component to the system
+
+Propose it when **all** of these hold:
+
+- **Reuse.** It is used, or about to be, in at least two independent places (two products, or two unrelated screens).
+- **No domain.** It has no business logic, data fetching or product copy inside. Data comes in through props.
+- **Stable.** The local version has lived through a few changes without its API changing.
+- **Expressible.** It can be built from existing tokens. If it needs a color, size or state the tokens do not have, that is a token change, not a component.
+
+Keep it local when:
+
+- It is a wrapper that only fixes props of a library component (`<PrimaryButton>` = `<Button tone="accent">`).
+- It is a one-off look of an existing component: propose a variant of that component instead.
+- It is tied to one entity of one product (a "Repository card" with repository fields).
+
+### What kind of change it is
+
+| Change                                           | When                                                            | Cost                                                      |
+| ------------------------------------------------ | --------------------------------------------------------------- | --------------------------------------------------------- |
+| New **variant** or prop of an existing component | Same anatomy and behaviour, different look or size              | Smallest: one cva entry, stories, Figma variant           |
+| New **component**                                | New anatomy or behaviour                                        | Medium: everything in the definition of done below        |
+| New **token** or role                            | The meaning does not exist in the color, type or dimension sets | Largest: generator, validator, export, Figma, every theme |
+
+### Proposal
+
+Open an issue with:
+
+1. The problem and where it shows up, with links to every place that needs it.
+2. Anatomy: the parts and their `data-slot` names.
+3. API: props with types and defaults, following the shared vocabulary (`tone`, `variant`, `size`, `state`, `disabled`, `asChild`, slots).
+4. States: hover, pressed, focus, disabled, invalid or active where they apply.
+5. Tokens per part and mode.
+6. Accessibility: role, keyboard, accessible name, what a screen reader announces.
+7. Figma link to the design, or a note that it has to be drawn.
+8. What else was considered: an existing component with a variant, a composition.
+
+### Definition of done
+
+- [ ] `src/components/<name>/{<name>.tsx,<name>.stories.tsx,index.ts}`, re-exported from `src/index.ts`.
+- [ ] Follows [Component conventions](?path=/docs/guides-component-conventions--docs): theme utilities only, `data-slot` on every part, `cn` with the caller's class last, disabled through `lib/disabled.ts`, no shadow when disabled.
+- [ ] Prop JSDoc on every prop.
+- [ ] Stories: Playground, Variants, Sizes, States (with disabled), slots, Do and Don't pairs.
+- [ ] Storybook a11y panel clean in light and dark.
+- [ ] Master component in Figma with the same variant properties, bound to the same variables and effect styles, and its documentation frame.
+- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build` pass.

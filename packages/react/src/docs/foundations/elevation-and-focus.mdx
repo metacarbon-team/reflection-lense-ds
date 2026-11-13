@@ -1,0 +1,91 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Elevation and focus" />
+
+# Elevation and focus
+
+Shadows lift surfaces off the page; the focus ring marks the element that has keyboard focus. Both are `box-shadow` values whose colors are separate variables, so a theme that sets the colors also changes the shadows.
+
+## Shadow scale
+
+Seven levels. `2xs` is a 1px contact line; every other level has two layers: a tight **contact** shadow and a soft **ambient** one with negative spread, tucked under the element.
+
+<div className="flex flex-wrap gap-6 rounded-lg bg-surface p-6">
+  {['shadow-2xs', 'shadow-xs', 'shadow-sm', 'shadow-md', 'shadow-lg', 'shadow-xl', 'shadow-2xl'].map((s) => (
+    <div
+      key={s}
+      className={`flex size-24 items-end rounded-lg border border-neutral-subtle bg-card-neutral-emphasized p-2 text-caption text-neutral-subtle ${s}`}
+    >
+      {s}
+    </div>
+  ))}
+</div>
+
+| Level | Contact (y · blur) | Ambient (y · blur · spread) | Utility      | Used by                                                                                                  |
+| ----- | ------------------ | --------------------------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| `2xs` | 1px · 0            | —                           | `shadow-2xs` | —                                                                                                        |
+| `xs`  | 0 · 1px            | 1px · 3px · −0.5px          | `shadow-xs`  | Card, Item List (card), Tag, Radio                                                                       |
+| `sm`  | 0.5px · 1px        | 2px · 5.5px · −1px          | `shadow-sm`  | solid Button and Icon Button, Input, Textarea, Select trigger, Checkbox, Dropdown Menu, active Tabs pill |
+| `md`  | 0.5px · 1px        | 3.5px · 10.5px · −2px       | `shadow-md`  | Select list, Popover, Toast                                                                              |
+| `lg`  | 1px · 2px          | 6.5px · 20px · −3.5px       | `shadow-lg`  | —                                                                                                        |
+| `xl`  | 2px · 4px          | 12.5px · 38px · −7px        | `shadow-xl`  | Dialog                                                                                                   |
+| `2xl` | 3.5px · 7px        | 24px · 72px · −13px         | `shadow-2xl` | —                                                                                                        |
+
+Offsets are vertical only (x = 0). Geometry is in px and the same in both modes.
+
+### Color
+
+Each layer has its own translucent color per mode, `shadow/<level>/<layer>`:
+
+```css
+[data-mode='light'] {
+  --shadow-xs-contact: #322e200a;
+  --shadow-xs-ambient: #322e2012;
+  --shadow-xs: 0px 0px 1px 0px var(--shadow-xs-contact), 0px 1px 3px -0.5px var(--shadow-xs-ambient);
+}
+```
+
+- The color is a dark shade in the hue of the mode's `surface`, not pure black.
+- Dark mode uses the same geometry with about four times the opacity, so shadows still read on dark surfaces.
+- The composite `--shadow-<level>` references its layer variables. Tailwind's `shadow-<level>` writes the same composite into the utility, so the layer colors resolve at the element and a theme set on a subtree reaches them.
+
+### Rules
+
+- A shadow never draws an edge. Every lifted surface also has a stroke (`border border-neutral-subtle` or `border-neutral`).
+- Pick the level by what the surface is, not by taste: resting surfaces and small controls `xs`–`sm`, floating layers (lists, popovers, toasts) `md`, modal `xl`.
+- **A disabled control has no shadow.** Components drop it with `disabled:shadow-none` / `data-disabled:shadow-none`, `has-disabled:shadow-none` on wrapping frames, or by applying the shadow only to enabled states: `enabled:` on a native control (Checkbox, Radio), `not-disabled:not-data-disabled:` on one that can render as a link (Tabs pill). The Figma variants match.
+
+## Focus ring
+
+One focus indicator for every focusable element: a 1px ring over a 4px translucent halo, drawn outside the element with no offset and no blur.
+
+<div className="flex flex-wrap items-center gap-6 rounded-lg bg-surface p-6">
+  <div className="h-10 w-28 rounded-md border border-neutral-emphasized bg-form-neutral shadow-focus-ring" />
+  <div className="h-10 w-28 rounded-md bg-accent-emphasized shadow-focus-ring" />
+  <div className="size-5 rounded-sm bg-neutral-emphasized shadow-focus-ring" />
+</div>
+
+| Layer (top to bottom) | Spread | Color variable                                        |
+| --------------------- | ------ | ----------------------------------------------------- |
+| ring                  | 1px    | `--focus-accent` (opaque, the accent)                 |
+| halo                  | 4px    | `--focus-accent-subtle` (the ring color at 25% alpha) |
+
+```css
+--focus-ring: 0px 0px 0px 1px var(--focus-accent), 0px 0px 0px 4px var(--focus-accent-subtle);
+```
+
+- Utility: `shadow-focus-ring`, normally as `focus-visible:shadow-focus-ring` (`focus-within:` on a frame that wraps the input).
+- It is a shadow, so it replaces the element's own shadow while focused; `cn()` treats `shadow-focus-ring` as a shadow, not a color.
+- The ring meets 3:1 against every layer it can sit on. Elements set `outline-none` and rely on the ring.
+- DTCG: `focus/ring` is a `shadow` token whose layer colors alias `{<mode>.focus.accent.$root}` and `{<mode>.focus.accent.subtle}`. Figma: the effect style `focus/ring`, bound to the same variables.
+
+### How components apply it
+
+| Treatment                                                                   | Components                                                                              |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| The ring replaces the border (`focus-visible:border-transparent`)           | Button, Icon Button, Switch, Checkbox (unchecked, indeterminate), Radio (unchecked)     |
+| The ring is added, the stroke stays                                         | Input (on the frame, `focus-within`), Textarea, Select trigger (also while open), Toast |
+| The ring on an element without a visible stroke                             | Link, Item, Nav Item, Tabs trigger, Tabs content, checked Checkbox and Radio            |
+| A highlight instead of the ring (`data-highlighted:bg-ghost-neutral-hover`) | Dropdown Menu rows, Select options                                                      |
+
+Components with a `state` prop (Button, Icon Button, Link, Item, Nav Item, Tabs trigger) accept `state="focus"` to freeze the focused look for docs and tests; in normal use the browser decides through `:focus-visible`.

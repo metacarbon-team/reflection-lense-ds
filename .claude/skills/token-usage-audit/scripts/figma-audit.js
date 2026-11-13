@@ -197,7 +197,7 @@ const checkNode = (node) => {
         report('A5 role-mismatch', 'warning', node, `stroke ${t.name}`, 'boundaries take stroke/* tokens')
       }
 
-      // B9 — form field on a tinted role background (ADR 0026).
+      // B9 — form field on a tinted role background.
       if (key === 'fills' && t.name.startsWith('form/neutral')) {
         const bg = backgroundOf(node).opaque
         if (bg && /^(bg\/(accent|success|warning|danger|info)|card\/(success|warning|danger|info))/.test(bg.name)) report('B9 form-ghost', 'warning', node, `form/neutral on ${bg.name}`, 'form fields belong on neutral layers')
@@ -299,7 +299,7 @@ const checkStates = (set) => {
       if (ghost && rootFill(c)) report('B8 states', 'warning', c, 'ghost control has a fill when disabled', 'ghost disabled keeps no fill')
     }
     if (state === 'focus') {
-      // ADR 0025: one focus indicator, the focus/ring effect style.
+      // One focus indicator, the focus/ring effect style.
       const uses = (n) => typeof n.effectStyleId === 'string' && effectStyles.get(n.effectStyleId) === 'focus/ring'
       if (!uses(c) && !c.findOne((n) => uses(n))) report('B8 states', 'warning', c, 'focus variant without the focus/ring effect style', 'apply focus/ring; do not recolor strokes for focus')
     }

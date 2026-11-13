@@ -10,7 +10,7 @@ Checks how **components** use color tokens. It reads the file, reports by severi
 
 Scope is component token usage only. Documentation frames around the components (headers, spec lines, explicit Light/Dark modes on doc frames, how many themes a page shows) belong to the documentation skill. The script audits only `COMPONENT_SET`, `COMPONENT` and `INSTANCE` subtrees, but it still reads the surrounding doc frames as the background a component sits on.
 
-The token grammar and the decisions behind every rule are in `docs/adr` (0002 naming, 0008 disabled, 0011 emphasized, 0012 text prominences, 0010 shadows, 0017 surface usage and local modes, 0024 surface group, 0025 focus ring, 0026 form and card scopes). The semantic usage guide and rule catalogue with rationale and fixes are in [references/rules.md](references/rules.md). Read them before explaining a finding or proposing a fix.
+The token grammar and the rules behind every check are in the Storybook Foundations pages: `packages/react/src/docs/foundations/color.mdx` (naming, scopes, opacity, disabled, surfaces) and `elevation-and-focus.mdx` (shadows, focus ring); the generator's rules are in `packages/tokens/README.md`. The semantic usage guide and rule catalogue with rationale and fixes are in [references/rules.md](references/rules.md). Read them before explaining a finding or proposing a fix.
 
 Supplement the script with the semantic usage guide: inspect confirmed element purposes, including window background versus content, form fields, cards and modal backdrops. Label contextual findings separately from script totals; do not claim the script implements these checks. Preserve designer choices for hierarchy, stroke strength and status sentiment, and resolve colors in each component's local mode.
 
@@ -42,7 +42,7 @@ An instance layer without an override inherits the field from its main component
 
 ## Severity
 
-- **error**: the token is wrong by a rule the ADRs fix (a deleted or primitive binding, text on the wrong pairing, disabled not on the disabled set, opacity that changes what renders, contrast below the floor). Fix it.
+- **error**: the token is wrong by a rule the Foundations docs fix (a deleted or primitive binding, text on the wrong pairing, disabled not on the disabled set, opacity that changes what renders, contrast below the floor). Fix it.
 - **warning**: likely wrong, but legitimate exceptions exist (a layer opacity for an animation frame, an fg-filled indicator, an outline control's hover). Show it, and let the designer decide.
 
 ## Front end

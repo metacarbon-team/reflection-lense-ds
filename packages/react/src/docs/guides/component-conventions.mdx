@@ -1,0 +1,109 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Guides/Component conventions" />
+
+# Component conventions
+
+How every component in `@reflection/react` is built. Follow the same rules in a component you compose in a product, and in one you propose to the system.
+
+## Files and exports
+
+| What                  | Where                                                         |
+| --------------------- | ------------------------------------------------------------- |
+| Component             | `src/components/<name>/<name>.tsx`                            |
+| Stories and docs page | `src/components/<name>/<name>.stories.tsx`                    |
+| Barrel                | `src/components/<name>/index.ts` → `export * from './<name>'` |
+| Public API            | re-export from `src/index.ts`                                 |
+| Shared atoms          | `src/lib/` (not exported, except `cn`)                        |
+
+- Relative imports only. No path aliases: the emitted `.d.ts` would keep them unresolved.
+- Every dependency and peer is externalised by the library build automatically from `package.json`.
+- React 19: `ref` is a regular prop. Merge your own ref with the caller's through `composeRefs` (`lib/compose-refs.ts`).
+
+## Styling
+
+- Tailwind v4 utilities on the theme only. No arbitrary values (`bg-[#…]`, `p-[13px]`), no hex, no inline colors, no opacity modifiers on color utilities (`bg-x/50`): opacity comes from the token.
+- Exceptions that are allowed:
+  - Runtime sizes a primitive publishes as CSS variables, written as `max-h-(--radix-select-content-available-height)`.
+  - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
+  - Layout of docs-only grids inside stories.
+- Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
+- Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
+- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
+
+### Variants and class merging
+
+- `cva` only where a part has variants. Fixed classes are plain strings or arrays.
+- Join classes with `cn` (`lib/cn.ts`) = `twMerge(clsx())` extended with the theme's text roles. The caller's `className` goes last, so a utility they pass replaces the component's utility for the same property.
+- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `skeletonVariants`, `tabsListVariants`, `tabsTriggerVariants`.
+
+### Vocabulary of props
+
+| Prop                           | Meaning                                                                                       | Values in use                                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `tone`                         | What the element communicates: maps to a color role                                           | `default`, `accent`, `danger`, status roles (`success`, `warning`, `info`), `inverse` where a dark element sits on a light surface |
+| `variant`                      | Visual weight                                                                                 | `solid`, `outline`, `ghost` (buttons); per component otherwise                                                                     |
+| `size`                         | Height and padding                                                                            | `sm`, `md`, `lg`                                                                                                                   |
+| `state`                        | Freezes an interaction state for docs and tests                                               | `default`, `hover`, `pressed`, `focus`                                                                                             |
+| `disabled`                     | Blocks interaction                                                                            | boolean                                                                                                                            |
+| `asChild`                      | Render the only child with this component's styles and behaviour (Radix `Slot`)               | boolean                                                                                                                            |
+| `leadingSlot` / `trailingSlot` | Content before or after the label, usually a 16 × 16 icon; shown only when set (`hasContent`) | `ReactNode`                                                                                                                        |
+
+`default` means neutral, not "the usual one". Keep one `size` within a group.
+
+## Structure
+
+- **`data-slot` on every part**: `data-slot="button"`, `data-slot="button-leading-slot"`, `data-slot="field-caption"`. It is the public hook for CSS (`*:data-[slot=icon]:size-4`) and tests. Name it `<component>` or `<component>-<part>`.
+- **Composition over configuration**: complex components are compound (`Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`…), each part a thin wrapper over its Radix primitive with our classes.
+- **Radix primitives** for behaviour (focus trap, roving focus, keyboard navigation, positioning, dismiss). Styling and API are ours; never expose a primitive's class names or props that bypass the theme.
+- **`asChild`** is supported on Button, IconButton, Card, Link and NavItem. Under `asChild` a link keeps the link role.
+
+## States
+
+| State                | How it is applied                                                                                                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hover, pressed       | `hover:` and `active:` with the token's paired state (`bg-accent-emphasized-hover`, `bg-ghost-neutral-pressed`). An opaque fill uses its own `*-hover`/`*-pressed`; a transparent control uses `ghost/*`. |
+| Active (current row) | `bg-ghost-<role>-active` on Item `state="active"`, NavItem `active`                                                                                                                                       |
+| Open popup trigger   | Keeps the pressed fill while open: `aria-expanded:bg-*-pressed`                                                                                                                                           |
+| Focus                | `focus-visible:shadow-focus-ring`. See [Elevation and focus](?path=/docs/foundations-elevation-and-focus--docs).                                                                                          |
+| Invalid              | Fields: `data-invalid:border-danger-emphasized` (control frame). Checkbox and Radio: `aria-invalid`.                                                                                                      |
+| Disabled             | The `disabled` role tokens, no shadow, no pointer events. See below.                                                                                                                                      |
+
+The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio and TabsTrigger take it. A disabled control ignores it.
+
+### Disabled
+
+One rule for every component, in `lib/disabled.ts`:
+
+| Element                                   | Attributes                                                                                                                |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Native control (`button`, `input`)        | `disabled` + `data-disabled=""`                                                                                           |
+| Anything else (link, element with a role) | `aria-disabled="true"` + `data-disabled=""`                                                                               |
+| Link under `asChild`                      | `role="link"`, `aria-disabled`, `tabIndex={-1}`, click cancelled, plain `href` removed (`disabledLinkProps`, `linkChild`) |
+
+- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control uses `has-disabled:`.
+- Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
+- Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
+- A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild` use `not-disabled:not-data-disabled:`.
+
+## Forms
+
+- `Field` gives its control an id, the caption as `aria-describedby`, `invalid` and `disabled`, through `useFieldControl`. Explicit props on the control win.
+- Controls that read the Field: Input, Textarea, SelectTrigger, Checkbox, Radio/RadioGroup, Switch. A new form control calls `useFieldControl` too.
+- Input, Textarea and the Select trigger share one frame: `controlFrameClass` (`lib/control-frame.ts`). Reuse it for any new text-entry control; each consumer adds its own focus treatment.
+
+## Color modes and portals
+
+- `data-mode="light|dark"` on `<html>` or any subtree switches every token below it.
+- Dialog, Dropdown Menu, Select, Popover and Toast render in `<body>` through a portal, so they follow the mode on `<html>`, not a subtree's.
+- Tooltip always renders in the opposite mode of its anchor's closest `data-mode` and follows it when it changes.
+- An inverse element is a local mode switch (`data-mode` on the element), not a set of inverse tokens.
+
+## Docs and stories
+
+Every component ships a stories file with:
+
+- `Playground` with controls for every prop.
+- `Variants`, `Sizes`, `States` matrices (including disabled) and slot examples where they apply.
+- Do and Don't guideline pairs (`docs/guideline-pairs.tsx`), hidden from the sidebar.
+- Prop JSDoc on the props type: it is the API reference on the Docs page.

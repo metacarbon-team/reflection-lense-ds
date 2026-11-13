@@ -1,0 +1,125 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Typography" />
+
+# Typography
+
+Text is set with **text roles**. A role is one utility, `text-<role>`, that sets the family, size, line height, weight and tracking, and switches the size between viewports. Components and product code use roles only; the primitives below exist to build roles and to port them.
+
+<div className="flex flex-col gap-2 rounded-lg border border-neutral-subtle bg-surface p-6 text-neutral">
+  <span className="text-display">Display</span>
+  <span className="text-heading">Heading</span>
+  <span className="text-body">Body text for reading.</span>
+  <span className="text-label">Label</span>
+  <span className="text-caption text-neutral-subtle">Caption</span>
+  <span className="text-code">code()</span>
+  <span className="text-overline">Overline</span>
+</div>
+
+## Families
+
+| Family  | Font          | CSS variable                                      | Utility      |
+| ------- | ------------- | ------------------------------------------------- | ------------ |
+| `sans`  | NaN Serf Sans | `--font-family-sans: 'NaN Serf Sans', sans-serif` | `font-sans`  |
+| `serif` | NaN Serf B    | `--font-family-serif: 'NaN Serf B', serif`        | `font-serif` |
+| `mono`  | Geist Mono    | `--font-family-mono: 'Geist Mono', monospace`     | `font-mono`  |
+
+- All three are variable WOFF2 files, self-hosted in `@reflection/theme/fonts.css` with `font-display: swap`. Import it next to `theme.css`.
+- NaN Serf Sans: weights 200–900, no italic. NaN Serf B: 200–900, italic, optical-size axis (`opsz` 8–100) picked by the browser from the font size. Geist Mono: 100–900, italic, Latin subset.
+- Families are the same in every theme and mode.
+
+## Type scale
+
+Each step is a size and a line height, both in rem (1rem = 16px). Line heights sit on a 0.25rem (4px) grid; the smallest size is 0.625rem (10px).
+
+| Step   | Size             | Line height    | Variables                                     | Tailwind      |
+| ------ | ---------------- | -------------- | --------------------------------------------- | ------------- |
+| `2xs`  | 0.625rem · 10px  | 1rem · 16px    | `--font-size-2xs`, `--font-line-height-2xs`   | `--text-2xs`  |
+| `xs`   | 0.75rem · 12px   | 1rem · 16px    | `--font-size-xs`, `--font-line-height-xs`     | `--text-xs`   |
+| `sm`   | 0.8125rem · 13px | 1.25rem · 20px | `--font-size-sm`, `--font-line-height-sm`     | `--text-sm`   |
+| `md`   | 0.875rem · 14px  | 1.25rem · 20px | `--font-size-md`, `--font-line-height-md`     | `--text-md`   |
+| `base` | 1rem · 16px      | 1.5rem · 24px  | `--font-size-base`, `--font-line-height-base` | `--text-base` |
+| `lg`   | 1.125rem · 18px  | 1.75rem · 28px | `--font-size-lg`, `--font-line-height-lg`     | `--text-lg`   |
+| `xl`   | 1.25rem · 20px   | 1.75rem · 28px | `--font-size-xl`, `--font-line-height-xl`     | `--text-xl`   |
+| `2xl`  | 1.5rem · 24px    | 2rem · 32px    | `--font-size-2xl`, `--font-line-height-2xl`   | `--text-2xl`  |
+| `3xl`  | 1.875rem · 30px  | 2.25rem · 36px | `--font-size-3xl`, `--font-line-height-3xl`   | `--text-3xl`  |
+| `4xl`  | 2.25rem · 36px   | 2.5rem · 40px  | `--font-size-4xl`, `--font-line-height-4xl`   | `--text-4xl`  |
+| `5xl`  | 3rem · 48px      | 3rem · 48px    | `--font-size-5xl`, `--font-line-height-5xl`   | `--text-5xl`  |
+| `6xl`  | 3.75rem · 60px   | 3.75rem · 60px | `--font-size-6xl`, `--font-line-height-6xl`   | `--text-6xl`  |
+
+The steps follow Tailwind v4's `--text-*`, with two differences: `2xs` and `sm` (13px) are added, and Tailwind's `sm` (14px) is called `md`.
+
+## Weights
+
+| Name       | Value | Variable                 | Utility         |
+| ---------- | ----- | ------------------------ | --------------- |
+| `light`    | 300   | `--font-weight-light`    | `font-light`    |
+| `normal`   | 400   | `--font-weight-normal`   | `font-normal`   |
+| `medium`   | 500   | `--font-weight-medium`   | `font-medium`   |
+| `semibold` | 600   | `--font-weight-semibold` | `font-semibold` |
+| `bold`     | 700   | `--font-weight-bold`     | `font-bold`     |
+
+Roles use these values only.
+
+## Tracking
+
+In em, so tracking scales with the size.
+
+| Step      | Value    | Variable                  | Utility            |
+| --------- | -------- | ------------------------- | ------------------ |
+| `tighter` | −0.05em  | `--font-tracking-tighter` | `tracking-tighter` |
+| `tight`   | −0.025em | `--font-tracking-tight`   | `tracking-tight`   |
+| `normal`  | 0        | `--font-tracking-normal`  | `tracking-normal`  |
+| `wide`    | 0.025em  | `--font-tracking-wide`    | `tracking-wide`    |
+| `wider`   | 0.05em   | `--font-tracking-wider`   | `tracking-wider`   |
+| `widest`  | 0.1em    | `--font-tracking-widest`  | `tracking-widest`  |
+
+## Text roles
+
+A role takes one step per viewport. Mobile steps apply below 48rem, desktop steps from `(width >= 48rem)` (Tailwind's `md`). A role with extra weights also has one utility per weight: `text-body-medium`, `text-code-bold`.
+
+| Role            | Utility              | Family | Weight | Extra weights    | Desktop | Mobile | Tracking | Other     |
+| --------------- | -------------------- | ------ | ------ | ---------------- | ------- | ------ | -------- | --------- |
+| `display/large` | `text-display-large` | serif  | 300    | —                | `5xl`   | `4xl`  | tight    |           |
+| `display`       | `text-display`       | serif  | 300    | —                | `4xl`   | `3xl`  | tight    |           |
+| `heading/large` | `text-heading-large` | serif  | 400    | —                | `3xl`   | `2xl`  | tight    |           |
+| `heading`       | `text-heading`       | serif  | 400    | —                | `2xl`   | `xl`   | tight    |           |
+| `heading/small` | `text-heading-small` | serif  | 400    | —                | `lg`    | `lg`   | normal   |           |
+| `body/large`    | `text-body-large`    | sans   | 400    | medium, semibold | `lg`    | `base` | normal   |           |
+| `body`          | `text-body`          | sans   | 400    | medium, semibold | `base`  | `base` | normal   |           |
+| `body/small`    | `text-body-small`    | sans   | 400    | medium, semibold | `md`    | `md`   | normal   |           |
+| `body/xsmall`   | `text-body-xsmall`   | sans   | 400    | medium, semibold | `sm`    | `sm`   | normal   |           |
+| `label/large`   | `text-label-large`   | sans   | 500    | —                | `base`  | `base` | normal   |           |
+| `label`         | `text-label`         | sans   | 500    | —                | `md`    | `md`   | normal   |           |
+| `label/small`   | `text-label-small`   | sans   | 500    | —                | `xs`    | `xs`   | normal   |           |
+| `link`          | `text-link`          | sans   | 500    | —                | `base`  | `base` | normal   | underline |
+| `link/small`    | `text-link-small`    | sans   | 500    | —                | `md`    | `md`   | normal   | underline |
+| `code`          | `text-code`          | mono   | 400    | bold             | `md`    | `md`   | normal   |           |
+| `code/small`    | `text-code-small`    | mono   | 400    | bold             | `xs`    | `xs`   | normal   |           |
+| `caption`       | `text-caption`       | sans   | 400    | —                | `xs`    | `xs`   | normal   |           |
+| `caption/small` | `text-caption-small` | sans   | 400    | —                | `2xs`   | `2xs`  | wide     |           |
+| `overline`      | `text-overline`      | sans   | 600    | —                | `xs`    | `xs`   | wider    | uppercase |
+
+Usage in the library: buttons use `label` (sm, md) and `label/large` (lg); form fields use `body/small`; dialog titles use `heading/small`. There are no component-specific text styles.
+
+### Rules
+
+- Set text with a role utility. Do not use raw `text-<step>`, `leading-*`, `tracking-*` or `font-<weight>` in components, and do not add responsive text classes (`md:text-*`): the role already switches by viewport.
+- Color is separate: combine a role with a text color utility, `text-body text-neutral-subtle`.
+- `cn()` knows the roles: `cn('text-body', 'text-heading')` keeps `text-heading`, and `cn('text-body', 'text-neutral')` keeps both.
+
+## Tokens
+
+DTCG export (`@reflection/theme/tokens.json`):
+
+| Path                                                    | Type             | Notes                                                                          |
+| ------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------ |
+| `font/family/<sans\|serif\|mono>`                       | `fontFamily`     |                                                                                |
+| `font/size/<step>`, `font/line-height/<step>`           | `dimension`, rem |                                                                                |
+| `font/weight/<name>`                                    | `fontWeight`     |                                                                                |
+| `font/tracking/<step>`                                  | `number`, em     |                                                                                |
+| `typography/desktop/<role>`, `typography/mobile/<role>` | `typography`     | One composite per role and extra weight, e.g. `typography/desktop/body/medium` |
+
+A composite references the primitives: `fontFamily: "{font.family.sans}"`, `fontSize: "{font.size.base}"`, `fontWeight: "{font.weight.normal}"`. `lineHeight` is the ratio (line height ÷ size) and `letterSpacing` is resolved to rem for that size, because DTCG has no em. The `com.reflection-lense` extension keeps what DTCG cannot express: the line-height step (`lineHeight: "{font.line-height.base}"`), the tracking step, `textDecoration: "underline"` and `textTransform: "uppercase"`.
+
+In TypeScript, `@reflection/tokens` exports `DEFAULT_TYPE_SCALE` (steps, tracking, roles), `FONT_WEIGHTS` and `textStyles(scale, viewport)`, which resolves every role and extra weight for one viewport. `validateTypeScale` checks an edited scale: sizes strictly growing, at least 10px, whole px; line heights on the 4px grid and not smaller than the size; every role on a known step, tracking step and weight.

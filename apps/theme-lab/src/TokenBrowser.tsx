@@ -11,7 +11,7 @@ import {
 import { Input } from '@reflection/react'
 import { Choice, Panel, Segmented } from './ui/lab'
 
-/** A value as shown: the resolved token and the palette step it aliases (ADR 0034); none when the mode lacks the token. */
+/** A value as shown: the resolved token and the palette step it aliases; none when the mode lacks the token. */
 type Cell = { token?: DtcgToken; alias?: string }
 type Row = { name: string; category: string; values: [Cell, Cell]; typography: boolean; shared: boolean }
 const CATEGORIES: Record<string, string> = {
@@ -35,7 +35,7 @@ const CATEGORIES: Record<string, string> = {
   radius: 'Radius',
   border: 'Border width',
 }
-/** Groups that are the same in every mode and viewport (ADR 0029, ADR 0030). */
+/** Groups that are the same in every mode and viewport. */
 const SHARED = /^(font|spacing|size|radius|border)\//
 
 function flatten(group: DtcgGroup, prefix = ''): Record<string, DtcgToken> {

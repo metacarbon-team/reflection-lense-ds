@@ -4,7 +4,7 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Reflection Lense
 
-React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilities on the theme that Style Dictionary builds from the DTCG export of <a href="/" target="_top">Theme Lab</a> (ADR 0032). Complex behaviour (dialog, menus, select, tabs, switch) uses Radix primitives.
+React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilities on the theme that Style Dictionary builds from the DTCG export of <a href="/" target="_top">Theme Lab</a>. Complex behaviour (dialog, menus, select, tabs, switch) uses Radix primitives.
 
 ## Setup
 
@@ -17,12 +17,25 @@ React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilit
 
 Set `data-mode="light"` or `data-mode="dark"` on `<html>`, or on any subtree for a local mode. Portalled content (dialogs, menus, select options) renders in `<body>`, so set the mode on `<html>`.
 
-## Conventions
+## Using components
 
-- Variants are `cva` functions, used only where a part has variants; fixed classes are plain strings, as in shadcn/ui. A component exports its `*Variants` when the call alone gives its look (`buttonVariants`, `badgeVariants`, `tabsTriggerVariants`…), for styling other elements the same way.
 - `className` is merged with `cn` (`tailwind-merge` that knows the theme's text roles): a utility you pass replaces the component's utility for the same property.
+- A component exports its `*Variants` when the call alone gives its look (`buttonVariants`, `badgeVariants`, `tabsTriggerVariants`…), for styling other elements the same way.
 - Every part renders `data-slot="<part>"` for targeting in CSS.
-- Form controls (Input, Textarea, SelectTrigger) take their id, description, invalid and disabled state from the surrounding `Field`.
-- `asChild` on Button, IconButton and Card renders the only child with their styles.
+- Form controls (Input, Textarea, SelectTrigger, Checkbox, Radio, Switch) take their id, description, invalid and disabled state from the surrounding `Field`.
+- `asChild` on Button, IconButton, Card, Link and NavItem renders the only child with their styles.
 
 Use the toolbar's **Mode** control to switch the color mode.
+
+## Where to read next
+
+| Page                                                                     | For                                                                  |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| [Tokens](?path=/docs/foundations-tokens--docs)                           | Where tokens come from, the export, the CSS output, themes and modes |
+| [Color](?path=/docs/foundations-color--docs)                             | Naming, scopes, which token to use where                             |
+| [Typography](?path=/docs/foundations-typography--docs)                   | Fonts, the type scale, text roles                                    |
+| [Dimensions](?path=/docs/foundations-dimensions--docs)                   | Spacing, sizes, radius, borders                                      |
+| [Elevation and focus](?path=/docs/foundations-elevation-and-focus--docs) | Shadows and the focus ring                                           |
+| [Component conventions](?path=/docs/guides-component-conventions--docs)  | How every component is built                                         |
+| [Composing components](?path=/docs/guides-composing-components--docs)    | Building what is missing, and when to propose it to the system       |
+| [Known issues](?path=/docs/guides-known-issues--docs)                    | Gaps between the rules and the code today, and planned improvements  |

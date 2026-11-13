@@ -1,17 +1,18 @@
-// Builds the Tailwind v4 theme from the DTCG export of Theme Lab (ADR 0032).
+// Builds the Tailwind v4 theme from the DTCG export of Theme Lab.
 //
-// tokens/*.tokens.json → dist/theme.css    CSS variables per mode + Tailwind namespaces + text role utilities
-//                      → dist/tw-merge.js  tailwind-merge extension with the theme's custom class names
+// tokens/*.tokens.json → dist/theme.css       CSS variables per mode + Tailwind namespaces + text role utilities
+//                      → dist/tw-merge.js     tailwind-merge extension with the theme's custom class names
+//                      → dist/utilities.json  token name → utility (`bg/accent` → `bg-accent`), for docs
 //
 // Variables keep the canonical token names (`bg/accent/hover` → `--bg-accent-hover`), so runtime themes
 // set the same variables. Tailwind namespaces only reference them (`@theme inline reference`).
-// Semantic colors keep their palette aliases (ADR 0034): `--bg-accent: var(--palette-light-accent-650)`,
+// Semantic colors keep their palette aliases: `--bg-accent: var(--palette-light-accent-650)`,
 // and a translucent color mixes its step with transparent at its own alpha.
 
 import StyleDictionary from 'style-dictionary'
 import type { Dictionary, TransformedToken } from 'style-dictionary/types'
 
-/** Desktop text steps apply from Tailwind's `md` breakpoint; below it the mobile steps (ADR 0030). */
+/** Desktop text steps apply from Tailwind's `md` breakpoint; below it the mobile steps. */
 const DESKTOP_FROM = '48rem'
 const GENERIC_FAMILY: Record<string, string> = { sans: 'sans-serif', serif: 'serif', mono: 'monospace' }
 const EXTENSION = 'com.reflection-lense'
@@ -27,6 +28,24 @@ const COLOR_NAMESPACES: Record<string, { namespace: string; keep: boolean }> = {
   ghost: { namespace: 'background-color', keep: true },
   fg: { namespace: 'text-color', keep: false },
   stroke: { namespace: 'border-color', keep: false },
+}
+/** Utility prefix of each namespace: `--background-color-accent` → `bg-accent`. */
+const UTILITY_PREFIX: Record<string, string> = {
+  'background-color': 'bg',
+  'text-color': 'text',
+  'border-color': 'border',
+}
+
+/**
+ * Tailwind theme key of a mode token (path without the mode), or none when it has no utility.
+ * shadow/<level> → `shadow-<level>`, focus/ring → `shadow-focus-ring`, colors by `COLOR_NAMESPACES`.
+ */
+function themeKey(path: string[], type: string | undefined): { namespace: string; name: string } | undefined {
+  const [group, ...rest] = path
+  if (type === 'shadow') return { namespace: 'shadow', name: (group === 'shadow' ? rest : path).join('-') }
+  const target = COLOR_NAMESPACES[group!]
+  if (!target) return undefined
+  return { namespace: target.namespace, name: (target.keep ? path : rest).join('-') }
 }
 
 interface Dimension {
@@ -67,8 +86,27 @@ function color(c: Color): string {
   const alpha = c.alpha ?? 1
   return `#${c.components.map(hex2).join('')}${alpha < 1 ? hex2(alpha) : ''}`
 }
-const shadow = (layers: ShadowLayer[]) =>
-  layers.map((l) => [l.offsetX, l.offsetY, l.blur, l.spread].map(dimension).join(' ') + ` ${color(l.color)}`).join(', ')
+/**
+ * A shadow whose layer colors alias color tokens of the mode references their variables, so a runtime
+ * theme that sets the colors (`--focus-accent`, `--shadow-xs-contact`) also sets the shadow.
+ */
+function shadow(layers: ShadowLayer[], original: unknown): string {
+  const aliases = Array.isArray(original) ? (original as { color?: unknown }[]) : []
+  return layers
+    .map((l, i) => {
+      const alias = aliases[i]?.color
+      const c = typeof alias === 'string' && alias.startsWith('{') ? cssVarRef(alias) : color(l.color)
+      return [l.offsetX, l.offsetY, l.blur, l.spread].map(dimension).join(' ') + ` ${c}`
+    })
+    .join(', ')
+}
+
+/** `{light.focus.accent.$root}` → `var(--focus-accent)`: the mode and `$root` are not part of the name. */
+const cssVarRef = (alias: string) => {
+  const path = alias.slice(1, -1).split('.')
+  const from = MODES.includes(path[0] as never) ? 1 : 0
+  return `var(${cssVar(path.slice(from).filter((p) => p !== '$root'))})`
+}
 
 /** Alpha as a percentage for `color-mix`, exact to the 8-bit value it came from. */
 const percent = (alpha: number) => `${Math.round(alpha * 1e6) / 1e4}%`
@@ -89,7 +127,7 @@ function value(token: TransformedToken): string {
     case 'dimension':
       return dimension(v as Dimension)
     case 'shadow':
-      return shadow(v as ShadowLayer[])
+      return shadow(v as ShadowLayer[], token.original.$value)
     case 'fontWeight':
       return String(v)
     case 'fontFamily': {
@@ -97,7 +135,7 @@ function value(token: TransformedToken): string {
       return [`'${v as string}'`, GENERIC_FAMILY[name]].filter(Boolean).join(', ')
     }
     case 'number':
-      // The only number tokens are tracking steps, in em (ADR 0031).
+      // The only number tokens are tracking steps, in em.
       if (token.path[1] !== 'tracking') throw new Error(`Unexpected number token: ${token.path.join('.')}`)
       return `${v as number}em`
     default:
@@ -114,7 +152,7 @@ interface TextRole {
   desktop: Record<string, string>
 }
 
-/** Text role utilities from the `typography/<viewport>/<style>` composites (ADR 0030). */
+/** Text role utilities from the `typography/<viewport>/<style>` composites. */
 function textRoles(tokens: TransformedToken[]): TextRole[] {
   const roles = new Map<string, TextRole>()
   for (const token of tokens) {
@@ -153,7 +191,7 @@ function themeCss({ allTokens }: Dictionary, source: string): string {
       (ns) => `--${ns}-*: initial;`,
     ),
     '',
-    // Tailwind's spacing multiplier is spacing/1 (ADR 0029): `p-4` = 4 × 0.25rem.
+    // Tailwind's spacing multiplier is spacing/1: `p-4` = 4 × 0.25rem.
     '--spacing: var(--spacing-1);',
   ]
   // Named sizes are containers; numeric sizes mirror spacing.
@@ -169,19 +207,23 @@ function themeCss({ allTokens }: Dictionary, source: string): string {
     if (kind === 'size')
       theme.push(`--text-${name}: ${v};`, `--text-${name}--line-height: var(--font-line-height-${name});`)
   }
+  const darkByName = new Map(modes.dark.map((t) => [cssVar(segments(t, 1)), t]))
   for (const t of modes.light) {
     const path = segments(t, 1)
-    const [group, ...rest] = path
+    const key = themeKey(path, t.$type)
+    if (!key) continue
     if (t.$type === 'shadow') {
-      // shadow/<level> and focus/ring
-      const name = group === 'shadow' ? rest.join('-') : path.join('-')
-      theme.push(`--shadow-${name}: var(${cssVar(path)});`)
+      // shadow/<level> and focus/ring. A var() inside a custom property resolves where that property is
+      // declared, so `--focus-ring` set on [data-mode] keeps the colors of that element. Writing the
+      // composite itself into the utility resolves its color variables at the element instead, so a
+      // runtime theme on a subtree reaches shadows too. Only possible when the composite is the same text
+      // in both modes (geometry shared, colors aliased); otherwise the utility points at the variable.
+      const light = value(t)
+      const dark = darkByName.get(cssVar(path))
+      theme.push(`--shadow-${key.name}: ${dark && value(dark) === light ? light : `var(${cssVar(path)})`};`)
       continue
     }
-    const target = COLOR_NAMESPACES[group!]
-    if (!target) continue
-    const name = (target.keep ? path : rest).join('-')
-    theme.push(`--${target.namespace}-${name}: var(${cssVar(path)});`)
+    theme.push(`--${key.namespace}-${key.name}: var(${cssVar(path)});`)
   }
 
   const primitives = shared.map((t) => `${cssVar(segments(t))}: ${value(t)};`)
@@ -224,15 +266,24 @@ function themeCss({ allTokens }: Dictionary, source: string): string {
   ].join('\n')
 }
 
+/** Token name → Tailwind utility, for docs and tools that show which utility a token is used through. */
+function utilitiesJson({ allTokens }: Dictionary): string {
+  const map: Record<string, string> = {}
+  for (const t of allTokens) {
+    if (t.path[0] !== 'light') continue
+    const path = segments(t, 1)
+    const key = themeKey(path, t.$type)
+    if (key) map[path.join('/')] = `${UTILITY_PREFIX[key.namespace] ?? key.namespace}-${key.name}`
+  }
+  return `${JSON.stringify(map, null, 2)}\n`
+}
+
 function twMergeJs({ allTokens }: Dictionary): string {
   const roles = textRoles(allTokens).map((r) => r.name)
   // Shadow utility names, so `shadow-focus-ring` replaces `shadow-xs` instead of reading as a shadow color.
   const shadows = allTokens
     .filter((t) => t.path[0] === 'light' && t.$type === 'shadow')
-    .map((t) => {
-      const path = segments(t, 1)
-      return path[0] === 'shadow' ? path.slice(1).join('-') : path.join('-')
-    })
+    .map((t) => themeKey(segments(t, 1), t.$type)!.name)
   const config = {
     extend: {
       theme: { shadow: shadows },
@@ -266,7 +317,7 @@ const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null 
 
 /**
  * Style Dictionary does not resolve DTCG 2025.10 JSON Pointer references. A translucent color takes its
- * components from a palette step by `$ref` (ADR 0034): resolve the pointer, and keep the step as an
+ * components from a palette step by `$ref`: resolve the pointer, and keep the step as an
  * alias in `$extensions` so the CSS can reference the palette variable.
  */
 function resolvePointers(root: Json): Json {
@@ -315,6 +366,7 @@ const sd = new StyleDictionary({
       'reflection/tailwind-theme': ({ dictionary }) => themeCss(dictionary, SOURCE),
       'reflection/tw-merge': ({ dictionary }) => twMergeJs(dictionary),
       'reflection/tw-merge-dts': () => TW_MERGE_DTS,
+      'reflection/utilities': ({ dictionary }) => utilitiesJson(dictionary),
     },
   },
   platforms: {
@@ -326,6 +378,7 @@ const sd = new StyleDictionary({
         { destination: 'theme.css', format: 'reflection/tailwind-theme' },
         { destination: 'tw-merge.js', format: 'reflection/tw-merge' },
         { destination: 'tw-merge.d.ts', format: 'reflection/tw-merge-dts' },
+        { destination: 'utilities.json', format: 'reflection/utilities' },
       ],
     },
   },

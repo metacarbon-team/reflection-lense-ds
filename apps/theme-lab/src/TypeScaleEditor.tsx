@@ -13,7 +13,7 @@ import { Choice, Panel, Section } from './ui/lab'
 const px = (rem: number) => `${Math.round(rem * 16 * 100) / 100}px`
 const FAMILY = { sans: 'var(--font-family-sans)', serif: 'var(--font-family-serif)', mono: 'var(--font-family-mono)' }
 
-/** Steps of the scale in rem (ADR 0030): size and line height, px shown as the Figma value. */
+/** Steps of the scale in rem: size and line height, px shown as the Figma value. */
 export function TypeStepsEditor({
   value,
   onChange,
@@ -92,7 +92,7 @@ export function TypeRolesPreview({
   return (
     <Panel
       title="Text roles"
-      description="Each role takes a step per viewport and a tracking step (ADR 0030, 0031). Samples use the bundled NaN Serf fonts; NaN Serf B picks its optical size from the font size."
+      description="Each role takes a step per viewport and a tracking step. Samples use the bundled NaN Serf fonts; NaN Serf B picks its optical size from the font size."
     >
       {!valid && (
         <p className="text-body-small text-danger" role="alert">

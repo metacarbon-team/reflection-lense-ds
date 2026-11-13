@@ -18,7 +18,7 @@ export interface DtcgToken {
   $extensions?: Record<string, unknown>
 }
 
-/** Namespace for values DTCG has no field for (ADR 0030). */
+/** Namespace for values DTCG has no field for. */
 export const DTCG_EXTENSION = 'com.reflection-lense'
 const FAMILIES = { sans: 'NaN Serf Sans', serif: 'NaN Serf B', mono: 'Geist Mono' }
 
@@ -26,7 +26,7 @@ export interface DtcgGroup {
   [name: string]: DtcgGroup | DtcgToken
 }
 
-/** Mode-independent groups; the all-modes document stores them once (ADR 0029, ADR 0030). */
+/** Mode-independent groups; the all-modes document stores them once. */
 const SHARED_GROUPS = ['font', 'spacing', 'size', 'radius', 'border'] as const
 const color = (hex: string) => {
   const { r, g, b, a } = hexToRgba(hex)
@@ -52,14 +52,27 @@ export interface DtcgOptions {
   shadows?: ShadowParams
   typeScale?: TypeScaleParams
   viewport?: Viewport
-  /** Role palette the colors alias; generated from the theme when left out (ADR 0013). */
+  /** Role palette the colors alias; generated from the theme when left out. */
   palette?: ModePalette
-  /** Where the palette group sits in the document; `palette` in a single-mode file (ADR 0034). */
+  /** Where the palette group sits in the document; `palette` in a single-mode file. */
   palettePath?: string[]
+  /** Where this mode's semantic tokens sit in the document; the root in a single-mode file. */
+  modePath?: string[]
+}
+
+/** A DTCG alias of a token of this mode: `{focus.accent.$root}` when the token is also a group. */
+function aliasOf(result: DtcgGroup, name: string, modePath: string[]): string {
+  const path = name.split('/')
+  const node = path.reduce<DtcgGroup | DtcgToken | undefined>(
+    (group, key) => (group && !('$value' in group) ? (group as DtcgGroup)[key] : undefined),
+    result,
+  )
+  if (!node) throw new Error(`No token to alias: ${name}`)
+  return `{${[...modePath, ...path, ...('$value' in node ? [] : ['$root'])].join('.')}}`
 }
 
 /**
- * The palette group and the semantic colors that alias it (ADR 0034). An opaque color is a DTCG alias
+ * The palette group and the semantic colors that alias it. An opaque color is a DTCG alias
  * of its step; a translucent one takes the step's components by a JSON Pointer `$ref` and keeps its
  * own alpha, since an alias cannot change alpha.
  */
@@ -91,13 +104,15 @@ function putColors(result: DtcgGroup, theme: ModeTheme, palette: ModePalette, ro
 
 /**
  * One color mode and type viewport per file; no proprietary modes extension. Semantic colors alias
- * the palette group of the same file (ADR 0034).
+ * the palette group of the same file.
  */
 export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
   const result: DtcgGroup = {}
   const put = (name: string, $type: DtcgToken['$type'], $value: unknown) =>
     insert(result, name.split('/'), { $type, $value })
   putColors(result, theme, options.palette ?? generateRolePalette(theme), options.palettePath ?? ['palette'])
+  // Shadow layers alias their color tokens, so a theme that sets the colors also sets the shadows.
+  const alias = (name: string) => aliasOf(result, name, options.modePath ?? [])
 
   const shadows = generateModeShadows(theme, options.shadows)
   for (const token of Object.values(shadows.colors)) put(token.name, 'color', color(token.value))
@@ -107,7 +122,7 @@ export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
       if (!layer) return []
       return [
         {
-          color: color(shadows.colors[`shadow/${level.name}/${name}`]!.value),
+          color: alias(`shadow/${level.name}/${name}`),
           offsetX: px(0),
           offsetY: px(layer.y),
           blur: px(layer.blur),
@@ -117,9 +132,9 @@ export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
     })
     put(`shadow/${level.name}`, 'shadow', layers)
   }
-  // The focus ring of ADR 0025: a 1px ring over a 4px translucent halo, ring first (on top).
+  // The focus ring: a 1px ring over a 4px translucent halo, ring first (on top).
   const ring = (token: string, spread: number) => ({
-    color: color(theme.tokens[token]!.value),
+    color: alias(token),
     offsetX: px(0),
     offsetY: px(0),
     blur: px(0),
@@ -149,7 +164,7 @@ export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
         fontFamily: `{font.family.${style.family}}`,
         fontSize: `{font.size.${style.step.name}}`,
         fontWeight: `{font.weight.${weightName(style.weight)}}`,
-        // DTCG has no em: tracking resolved against this style's size (ADR 0031).
+        // DTCG has no em: tracking resolved against this style's size.
         letterSpacing: rem(Math.round(style.tracking.em * style.step.size * 1e6) / 1e6),
         lineHeight: Math.round((style.step.lineHeight / style.step.size) * 10000) / 10000,
       },
@@ -162,14 +177,15 @@ export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
 
 /**
  * All modes as ordinary DTCG groups; the type scale, font families and dimensions are exported once.
- * Each mode's palette sits under `palette/<mode>`, next to the mode's semantic colors (ADR 0034).
+ * Each mode's palette sits under `palette/<mode>`, next to the mode's semantic colors.
  */
 export function toDtcgAllModes(
   theme: Theme,
   options: { shadows?: ShadowParams; typeScale?: TypeScaleParams; palettes?: Partial<Record<Mode, ModePalette>> } = {},
 ): DtcgGroup {
   const { palettes, ...rest } = options
-  const mode = (m: Mode) => toDtcg(theme[m], { ...rest, palette: palettes?.[m], palettePath: ['palette', m] })
+  const mode = (m: Mode) =>
+    toDtcg(theme[m], { ...rest, palette: palettes?.[m], palettePath: ['palette', m], modePath: [m] })
   const light = mode('light')
   const dark = mode('dark')
   const mobile = toDtcg(theme.light, { ...rest, palette: palettes?.light, viewport: 'mobile' })
