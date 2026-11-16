@@ -1,7 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Dialog as DialogPrimitive } from 'radix-ui'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { IconButton } from '../icon-button/icon-button'
 
@@ -18,7 +19,13 @@ export const DialogClose = (props: ComponentProps<typeof DialogPrimitive.Close>)
 )
 
 export type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
-  /** The ghost close button in the header corner. */
+  /**
+   * `inline` aligns the text to the left and puts the actions in one row on the right. `stacked` centers
+   * the header and stacks full-width actions, which suits short confirmations. The header and the footer
+   * follow it.
+   */
+  layout?: 'inline' | 'stacked'
+  /** The ghost close button in the header corner. It is on in `inline` and off in `stacked`, unless you set it. */
   showCloseButton?: boolean
   /** Accessible name of the close button. */
   closeLabel?: string
@@ -31,7 +38,8 @@ export type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> 
 export function DialogContent({
   className,
   children,
-  showCloseButton = true,
+  layout = 'inline',
+  showCloseButton = layout === 'inline',
   closeLabel = 'Close',
   ...props
 }: DialogContentProps) {
@@ -43,6 +51,7 @@ export function DialogContent({
       >
         <DialogPrimitive.Content
           data-slot="dialog-content"
+          data-layout={layout}
           data-close-button={showCloseButton || undefined}
           className={cn(
             'group/dialog relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none',
@@ -70,14 +79,32 @@ export function DialogContent({
   )
 }
 
-/** Title and description. Next to the close button it keeps the header gap (12px) to it. */
-export function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
+export type DialogHeaderProps = ComponentProps<'div'> & {
+  /** An Icon Box above the title that sets the tone, such as a warning. Keep it to one small icon. The header shows the slot when it is set. */
+  iconBox?: ReactNode
+}
+
+/** Title and description, with an optional `iconBox` above them. Next to the close button it keeps the header gap (12px) to it. In `stacked` the text and the iconBox are centered. */
+export function DialogHeader({ className, iconBox, children, ...props }: DialogHeaderProps) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-1 px-4 pt-4 group-data-close-button/dialog:pr-15', className)}
+      className={cn(
+        'flex flex-col gap-3 px-4 pt-4 group-data-close-button/dialog:pr-15',
+        'group-data-[layout=stacked]/dialog:items-center group-data-[layout=stacked]/dialog:text-center',
+        className,
+      )}
       {...props}
-    />
+    >
+      {hasContent(iconBox) && (
+        <div data-slot="dialog-icon-box" className="flex">
+          {iconBox}
+        </div>
+      )}
+      <div data-slot="dialog-heading" className="flex w-full flex-col gap-1">
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -116,10 +143,25 @@ const dialogFooterVariants = cva('flex gap-2 p-4', {
   defaultVariants: { layout: 'inline' },
 })
 
-export function DialogFooter({
-  className,
-  layout,
-  ...props
-}: ComponentProps<'div'> & VariantProps<typeof dialogFooterVariants>) {
-  return <div data-slot="dialog-footer" className={cn(dialogFooterVariants({ layout }), className)} {...props} />
+// Without `layout` the footer follows the `layout` of DialogContent.
+const dialogFooterAuto = [
+  'flex flex-wrap items-center justify-end gap-2 p-4',
+  'group-data-[layout=stacked]/dialog:flex-col group-data-[layout=stacked]/dialog:flex-nowrap',
+  'group-data-[layout=stacked]/dialog:items-stretch group-data-[layout=stacked]/dialog:justify-start',
+  'group-data-[layout=stacked]/dialog:*:w-full',
+]
+
+export type DialogFooterProps = ComponentProps<'div'> & {
+  /** Sets the footer layout on its own. By default it follows the `layout` of DialogContent. */
+  layout?: VariantProps<typeof dialogFooterVariants>['layout']
+}
+
+export function DialogFooter({ className, layout, ...props }: DialogFooterProps) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn(layout === undefined ? dialogFooterAuto : dialogFooterVariants({ layout }), className)}
+      {...props}
+    />
+  )
 }
