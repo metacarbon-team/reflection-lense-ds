@@ -71,3 +71,17 @@ export const CalendarIcon = (props: IconProps) => (
     <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" />
   </Icon>
 )
+
+export const FileIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 2H4.5A1.5 1.5 0 003 3.5v9A1.5 1.5 0 004.5 14h7a1.5 1.5 0 001.5-1.5V6L9 2z" />
+    <path d="M9 2v4h4" />
+  </Icon>
+)
+
+export const CopyIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+    <path d="M10.5 5.5v-2A1.5 1.5 0 009 2H3.5A1.5 1.5 0 002 3.5V9a1.5 1.5 0 001.5 1.5h2" />
+  </Icon>
+)
