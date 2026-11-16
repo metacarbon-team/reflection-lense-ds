@@ -1,10 +1,11 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ComponentProps } from 'react'
 import { Checkbox } from '../checkbox'
 import { RadioGroup, Radio } from '../radio'
 import { Switch } from '../switch'
 import { ChevronRightIcon } from '../../lib/icons'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 import { Item } from './item'
 
@@ -290,20 +291,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} [&_p]:mb-0!`}>
-          {/* Figma has a caption only over the Do card, so it takes the whole row; the cards sit side by side below. */}
-          <Description of={Do} />
-          <div className="grid grid-cols-2 gap-x-6">
-            <div>
-              <Canvas of={Do} />
-            </div>
-            <div>
-              <Canvas of={Dont} />
-            </div>
-          </div>
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

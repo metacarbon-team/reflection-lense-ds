@@ -1,8 +1,9 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { Button } from '../button/button'
 import { toast, Toast, ToastAction, ToastProvider, Toaster, ToastViewport } from './toast'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 
 const Glyph = ({ children }: { children: ReactNode }) => (
@@ -392,20 +393,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} [&_p]:mb-0!`}>
-          {/* Figma has a caption only over the Do card, so it takes the whole row; the cards sit side by side below. */}
-          <Description of={Do} />
-          <div className="grid grid-cols-2 gap-x-6">
-            <div>
-              <Canvas of={Do} />
-            </div>
-            <div>
-              <Canvas of={Dont} />
-            </div>
-          </div>
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

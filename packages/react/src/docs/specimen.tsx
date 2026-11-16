@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 /** A Do or Don't badge attached to the top of the card, as in Figma, over the example. */
 export function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: ReactNode }) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
       <span
         className={
           tone === 'do'
@@ -15,7 +15,7 @@ export function Specimen({ tone, children }: { tone: 'do' | 'dont'; children: Re
       >
         {tone === 'do' ? 'Do' : 'Don’t'}
       </span>
-      <div className="flex justify-center px-6 pb-6">{children}</div>
+      <div className="flex flex-1 items-center justify-center px-6 pb-6">{children}</div>
     </div>
   )
 }
