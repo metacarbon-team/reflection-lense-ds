@@ -331,7 +331,7 @@ export const Variants: Story = {
   ),
 }
 
-/** `leadingSlot` and `trailingSlot` sit inside a text cell or a header, around the label, and hold an icon, a checkbox, a tag or an avatar. They show only when set. The tag, checkbox and button cells have no slots. */
+/** `leadingSlot` and `trailingSlot` sit inside a text cell or a header, around the label, and hold an icon. They show only when set. The tag, checkbox and button cells have no slots: their component goes in the cell itself. */
 export const Slots: Story = {
   render: () => (
     <div className="w-160">

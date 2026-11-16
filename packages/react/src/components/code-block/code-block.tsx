@@ -128,26 +128,26 @@ export function CodeBlockCopyButton({
   )
 }
 
-export type CodeBlockProps = Omit<ComponentProps<'figure'>, 'title'> & {
+export type CodeBlockProps = Omit<ComponentProps<'figure'>, 'title' | 'children' | 'content'> & {
   /** Filename or language label shown in the header, for example `transport/client.ts` or `tsx`. It also names the code region. */
   title: string
   /** Header content before the title, 16 × 16. A file icon when it is not set; pass `null` to hide it, as in a snippet labelled by its language. */
   leadingSlot?: ReactNode
   /** Header actions at the end. A copy button when it is not set; for a diff add a Diff Stat before it. Pass `null` to hide it. */
   trailingSlot?: ReactNode
-  /** The code: `CodeLine` rows, and `CodeLineHunk` for the `@@` range headers of a diff. */
-  children?: ReactNode
+  /** The `content` slot of Figma, the Card slot below the header. The code: `CodeLine` rows, and `CodeLineHunk` for the `@@` range headers of a diff. */
+  content?: ReactNode
 }
 
 /**
  * Code Block: read-only code, the way chat and coding tools show it. A header with a title and actions
  * over a list of code lines. It wraps `Card` and runs the header and the lines edge to edge. It is
  * not an editor: for code people edit, use a code editor. A long line scrolls sideways, and the
- * scrolling region takes the keyboard focus. The three types of Figma are compositions: a file
+ * scrolling region takes the keyboard focus. The three variants of Figma (`file`, `code` and `diff`) are compositions: a file
  * snippet (the defaults), a code snippet labelled by its language (`leadingSlot={null}`) and a diff
  * (`CodeLine` rows of type `added` and `removed`, a `CodeLineHunk` and a Diff Stat in `trailingSlot`).
  */
-export function CodeBlock({ title, leadingSlot, trailingSlot, children, className, ...props }: CodeBlockProps) {
+export function CodeBlock({ title, leadingSlot, trailingSlot, content, className, ...props }: CodeBlockProps) {
   const titleId = useId()
   return (
     <Card asChild padding="none" data-slot="code-block" className={cn('gap-0', className)}>
@@ -160,7 +160,7 @@ export function CodeBlock({ title, leadingSlot, trailingSlot, children, classNam
           tabIndex={0}
           className="overflow-x-auto rounded-b-xl outline-none focus-visible:shadow-focus-ring"
         >
-          <div className="w-max min-w-full py-2">{children}</div>
+          <div className="w-max min-w-full py-2">{content}</div>
         </div>
       </figure>
     </Card>

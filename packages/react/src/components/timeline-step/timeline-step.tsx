@@ -34,6 +34,6 @@ export const TimelineStepContent = ({ className, children, ...props }: Component
       data-slot="timeline-step-divider"
       className="w-px shrink-0 self-stretch border-l border-neutral-subtle"
     />
-    <div className="flex min-w-0 flex-1 flex-col items-start overflow-clip">{children}</div>
+    <div className="flex min-w-0 flex-1 flex-col items-stretch overflow-clip">{children}</div>
   </CollapsibleContent>
 )

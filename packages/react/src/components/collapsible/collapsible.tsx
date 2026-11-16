@@ -13,7 +13,7 @@ export const Collapsible = (props: ComponentProps<typeof CollapsiblePrimitive.Ro
 )
 
 export type CollapsibleTriggerProps = Omit<ComponentProps<typeof CollapsiblePrimitive.Trigger>, 'asChild'> & {
-  /** Freezes `hover` for docs and tests. Real hover needs no value. The open look comes from `aria-expanded`, not from a prop. */
+  /** Freezes `hover` for docs and tests. Real hover needs no value. The `active` look of Figma (open) comes from `aria-expanded`, and `disabled` from the `disabled` prop, so neither is a value here. */
   state?: 'default' | 'hover'
   /** Content before the label, 16 × 16: usually an icon. The trigger shows the slot when it is set. */
   leadingSlot?: ReactNode

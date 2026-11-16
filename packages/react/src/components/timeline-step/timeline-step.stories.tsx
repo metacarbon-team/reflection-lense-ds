@@ -25,11 +25,13 @@ const codeLines = [
 
 /** The terminal output of a step: a Code Block labelled `tsx`, as in Figma. */
 const CodeSample = () => (
-  <CodeBlock title="tsx" leadingSlot={null}>
-    {codeLines.map((code, index) => (
+  <CodeBlock
+    title="tsx"
+    leadingSlot={null}
+    content={codeLines.map((code, index) => (
       <CodeLine key={code} number={index + 1} code={code} />
     ))}
-  </CodeBlock>
+  />
 )
 
 const TextRows = () => <Item label="Edited app/layout.tsx" />
@@ -39,6 +41,8 @@ const slotIcons = { none: undefined, circle: <StepIcon /> }
 const meta = {
   title: 'Components/Timeline Step',
   component: TimelineStepTrigger,
+  // The Docs table lists the root too, which owns `open`, `defaultOpen` and `onOpenChange`.
+  subcomponents: { TimelineStep, TimelineStepContent },
   args: { children: 'Updated the page metadata', leadingSlot: 'circle', disabled: false },
   argTypes: {
     leadingSlot: { control: 'inline-radio', options: ['none', 'circle'], mapping: slotIcons },
@@ -68,7 +72,7 @@ export const Playground: Story = {
   ),
 }
 
-/** Closed and open, with text rows and with a code block, as in the Figma matrix. Open is `aria-expanded`, not a prop. */
+/** Closed and open, with text rows and with a code block, as in the Figma matrix, where it is the `open` property: `false` and `true`. In code the step opens with `open` or `defaultOpen` on `TimelineStep`. */
 export const Variants: Story = {
   decorators: [],
   render: () => (
@@ -162,6 +166,7 @@ export const GuidelineKeepTheDividerBesideTheContentDo: Story = {
           <TimelineStepTrigger leadingSlot={<StepIcon />}>Collapsible</TimelineStepTrigger>
           <TimelineStepContent>
             <TextRows />
+            <Item label="Edited app/page.tsx" />
           </TimelineStepContent>
         </TimelineStep>
       </div>
@@ -179,8 +184,9 @@ export const GuidelineKeepTheDividerBesideTheContentDont: Story = {
         <TimelineStep open>
           <TimelineStepTrigger leadingSlot={<StepIcon />}>Collapsible</TimelineStepTrigger>
           {/* The same panel without the divider: the details no longer point at their header. */}
-          <CollapsibleContent className="pl-5">
+          <CollapsibleContent className="pl-5.25">
             <TextRows />
+            <Item label="Edited app/page.tsx" />
           </CollapsibleContent>
         </TimelineStep>
       </div>

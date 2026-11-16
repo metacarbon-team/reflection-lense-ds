@@ -69,11 +69,11 @@ const tableHeaderVariants = cva(
 )
 
 export type TableHeaderProps = Omit<ComponentProps<'th'>, 'children'> & {
-  /** The column title. One line, cut with an ellipsis when it does not fit. For a column with no visible title, pass visually hidden text such as `<span className="sr-only">Actions</span>`, so the column still has a name. */
-  label?: ReactNode
-  /** Content before the title, usually a small icon. Shown only when set. */
+  /** The column title. Required. One line, cut with an ellipsis when it does not fit. For a column with no visible title, pass visually hidden text such as `<span className="sr-only">Actions</span>`, so the column still has a name. */
+  label: ReactNode
+  /** An icon before the title. Shown only when set. */
   leadingSlot?: ReactNode
-  /** Content after the title, such as a sort icon. Shown only when set. */
+  /** An icon after the title, such as a sort icon. Shown only when set. */
   trailingSlot?: ReactNode
   /** Freezes `hover` for docs and tests. In `default` the browser decides. */
   state?: VariantProps<typeof tableHeaderVariants>['state']
@@ -133,9 +133,9 @@ export type TableCellProps = Omit<ComponentProps<'td'>, 'children'> & {
   label?: ReactNode
   /** A second line under the label, in a quieter color. `text` type only. */
   subtitle?: ReactNode
-  /** Content before the label, such as an icon, a checkbox or an avatar. Shown only when set. `text` type only. */
+  /** An icon before the label. Shown only when set. `text` type only: a checkbox, a tag or a button goes in the cell of its own `type`. */
   leadingSlot?: ReactNode
-  /** Content after the label, such as an icon. Shown only when set. `text` type only. */
+  /** An icon after the label. Shown only when set. `text` type only. */
   trailingSlot?: ReactNode
   /** The content of the `tag`, `checkbox` and `button` types: a `Tag`, a `Checkbox` or an `IconButton`. Any content that fits a cell will do. Give a checkbox and an icon button an `aria-label`. */
   children?: ReactNode

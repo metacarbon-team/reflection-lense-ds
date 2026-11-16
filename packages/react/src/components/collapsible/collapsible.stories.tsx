@@ -6,7 +6,7 @@ import { ChevronDownIcon } from '../../lib/icons'
 import { Specimen } from '../../docs/specimen'
 import { GuidelinePairs } from '../../docs/guideline-pairs'
 
-const ToolsIcon = () => (
+const PlaceholderIcon = () => (
   <svg
     viewBox="0 0 16 16"
     fill="none"
@@ -16,21 +16,21 @@ const ToolsIcon = () => (
     strokeLinejoin="round"
     aria-hidden="true"
   >
-    <path d="M2 4h7M12 4h2M2 12h2M7 12h7M10 2v4M5 10v4" />
+    <circle cx="8" cy="8" r="5.25" />
   </svg>
 )
 
-const states = ['default', 'hover', 'open', 'disabled'] as const
+const states = ['default', 'hover', 'active', 'disabled'] as const
 
-const slotIcons = { none: undefined, tools: <ToolsIcon /> }
+const slotIcons = { none: undefined, placeholder: <PlaceholderIcon /> }
 
 const meta = {
   title: 'Components/Collapsible',
   component: CollapsibleTrigger,
-  args: { children: 'Collapsible', state: 'default', leadingSlot: 'tools', disabled: false },
+  args: { children: 'Collapsible', state: 'default', leadingSlot: 'placeholder', disabled: false },
   argTypes: {
     state: { control: 'inline-radio', options: ['default', 'hover'] },
-    leadingSlot: { control: 'inline-radio', options: ['none', 'tools'], mapping: slotIcons },
+    leadingSlot: { control: 'inline-radio', options: ['none', 'placeholder'], mapping: slotIcons },
   },
   parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof CollapsibleTrigger>
@@ -50,7 +50,10 @@ export const Playground: Story = {
   ),
 }
 
-/** Every state with and without the leading slot, as in the Figma matrix. Open is `aria-expanded`, not a prop. */
+/**
+ * Every state with and without the leading slot, as in the Figma matrix. `active` is the open look: it
+ * comes from `aria-expanded`, not from a prop. `disabled` is the `disabled` prop.
+ */
 export const Variants: Story = {
   render: () => (
     <div className="inline-grid grid-cols-[auto_repeat(4,max-content)] items-center gap-x-8 gap-y-3">
@@ -61,13 +64,13 @@ export const Variants: Story = {
         </span>
       ))}
       {[
-        { name: 'with leading slot', leadingSlot: <ToolsIcon /> },
+        { name: 'with leading slot', leadingSlot: <PlaceholderIcon /> },
         { name: 'label only', leadingSlot: undefined },
       ].map(({ name, leadingSlot }) => (
         <div key={name} className="contents">
           <span className="text-caption text-neutral-subtle">{name}</span>
           {states.map((state) => (
-            <Collapsible key={state} open={state === 'open'}>
+            <Collapsible key={state} open={state === 'active'}>
               <CollapsibleTrigger
                 state={state === 'hover' ? 'hover' : 'default'}
                 leadingSlot={leadingSlot}
@@ -76,7 +79,7 @@ export const Variants: Story = {
                 Collapsible
               </CollapsibleTrigger>
               {/* An open trigger points at its panel with `aria-controls`, so the open cells keep one, hidden from view. */}
-              {state === 'open' && <CollapsibleContent className="sr-only">Panel</CollapsibleContent>}
+              {state === 'active' && <CollapsibleContent className="sr-only">Panel</CollapsibleContent>}
             </Collapsible>
           ))}
         </div>
@@ -89,7 +92,7 @@ export const Variants: Story = {
 export const WithPanel: Story = {
   render: (args) => (
     <Collapsible className="flex w-72 flex-col gap-2">
-      <CollapsibleTrigger {...args} leadingSlot={<ToolsIcon />}>
+      <CollapsibleTrigger {...args} leadingSlot={<PlaceholderIcon />}>
         Plan: migrate to Base UI
       </CollapsibleTrigger>
       <CollapsibleContent className="text-body-small text-neutral-subtle">

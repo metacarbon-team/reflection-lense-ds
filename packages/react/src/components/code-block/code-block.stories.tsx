@@ -66,10 +66,19 @@ const meta = {
     trailingSlot: true,
   },
   argTypes: {
-    // Switches: on leaves the default slot (a file icon, a copy button), off hides it.
-    leadingSlot: { control: 'boolean' },
-    trailingSlot: { control: 'boolean' },
-    children: { control: false },
+    // The Figma switches `?leadingSlot` and `?trailingSlot`: on leaves the default slot (a file icon, a
+    // copy button), off passes `null` and hides it. The props themselves take any `ReactNode`.
+    leadingSlot: {
+      control: 'boolean',
+      description:
+        'Header content before the title, 16 × 16. The control is the `?leadingSlot` switch of Figma: on keeps the default file icon, off passes `null`. In code pass any icon.',
+    },
+    trailingSlot: {
+      control: 'boolean',
+      description:
+        'Header actions at the end. The control is the `?trailingSlot` switch of Figma: on keeps the default copy button, off passes `null`. In code pass your own actions.',
+    },
+    content: { control: false },
   },
   parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof CodeBlock>
@@ -77,19 +86,61 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** One code block with every property. The code is made of `CodeLine` rows. */
-export const Playground: Story = {
-  render: ({ leadingSlot, trailingSlot, ...args }) => (
-    <div className="w-120">
-      <CodeBlock {...args} leadingSlot={leadingSlot ? undefined : null} trailingSlot={trailingSlot ? undefined : null}>
-        {codeLines()}
-      </CodeBlock>
-    </div>
-  ),
+type PlaygroundArgs = {
+  /** The `variant` property of Figma. The component has no such prop: the variants are built from the parts. */
+  variant: 'file' | 'code' | 'diff'
+  title: string
+  /** The `?leadingSlot` switch. Off in the `code` variant, as in Figma. */
+  leadingSlot: boolean
+  /** The `?trailingSlot` switch. */
+  trailingSlot: boolean
 }
 
 /**
- * The three types of Figma. A file snippet has a file icon, a filename and a copy button. A code
+ * One code block with the properties of the Figma component. `variant` picks `file`, `code` or `diff`
+ * and builds the parts for it; `title` and the two slot switches work as in Figma.
+ */
+export const Playground: StoryObj<PlaygroundArgs> = {
+  args: { variant: 'file', title: 'transport/client.ts', leadingSlot: true, trailingSlot: true },
+  argTypes: {
+    variant: { control: 'inline-radio', options: ['file', 'code', 'diff'] },
+    title: { control: 'text' },
+    leadingSlot: { control: 'boolean' },
+    trailingSlot: { control: 'boolean' },
+  },
+  render: ({ variant, title, leadingSlot, trailingSlot }) => {
+    const diff = variant === 'diff'
+    return (
+      <div className="w-120">
+        <CodeBlock
+          title={title}
+          leadingSlot={leadingSlot && variant !== 'code' ? undefined : null}
+          trailingSlot={
+            !trailingSlot ? null : diff ? (
+              <>
+                {diffStat}
+                <CodeBlockCopyButton />
+              </>
+            ) : undefined
+          }
+          content={
+            diff ? (
+              <>
+                <CodeLineHunk code="@@ -40,7 +40,13 @@ class Client" />
+                {diffLines}
+              </>
+            ) : (
+              codeLines()
+            )
+          }
+        />
+      </div>
+    )
+  },
+}
+
+/**
+ * The three variants of Figma. A file snippet has a file icon, a filename and a copy button. A code
  * snippet is labelled by its language and has no icon (`leadingSlot={null}`). A diff adds a Diff Stat
  * before the copy button, a hunk header and added and removed lines.
  */
@@ -98,13 +149,11 @@ export const Variants: Story = {
     <div className="grid w-120 gap-6">
       <div className="grid gap-2">
         <span className="text-caption text-neutral-subtle">file</span>
-        <CodeBlock title="transport/client.ts">{codeLines()}</CodeBlock>
+        <CodeBlock title="transport/client.ts" content={codeLines()} />
       </div>
       <div className="grid gap-2">
         <span className="text-caption text-neutral-subtle">code</span>
-        <CodeBlock title="tsx" leadingSlot={null}>
-          {codeLines()}
-        </CodeBlock>
+        <CodeBlock title="tsx" leadingSlot={null} content={codeLines()} />
       </div>
       <div className="grid gap-2">
         <span className="text-caption text-neutral-subtle">diff</span>
@@ -116,10 +165,13 @@ export const Variants: Story = {
               <CodeBlockCopyButton />
             </>
           }
-        >
-          <CodeLineHunk code="@@ -40,7 +40,13 @@ class Client" />
-          {diffLines}
-        </CodeBlock>
+          content={
+            <>
+              <CodeLineHunk code="@@ -40,7 +40,13 @@ class Client" />
+              {diffLines}
+            </>
+          }
+        />
       </div>
     </div>
   ),
@@ -158,7 +210,7 @@ export const Header: Story = {
 export const WithoutLineNumbers: Story = {
   render: () => (
     <div className="w-120">
-      <CodeBlock title="transport/client.ts">{codeLines({ lineNumber: false })}</CodeBlock>
+      <CodeBlock title="transport/client.ts" content={codeLines({ lineNumber: false })} />
     </div>
   ),
 }
@@ -167,14 +219,19 @@ export const WithoutLineNumbers: Story = {
 export const LongLine: Story = {
   render: () => (
     <div className="w-120">
-      <CodeBlock title="transport/client.ts">
-        <CodeLine
-          number={1}
-          code="export const endpoint = 'https://api.example.com/v2/transport/client/retry?attempts=5&delay=250&jitter=true';"
-        />
-        <CodeLine number={2} type="highlighted" code="export const timeout = 30_000;" />
-        <CodeLine number={3} code="export const retries = 5;" />
-      </CodeBlock>
+      <CodeBlock
+        title="transport/client.ts"
+        content={
+          <>
+            <CodeLine
+              number={1}
+              code="export const endpoint = 'https://api.example.com/v2/transport/client/retry?attempts=5&delay=250&jitter=true';"
+            />
+            <CodeLine number={2} type="highlighted" code="export const timeout = 30_000;" />
+            <CodeLine number={3} code="export const retries = 5;" />
+          </>
+        }
+      />
     </div>
   ),
 }
@@ -183,9 +240,10 @@ export const LongLine: Story = {
 export const LongTitle: Story = {
   render: () => (
     <div className="w-80">
-      <CodeBlock title="packages/transport/src/internal/retry/exponential-backoff-with-jitter.ts">
-        {codeLines().slice(0, 2)}
-      </CodeBlock>
+      <CodeBlock
+        title="packages/transport/src/internal/retry/exponential-backoff-with-jitter.ts"
+        content={codeLines().slice(0, 2)}
+      />
     </div>
   ),
 }
@@ -202,10 +260,13 @@ export const Diff: Story = {
             <CodeBlockCopyButton />
           </>
         }
-      >
-        <CodeLineHunk code="@@ -40,7 +40,13 @@ class Client" />
-        {diffLines}
-      </CodeBlock>
+        content={
+          <>
+            <CodeLineHunk code="@@ -40,7 +40,13 @@ class Client" />
+            {diffLines}
+          </>
+        }
+      />
     </div>
   ),
 }
@@ -221,9 +282,12 @@ export const CustomSlots: Story = {
             <path d="M3 4.5l3.5 3.5L3 11.5M8 12h5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         }
-      >
-        <CodeLine number={1} code="pnpm add @reflection/react" />
-      </CodeBlock>
+        content={
+          <>
+            <CodeLine number={1} code="pnpm add @reflection/react" />
+          </>
+        }
+      />
     </div>
   ),
 }
@@ -240,7 +304,7 @@ export const GuidelineHighlightOnlyTheLinesTheTextRefersToDo: Story = {
   render: () => (
     <Specimen tone="do">
       <div className="w-full">
-        <CodeBlock title="transport/retry.ts">{codeLines({ highlight: [3] })}</CodeBlock>
+        <CodeBlock title="transport/retry.ts" content={codeLines({ highlight: [3] })} />
       </div>
     </Specimen>
   ),
@@ -253,7 +317,7 @@ export const GuidelineHighlightOnlyTheLinesTheTextRefersToDont: Story = {
   render: () => (
     <Specimen tone="dont">
       <div className="w-full">
-        <CodeBlock title="transport/retry.ts">{codeLines({ highlight: [1, 2, 3, 4] })}</CodeBlock>
+        <CodeBlock title="transport/retry.ts" content={codeLines({ highlight: [1, 2, 3, 4] })} />
       </div>
     </Specimen>
   ),
@@ -271,7 +335,7 @@ export const GuidelineKeepLineNumbersOnOrOffForTheWholeBlockDo: Story = {
   render: () => (
     <Specimen tone="do">
       <div className="w-full">
-        <CodeBlock title="transport/retry.ts">{codeLines()}</CodeBlock>
+        <CodeBlock title="transport/retry.ts" content={codeLines()} />
       </div>
     </Specimen>
   ),
@@ -284,11 +348,12 @@ export const GuidelineKeepLineNumbersOnOrOffForTheWholeBlockDont: Story = {
   render: () => (
     <Specimen tone="dont">
       <div className="w-full">
-        <CodeBlock title="transport/retry.ts">
-          {lines.map((code, index) => (
+        <CodeBlock
+          title="transport/retry.ts"
+          content={lines.map((code, index) => (
             <CodeLine key={index} number={index + 1} code={code} lineNumber={index !== 2 && index !== 3} />
           ))}
-        </CodeBlock>
+        />
       </div>
     </Specimen>
   ),
@@ -306,7 +371,7 @@ export const GuidelineGiveTheBlockATitleThatSaysWhatTheCodeIsDo: Story = {
   render: () => (
     <Specimen tone="do">
       <div className="w-full">
-        <CodeBlock title="transport/retry.ts">{codeLines()}</CodeBlock>
+        <CodeBlock title="transport/retry.ts" content={codeLines()} />
       </div>
     </Specimen>
   ),
@@ -319,7 +384,7 @@ export const GuidelineGiveTheBlockATitleThatSaysWhatTheCodeIsDont: Story = {
   render: () => (
     <Specimen tone="dont">
       <div className="w-full">
-        <CodeBlock title="Code">{codeLines()}</CodeBlock>
+        <CodeBlock title="Code" content={codeLines()} />
       </div>
     </Specimen>
   ),
