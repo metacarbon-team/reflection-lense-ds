@@ -5,17 +5,9 @@ import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 import { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbSeparator } from './breadcrumb'
 
-const DotIcon = () => (
-  <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-    <circle cx="6" cy="6" r="1.5" />
-  </svg>
-)
-
 type PlaygroundArgs = ComponentProps<typeof Breadcrumb> & {
   /** State of the last item. `active` is the current page. */
   state: ComponentProps<typeof BreadcrumbItem>['state']
-  /** The glyph between the items. */
-  separator: 'chevron' | 'dot'
   /** Collapses the middle of the path into a "…" mark. */
   ellipsis: boolean
 }
@@ -24,7 +16,7 @@ const meta = {
   title: 'Components/Breadcrumb',
   component: Breadcrumb,
   subcomponents: { BreadcrumbItem, BreadcrumbSeparator, BreadcrumbEllipsis },
-  args: { 'aria-label': 'Breadcrumb', state: 'active', separator: 'chevron', ellipsis: false },
+  args: { 'aria-label': 'Breadcrumb', state: 'active', ellipsis: false },
   argTypes: {
     // Playground-only controls: they set up the example and are not props of Breadcrumb.
     state: {
@@ -33,12 +25,6 @@ const meta = {
       description: 'State of the last item: `active` is the current page, `hover` freezes the hover look.',
       table: { category: 'Playground', type: { summary: "'default' | 'hover' | 'active'" } },
     },
-    separator: {
-      control: 'inline-radio',
-      options: ['chevron', 'dot'],
-      description: 'The glyph between the items.',
-      table: { category: 'Playground', type: { summary: "'chevron' | 'dot'" } },
-    },
     ellipsis: {
       control: 'boolean',
       description: 'Collapses the middle of the path into a "…" mark.',
@@ -46,20 +32,19 @@ const meta = {
     },
   },
   parameters: { docs: { page: DocsPage } },
-  render: ({ state, separator, ellipsis, ...args }) => {
-    const sep = separator === 'dot' ? <DotIcon /> : undefined
+  render: ({ state, ellipsis, ...args }) => {
     return (
       <Breadcrumb {...args}>
         <BreadcrumbItem label="Home" href="#" />
-        <BreadcrumbSeparator>{sep}</BreadcrumbSeparator>
+        <BreadcrumbSeparator />
         {ellipsis ? (
           <>
             <BreadcrumbEllipsis />
-            <BreadcrumbSeparator>{sep}</BreadcrumbSeparator>
+            <BreadcrumbSeparator />
           </>
         ) : null}
         <BreadcrumbItem label="Components" href="#" />
-        <BreadcrumbSeparator>{sep}</BreadcrumbSeparator>
+        <BreadcrumbSeparator />
         <BreadcrumbItem label="Breadcrumb" href="#" state={state} />
       </Breadcrumb>
     )
@@ -69,12 +54,12 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** A path of three levels. The last item is the current page; the controls change its state, the separator and the "…" mark. */
+/** A path of three levels. The last item is the current page; the controls change its state and the "…" mark. */
 export const Playground: Story = {}
 
 const itemStates = ['default', 'hover', 'active'] as const
 
-/** Every item state, then the path with a chevron, with a dot and with the "…" mark. Hover is frozen with `state`. */
+/** Every item state, then the path with its separator and with the "…" mark. Hover is frozen with `state`. */
 export const Variants: Story = {
   render: () => (
     <div className="inline-grid grid-cols-[auto_repeat(3,max-content)] items-center gap-x-8 gap-y-4">
@@ -90,27 +75,13 @@ export const Variants: Story = {
           <BreadcrumbItem label="Label" href="#" state={state} />
         </Breadcrumb>
       ))}
-      <span className="text-caption text-neutral-subtle">chevron</span>
+      <span className="text-caption text-neutral-subtle">path</span>
       <div className="col-span-3">
-        <Breadcrumb aria-label="Chevron separator">
+        <Breadcrumb aria-label="Path">
           <BreadcrumbItem label="Home" href="#" />
           <BreadcrumbSeparator />
           <BreadcrumbItem label="Components" href="#" />
           <BreadcrumbSeparator />
-          <BreadcrumbItem label="Breadcrumb" state="active" />
-        </Breadcrumb>
-      </div>
-      <span className="text-caption text-neutral-subtle">dot</span>
-      <div className="col-span-3">
-        <Breadcrumb aria-label="Dot separator">
-          <BreadcrumbItem label="Home" href="#" />
-          <BreadcrumbSeparator>
-            <DotIcon />
-          </BreadcrumbSeparator>
-          <BreadcrumbItem label="Components" href="#" />
-          <BreadcrumbSeparator>
-            <DotIcon />
-          </BreadcrumbSeparator>
           <BreadcrumbItem label="Breadcrumb" state="active" />
         </Breadcrumb>
       </div>
@@ -140,23 +111,6 @@ export const CollapsedPath: Story = {
       <BreadcrumbSeparator />
       <BreadcrumbItem label="Components" href="#" />
       <BreadcrumbSeparator />
-      <BreadcrumbItem label="Breadcrumb" state="active" />
-    </Breadcrumb>
-  ),
-}
-
-/** A dot instead of the chevron. Use one glyph for the whole path. */
-export const DotSeparator: Story = {
-  render: () => (
-    <Breadcrumb>
-      <BreadcrumbItem label="Home" href="#" />
-      <BreadcrumbSeparator>
-        <DotIcon />
-      </BreadcrumbSeparator>
-      <BreadcrumbItem label="Components" href="#" />
-      <BreadcrumbSeparator>
-        <DotIcon />
-      </BreadcrumbSeparator>
       <BreadcrumbItem label="Breadcrumb" state="active" />
     </Breadcrumb>
   ),
@@ -228,55 +182,11 @@ export const GuidelineCollapseLongPathsDont: Story = {
 }
 
 /**
- * **Use one separator type per breadcrumb.**
- * Mixing glyphs makes the trail look broken. Pick chevron or dot and keep it across the whole path.
- */
-export const GuidelineOneSeparatorDo: Story = {
-  name: 'Guideline 2 Do',
-  tags: ['!autodocs', '!dev'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="do">
-      <Breadcrumb>
-        <BreadcrumbItem label="Home" href="#" />
-        <BreadcrumbSeparator />
-        <BreadcrumbItem label="Components" href="#" />
-        <BreadcrumbSeparator />
-        <BreadcrumbItem label="Breadcrumb" state="active" />
-      </Breadcrumb>
-    </Specimen>
-  ),
-}
-
-export const GuidelineOneSeparatorDont: Story = {
-  name: 'Guideline 2 Don’t',
-  tags: ['!autodocs', '!dev'],
-  parameters: { layout: 'fullscreen', controls: { disable: true } },
-  render: () => (
-    <Specimen tone="dont">
-      <Breadcrumb>
-        <BreadcrumbItem label="Home" href="#" />
-        <BreadcrumbSeparator>
-          <DotIcon />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem label="Components" href="#" />
-        <BreadcrumbSeparator />
-        <BreadcrumbItem label="Guides" href="#" />
-        <BreadcrumbSeparator>
-          <DotIcon />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem label="Breadcrumb" state="active" />
-      </Breadcrumb>
-    </Specimen>
-  ),
-}
-
-/**
  * **Keep item labels short.**
  * Use one or two words that match the page title. Long labels push the trail past its container.
  */
 export const GuidelineShortLabelsDo: Story = {
-  name: 'Guideline 3 Do',
+  name: 'Guideline 2 Do',
   tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -293,7 +203,7 @@ export const GuidelineShortLabelsDo: Story = {
 }
 
 export const GuidelineShortLabelsDont: Story = {
-  name: 'Guideline 3 Don’t',
+  name: 'Guideline 2 Don’t',
   tags: ['!autodocs', '!dev'],
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
@@ -313,7 +223,6 @@ export const GuidelineShortLabelsDont: Story = {
 function DocsPage() {
   const rules = [
     [GuidelineCollapseLongPathsDo, GuidelineCollapseLongPathsDont],
-    [GuidelineOneSeparatorDo, GuidelineOneSeparatorDont],
     [GuidelineShortLabelsDo, GuidelineShortLabelsDont],
   ] as const
   return (

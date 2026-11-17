@@ -99,7 +99,7 @@ export function BreadcrumbItem({
   )
 }
 
-/** The mark between two items, 12 px. A chevron by default; pass `children` to use another glyph, for example a dot. Hidden from assistive tech. */
+/** The mark between two items, 12 px. A chevron by default; `children` replace it with another glyph. Hidden from assistive tech. */
 export function BreadcrumbSeparator({ className, children, ...props }: ComponentProps<'li'>) {
   return (
     <li
