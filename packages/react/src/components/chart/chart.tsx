@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { createContext, useContext, type ComponentProps, type CSSProperties, type ReactNode } from 'react'
+import { useId, type ComponentProps, type CSSProperties, type ReactNode } from 'react'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
 import { Card } from '../card/card'
@@ -16,18 +17,23 @@ const hatchColor = (tone: Tone, emphasis: Emphasis) =>
       : 'var(--bg-neutral-emphasized)'
     : `var(--bg-${tone}-emphasized)`
 
+// The pale ground of a hatched mark. In Figma it is the tone with a white film over it, the same in Light and
+// Dark, so it is mixed with white here instead of taken from the card surface.
+const hatchGround = (tone: Tone, emphasis: Emphasis) => `color-mix(in srgb, ${hatchColor(tone, emphasis)} 18%, white)`
+
 const hatchStyle = (tone: Tone, emphasis: Emphasis): CSSProperties => ({
-  backgroundImage: `repeating-linear-gradient(135deg, ${hatchColor(tone, emphasis)} 0 3px, transparent 3px 6px)`,
+  backgroundColor: hatchGround(tone, emphasis),
+  backgroundImage: `repeating-linear-gradient(135deg, ${hatchColor(tone, emphasis)} 0 1.5px, transparent 1.5px 3.2px)`,
 })
 
 /**
  * Shared look of a mark: the bar segment and the swatch that names it. One tone per series; `subtle`
- * exists only for `neutral`. A hatched mark sits on the card surface and draws diagonal lines in its tone.
+ * exists only for `neutral`. A hatched mark draws diagonal lines of its tone on a pale ground of the same tone.
  */
 const markVariants = cva('block shrink-0 border', {
   variants: {
     tone: { neutral: '', info: '', success: '', warning: '', danger: '' },
-    fill: { solid: '', hatched: 'bg-card-neutral-emphasized' },
+    fill: { solid: '', hatched: '' },
     emphasis: { default: '', subtle: '' },
   },
   compoundVariants: [
@@ -49,12 +55,6 @@ const swatchStroke: Record<Tone, string> = {
   warning: 'border-warning-emphasized',
   danger: 'border-danger-emphasized',
 }
-
-type ChartPlotContextValue = { max: number }
-const ChartPlotContext = createContext<ChartPlotContextValue>({ max: 100 })
-
-/** Height of a value as a share of the plot, between 0 and 100 percent. */
-const percent = (value: number, max: number) => `${Math.min(100, Math.max(0, (value / max) * 100))}%`
 
 export type ChartProps = Omit<ComponentProps<'div'>, 'content'> & {
   /** The summary block on the left: a ChartStat. The card shows it when it is set. */
@@ -216,178 +216,224 @@ export function ChartSwatch({
   )
 }
 
-export type ChartAxisLineProps = Omit<ComponentProps<'div'>, 'children'> & {
-  /** `dashed` for grid lines, `solid` for the baseline. */
-  line?: 'dashed' | 'solid'
-  /** Value shown at the left end of the line. Shown when it is set. */
-  label?: ReactNode
+/** One column of the plot: the label under it and one number per series key. */
+export type ChartDatum = Record<string, string | number>
+
+export type ChartSeries = {
+  /** The key of the value in each datum. */
+  key: string
+  /** The series color. */
+  tone?: Tone
+  /** `default` is the bright tone; `subtle` exists only for `neutral`. */
+  emphasis?: Emphasis
+  /** `solid` or `hatched`. Use hatched for a secondary series, such as cached input. */
+  fill?: 'solid' | 'hatched'
 }
 
-/** Chart Axis Line: a horizontal grid line with an optional value label. It is decoration; the bars carry the data. */
-export function ChartAxisLine({ line = 'dashed', label, className, ...props }: ChartAxisLineProps) {
+// The hatch of the Figma file: 1.5px lines, 3.2px apart across the stripes, at 45 degrees.
+const HATCH_STRIPE = 1.5
+const HATCH_PERIOD = 3.2
+const SEGMENT_GAP = 2
+const COLUMN_PADDING = 8
+const MAX_BAR_WIDTH = 64
+const TICK_CLASS = 'fill-current text-caption text-neutral-subtle'
+const STROKE = 'var(--stroke-neutral-emphasized)'
+// The whisker and the dot are solid, like the whisker swatch: the opaque neutral fill token, not a stroke token.
+const WHISKER = 'var(--bg-neutral-emphasized)'
+
+type ShapeBox = { x?: number; y?: number; width?: number; height?: number; payload?: ChartDatum }
+
+// One rectangle of a stack: a 1px neutral stroke inside the box and a gap of 2px above it.
+function SegmentShape({
+  x = 0,
+  y = 0,
+  width = 0,
+  height = 0,
+  series,
+  patternId,
+}: ShapeBox & { series: ChartSeries; patternId: string }) {
+  const h = height - SEGMENT_GAP
+  if (h <= 0 || width <= 0) return null
+  const { tone = 'neutral', emphasis = 'default', fill = 'solid' } = series
   return (
-    <div data-slot="chart-axis-line" aria-hidden="true" className={cn('flex h-0 items-center', className)} {...props}>
-      <span data-slot="chart-axis-label" className="w-10 shrink-0 pr-2 text-end text-caption text-neutral-subtle">
-        {label}
-      </span>
-      <span
-        className={cn(
-          'flex-1 border-t',
-          line === 'dashed' ? 'border-dashed border-neutral' : 'border-neutral-emphasized',
-        )}
-      />
-    </div>
+    <rect
+      x={x + 0.5}
+      y={y + SEGMENT_GAP + 0.5}
+      width={Math.max(width - 1, 0)}
+      height={Math.max(h - 1, 0)}
+      rx={2}
+      style={{
+        rx: 'var(--radius-xs)',
+        fill: fill === 'hatched' ? `url(#${patternId})` : hatchColor(tone, emphasis),
+        stroke: STROKE,
+        strokeWidth: 1,
+      }}
+    />
+  )
+}
+
+// A p50 to p95 whisker: a line, a cap at p95 and a dot at p50. The bar runs from 0 to p95.
+function RangeShape({
+  x = 0,
+  y = 0,
+  width = 0,
+  height = 0,
+  payload,
+  lowKey,
+  highKey,
+}: ShapeBox & { lowKey: string; highKey: string }) {
+  const high = Number(payload?.[highKey] ?? 0)
+  const low = Number(payload?.[lowKey] ?? 0)
+  if (height <= 0 || high <= 0) return null
+  // Whole pixels plus a half keep the 1px lines sharp instead of blurred over two pixels.
+  const center = Math.floor(x + width / 2) + 0.5
+  const top = Math.floor(y) + 0.5
+  const lowY = y + height - (height * low) / high
+  return (
+    <g style={{ stroke: WHISKER, strokeWidth: 1 }}>
+      <line x1={center} x2={center} y1={top} y2={lowY} />
+      <line x1={center - 4} x2={center + 4} y1={top} y2={top} />
+      <circle cx={center} cy={lowY} r={3} style={{ fill: WHISKER, stroke: 'none' }} />
+    </g>
   )
 }
 
 export type ChartPlotProps = Omit<ComponentProps<'div'>, 'children'> & {
-  /** The value of the top of the plot. A segment or a whisker is as tall as its value is a share of it. */
-  max?: number
-  /** Axis lines, drawn from top to bottom in equal steps. End with a `solid` baseline. */
-  axes?: ReactNode
-  /** The columns: ChartBar components. They share the width equally. */
-  children?: ReactNode
+  /** The columns, left to right. */
+  data: ChartDatum[]
+  /** The key of the label under each column. */
+  categoryKey?: string
+  /** The stacked series, the first one at the bottom. Ignored when `range` is set. */
+  series?: ChartSeries[]
+  /** Draws a p50 to p95 whisker per column instead of a stack: the keys of both values in each datum. */
+  range?: { low: string; high: string }
+  /** The value of the top of the plot. */
+  max: number
+  /** Values of the axis lines, from the bottom to the top. The first one is drawn solid. */
+  ticks?: number[]
+  /** Formats the axis values. */
+  formatTick?: (value: number) => string
+  /** Content of the popover of a column: Item rows with a ChartSwatch each. The popover opens on hover and on keyboard focus. */
+  popoverContent?: (datum: ChartDatum) => ReactNode
+  /** Index of a column that keeps its highlight and popover open, for docs and tests. */
+  activeIndex?: number
 }
 
 /**
- * Chart Plot: the plot area. The axes sit behind a row of columns. It is a labeled group: give it an
- * `aria-label` that says what the chart shows, and give each column its own `aria-label` with the values.
+ * Chart Plot: the plot area of a chart, drawn by Recharts. Pass the data and the series; the plot draws
+ * the axis lines, a stack or a whisker per column and a popover on hover and focus. It is a labeled group:
+ * give it an `aria-label` that says what the chart shows. The plot takes the keyboard focus and shows a focus ring; the arrow keys move between the columns.
  */
-export function ChartPlot({ max = 100, axes, children, className, ...props }: ChartPlotProps) {
-  return (
-    <ChartPlotContext.Provider value={{ max }}>
-      <div data-slot="chart-plot" role="group" className={cn('relative h-90 w-full min-w-0', className)} {...props}>
-        <div className="absolute inset-x-0 top-0 bottom-4 flex flex-col justify-between">{axes}</div>
-        <div className="relative flex h-full pl-10">{children}</div>
-      </div>
-    </ChartPlotContext.Provider>
-  )
-}
-
-const barAreaVariants = cva('relative flex-1 rounded-sm outline-none focus-visible:shadow-focus-ring', {
-  variants: {
-    state: {
-      default: 'group-hover/bar:bg-neutral-hover',
-      hover: 'bg-neutral-hover',
-    },
-  },
-  defaultVariants: { state: 'default' },
-})
-
-export type ChartBarProps = ComponentProps<'div'> & {
-  /** `hover` freezes the highlight of the bar area for docs and tests. The label is never highlighted. */
-  state?: 'default' | 'hover'
-  /** Text under the bar, usually the date. One line, centered under the bar; it may be wider than the column, so label only every few columns of a dense plot. Shown when it is set. */
-  label?: ReactNode
-  /** The data marks of the column: a ChartItems. */
-  children?: ReactNode
-}
-
-/**
- * Chart Bar: one column of the plot, a hover area with a label under it. The marks come from the
- * ChartItems inside. The column is an image with a name: set `aria-label` to the label and the values,
- * for example "Oct 26: input 1M, output 35.8k". To open a popover from it, set `role="button"` and
- * `tabIndex={0}` yourself.
- */
-export function ChartBar({ state = 'default', label, children, className, role = 'img', ...props }: ChartBarProps) {
-  return (
-    <div data-slot="chart-bar" className={cn('group/bar flex min-w-0 flex-1 flex-col', className)}>
-      <div data-slot="chart-bar-area" role={role} className={barAreaVariants({ state })} {...props}>
-        {children}
-      </div>
-      <span
-        data-slot="chart-bar-label"
-        aria-hidden="true"
-        className="flex h-4 justify-center text-caption whitespace-nowrap text-neutral-subtle"
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
-
-export type ChartItemsProps = Omit<ComponentProps<'div'>, 'children'> & {
-  /** `stack` holds colored segments; `range` draws a p50 to p95 whisker with a dot. */
-  kind?: 'stack' | 'range'
-  /** `range` only: the p50 value, where the dot sits. */
-  low?: number
-  /** `range` only: the p95 value, where the whisker ends. */
-  high?: number
-  /** `stack` only: ChartSegment components, the first one at the bottom. */
-  children?: ReactNode
-}
-
-/** Chart Items: the data marks of one column. Lay it over the bar area of a ChartBar. */
-export function ChartItems({ kind = 'stack', low = 0, high = 0, children, className, ...props }: ChartItemsProps) {
-  const { max } = useContext(ChartPlotContext)
-  if (kind === 'range') {
-    return (
-      <div data-slot="chart-items" data-kind="range" className={cn('absolute inset-0', className)} {...props}>
-        <span
-          className="absolute left-1/2 w-px -translate-x-1/2 bg-neutral-emphasized"
-          style={{ bottom: percent(low, max), height: percent(Math.max(high - low, 0), max) }}
-        />
-        <span
-          className="absolute left-1/2 h-px w-2 -translate-x-1/2 bg-neutral-emphasized"
-          style={{ bottom: percent(high, max) }}
-        />
-        <span
-          className="absolute left-1/2 size-1.5 -translate-x-1/2 translate-y-1/2 rounded-full bg-neutral-emphasized"
-          style={{ bottom: percent(low, max) }}
-        />
-      </div>
-    )
-  }
+export function ChartPlot({
+  data,
+  categoryKey = 'label',
+  series = [],
+  range,
+  max,
+  ticks = [0, max / 3, (max * 2) / 3, max],
+  formatTick = String,
+  popoverContent,
+  activeIndex,
+  className,
+  'aria-label': ariaLabel,
+  ...props
+}: ChartPlotProps) {
+  const patternId = useId()
   return (
     <div
-      data-slot="chart-items"
-      data-kind="stack"
-      className={cn('absolute inset-0 flex flex-col-reverse items-center gap-0.5 px-2', className)}
+      data-slot="chart-plot"
+      role="group"
+      aria-label={ariaLabel}
+      className={cn('h-90 w-full min-w-0 rounded-sm has-focus-visible:shadow-focus-ring', className)}
       {...props}
     >
-      {children}
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          aria-label={ariaLabel}
+          margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          barCategoryGap={COLUMN_PADDING}
+          maxBarSize={MAX_BAR_WIDTH}
+        >
+          <defs>
+            {series
+              .filter((item) => item.fill === 'hatched')
+              .map((item) => (
+                <pattern
+                  key={item.key}
+                  id={`${patternId}-${item.key}`}
+                  width={HATCH_PERIOD}
+                  height={HATCH_PERIOD}
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)"
+                >
+                  <rect
+                    width={HATCH_PERIOD}
+                    height={HATCH_PERIOD}
+                    style={{ fill: hatchGround(item.tone ?? 'neutral', item.emphasis ?? 'default') }}
+                  />
+                  <rect
+                    width={HATCH_STRIPE}
+                    height={HATCH_PERIOD}
+                    style={{ fill: hatchColor(item.tone ?? 'neutral', item.emphasis ?? 'default') }}
+                  />
+                </pattern>
+              ))}
+          </defs>
+          <CartesianGrid vertical={false} strokeDasharray="4 4" style={{ stroke: 'var(--stroke-neutral)' }} />
+          <XAxis
+            dataKey={categoryKey}
+            tickLine={false}
+            axisLine={{ style: { stroke: STROKE } }}
+            tick={{ className: TICK_CLASS }}
+            tickMargin={4}
+            interval="equidistantPreserveStart"
+          />
+          <YAxis
+            width={40}
+            domain={[0, max]}
+            ticks={ticks}
+            tickFormatter={formatTick}
+            tickLine={false}
+            axisLine={false}
+            tick={{ className: TICK_CLASS }}
+            tickMargin={8}
+          />
+          <Tooltip
+            active={activeIndex === undefined ? undefined : true}
+            defaultIndex={activeIndex}
+            cursor={{ style: { fill: 'var(--bg-neutral-hover)', rx: 'var(--radius-sm)' } }}
+            isAnimationActive={false}
+            offset={8}
+            position={{ y: 0 }}
+            content={({ active, payload }) => {
+              const datum = payload?.[0]?.payload as ChartDatum | undefined
+              if (!active || !datum || !popoverContent) return null
+              return <ChartPopover label={String(datum[categoryKey] ?? '')}>{popoverContent(datum)}</ChartPopover>
+            }}
+          />
+          {range ? (
+            <Bar
+              dataKey={range.high}
+              isAnimationActive={false}
+              shape={(box: ShapeBox) => <RangeShape {...box} lowKey={range.low} highKey={range.high} />}
+            />
+          ) : (
+            series.map((item) => (
+              <Bar
+                key={item.key}
+                dataKey={item.key}
+                stackId="stack"
+                isAnimationActive={false}
+                shape={(box: ShapeBox) => (
+                  <SegmentShape {...box} series={item} patternId={`${patternId}-${item.key}`} />
+                )}
+              />
+            ))
+          )}
+        </BarChart>
+      </ResponsiveContainer>
     </div>
-  )
-}
-
-export type ChartSegmentProps = Omit<ComponentProps<'span'>, 'children'> &
-  Omit<VariantProps<typeof markVariants>, 'tone' | 'emphasis'> & {
-    /** The data value. The height of the segment is its share of the plot `max`. */
-    value: number
-    /** `solid` or `hatched`. Use hatched for a secondary series, such as cached input. */
-    fill?: 'solid' | 'hatched'
-    /** The series color. */
-    tone?: Tone
-    /** `default` is the bright tone; `subtle` exists only for `neutral`. */
-    emphasis?: Emphasis
-  }
-
-/** Chart Segment: one rectangle of a stack. Its height is the data value; it is at most 64 px wide. */
-export function ChartSegment({
-  value,
-  fill = 'solid',
-  tone = 'neutral',
-  emphasis = 'default',
-  className,
-  style,
-  ...props
-}: ChartSegmentProps) {
-  const { max } = useContext(ChartPlotContext)
-  return (
-    <span
-      data-slot="chart-segment"
-      className={cn(
-        markVariants({ tone, emphasis, fill }),
-        'w-full max-w-16 rounded-xs border-neutral-emphasized',
-        className,
-      )}
-      style={{
-        height: percent(value, max),
-        ...(fill === 'hatched' ? hatchStyle(tone, emphasis) : undefined),
-        ...style,
-      }}
-      {...props}
-    />
   )
 }
 
