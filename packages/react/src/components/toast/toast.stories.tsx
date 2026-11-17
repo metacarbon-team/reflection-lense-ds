@@ -1,8 +1,8 @@
 import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Button } from '../button/button'
-import { toast, Toast, ToastAction, ToastProvider, Toaster, ToastViewport } from './toast'
+import { toast, Toaster, ToastPanel, toastStatusIcons } from './toast'
 import { Specimen } from '../../docs/specimen'
 
 const Glyph = ({ children }: { children: ReactNode }) => (
@@ -24,79 +24,14 @@ const BellIcon = () => (
     <path d="M5 8a5 5 0 0110 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8zM8.5 16.5a1.5 1.5 0 003 0" />
   </Glyph>
 )
-const SuccessIcon = () => (
-  <Glyph>
-    <circle cx="10" cy="10" r="7.25" />
-    <path d="M6.5 10.5l2.5 2.5 4.5-5" />
-  </Glyph>
-)
-const InfoIcon = () => (
-  <Glyph>
-    <circle cx="10" cy="10" r="7.25" />
-    <path d="M10 9v4.5M10 6.5v.01" />
-  </Glyph>
-)
-const WarningIcon = () => (
-  <Glyph>
-    <path d="M10 3.5l7 12.5H3L10 3.5zM10 8.5v3.5M10 14v.01" />
-  </Glyph>
-)
-const DangerIcon = () => (
-  <Glyph>
-    <circle cx="10" cy="10" r="7.25" />
-    <path d="M7.5 7.5l5 5M12.5 7.5l-5 5" />
-  </Glyph>
-)
-
-const successIcon = (
-  <span className="text-success">
-    <SuccessIcon />
-  </span>
-)
-const infoIcon = (
-  <span className="text-info">
-    <InfoIcon />
-  </span>
-)
-const warningIcon = (
-  <span className="text-warning">
-    <WarningIcon />
-  </span>
-)
-const dangerIcon = (
-  <span className="text-danger">
-    <DangerIcon />
-  </span>
-)
-
-/** A provider and a viewport that sit in the page flow, so a story can show toasts in place. */
-const Stage = ({ children, label }: { children: ReactNode; label?: string }) => (
-  <ToastProvider duration={Infinity}>
-    <ToastViewport label={label} className="static w-100" />
-    {children}
-  </ToastProvider>
-)
-
-/** Stories show a toast that never goes away: after the close button it comes back a moment later. */
-const Pinned = (props: ComponentProps<typeof Toast>) => {
-  const [open, setOpen] = useState(true)
-  return (
-    <Toast
-      {...props}
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next)
-        if (!next) setTimeout(() => setOpen(true), 800)
-      }}
-    />
-  )
-}
-
-const undo = <ToastAction altText="Undo the change">Undo</ToastAction>
+const successIcon = toastStatusIcons.success
+const infoIcon = toastStatusIcons.info
+const warningIcon = toastStatusIcons.warning
+const dangerIcon = toastStatusIcons.error
 
 const meta = {
   title: 'Components/Toast',
-  component: Toast,
+  component: ToastPanel,
   args: {
     label: 'Event has been created',
     description: 'Sunday, December 03 at 9:00 AM',
@@ -110,21 +45,19 @@ const meta = {
     action: { control: 'boolean' },
   },
   parameters: { docs: { page: DocsPage } },
-} satisfies Meta<typeof Toast>
+} satisfies Meta<typeof ToastPanel>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** One toast with every property. Several toasts pile up on their own: see Stack and Triggered. */
+/** One toast with every property, drawn in the page. Real toasts pile up on their own: see Stack and Triggered. */
 export const Playground: Story = {
   render: (args) => (
-    <Stage>
-      <Pinned
-        {...args}
-        leadingSlot={args.leadingSlot ? <BellIcon /> : undefined}
-        action={args.action ? undo : undefined}
-      />
-    </Stage>
+    <ToastPanel
+      {...args}
+      leadingSlot={args.leadingSlot ? <BellIcon /> : undefined}
+      action={args.action ? 'Undo' : undefined}
+    />
   ),
 }
 
@@ -148,10 +81,8 @@ export const Variants: Story = {
       {kinds.map((kind) => (
         <div key={kind.name} className="contents">
           <span className="text-caption text-neutral-subtle">{kind.name}</span>
-          {[undo, undefined].map((action, index) => (
-            <Stage key={index} label={`Notifications: ${kind.name}, ${action ? 'with action' : 'without action'}`}>
-              <Pinned {...copy} leadingSlot={kind.icon} action={action} />
-            </Stage>
+          {['Undo', undefined].map((action, index) => (
+            <ToastPanel key={index} {...copy} leadingSlot={kind.icon} action={action} />
           ))}
         </div>
       ))}
@@ -171,7 +102,7 @@ const StackDemo = ({ expand }: { expand?: boolean }) => {
       toast({
         ...item,
         leadingSlot: <BellIcon />,
-        action: { label: 'Undo', altText: 'Undo the change' },
+        action: { label: 'Undo' },
         duration: Infinity,
       }),
     )
@@ -209,7 +140,7 @@ const TriggeredDemo = () => (
         toast({
           ...copy,
           leadingSlot: <BellIcon />,
-          action: { label: 'Undo', altText: 'Undo the change' },
+          action: { label: 'Undo' },
         })
       }
     >
@@ -237,6 +168,58 @@ export const Triggered: Story = {
   ),
 }
 
+const StatusDemo = () => {
+  const save = () => new Promise<string>((resolve) => setTimeout(() => resolve('report.pdf'), 1500))
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button tone="default" variant="outline" onClick={() => toast.success({ label: 'Changes saved' })}>
+        Success
+      </Button>
+      <Button tone="default" variant="outline" onClick={() => toast.info({ label: 'A new version is available' })}>
+        Info
+      </Button>
+      <Button tone="default" variant="outline" onClick={() => toast.warning({ label: 'Storage is almost full' })}>
+        Warning
+      </Button>
+      <Button
+        tone="default"
+        variant="outline"
+        onClick={() => toast.error({ label: 'Upload failed', description: 'The file is larger than 10 MB' })}
+      >
+        Error
+      </Button>
+      <Button
+        tone="default"
+        variant="outline"
+        onClick={() =>
+          toast.promise(save(), {
+            loading: 'Saving the report…',
+            success: (file) => `${file} saved`,
+            error: 'The report could not be saved',
+          })
+        }
+      >
+        Promise
+      </Button>
+      <Toaster />
+    </div>
+  )
+}
+
+/**
+ * The status shortcuts add their icon in the color of the role: `toast.success()`, `toast.info()`,
+ * `toast.warning()`, `toast.error()`. `toast.promise()` shows a spinner while the work runs, then
+ * success or error.
+ */
+export const Statuses: Story = {
+  parameters: isolatedDocs,
+  render: () => (
+    <div className="h-96">
+      <StatusDemo />
+    </div>
+  ),
+}
+
 const date = 'Sunday, December 03 at 9:00 AM'
 
 /**
@@ -250,9 +233,7 @@ export const GuidelineKeepTheTitleShortDo: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
-      <Stage label="Notifications: Do, keep the title short">
-        <Pinned label="Event created" description={date} leadingSlot={successIcon} />
-      </Stage>
+      <ToastPanel label="Event created" description={date} leadingSlot={successIcon} />
     </Specimen>
   ),
 }
@@ -263,13 +244,11 @@ export const GuidelineKeepTheTitleShortDont: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <Stage label="Notifications: Don’t, keep the title short">
-        <Pinned
-          label="Your event has been successfully created and added to the shared team calendar"
-          description={date}
-          leadingSlot={successIcon}
-        />
-      </Stage>
+      <ToastPanel
+        label="Your event has been successfully created and added to the shared team calendar"
+        description={date}
+        leadingSlot={successIcon}
+      />
     </Specimen>
   ),
 }
@@ -284,9 +263,7 @@ export const GuidelineMatchTheIconToTheMeaningDo: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
-      <Stage label="Notifications: Do, match the icon to the meaning">
-        <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={dangerIcon} />
-      </Stage>
+      <ToastPanel label="Upload failed" description="The file is larger than 10 MB" leadingSlot={dangerIcon} />
     </Specimen>
   ),
 }
@@ -297,9 +274,7 @@ export const GuidelineMatchTheIconToTheMeaningDont: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <Stage label="Notifications: Don’t, match the icon to the meaning">
-        <Pinned label="Upload failed" description="The file is larger than 10 MB" leadingSlot={successIcon} />
-      </Stage>
+      <ToastPanel label="Upload failed" description="The file is larger than 10 MB" leadingSlot={successIcon} />
     </Specimen>
   ),
 }
@@ -315,9 +290,7 @@ export const GuidelineDoNotRepeatTheTitleDo: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
-      <Stage label="Notifications: Do, do not repeat the title">
-        <Pinned label="Event has been created" description={date} leadingSlot={successIcon} />
-      </Stage>
+      <ToastPanel label="Event has been created" description={date} leadingSlot={successIcon} />
     </Specimen>
   ),
 }
@@ -328,9 +301,7 @@ export const GuidelineDoNotRepeatTheTitleDont: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <Stage label="Notifications: Don’t, do not repeat the title">
-        <Pinned label="Event has been created" description="Your event has been created" leadingSlot={successIcon} />
-      </Stage>
+      <ToastPanel label="Event has been created" description="Your event has been created" leadingSlot={successIcon} />
     </Specimen>
   ),
 }
@@ -346,14 +317,7 @@ export const GuidelineUseTheActionToUndoOrViewDo: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="do">
-      <Stage label="Notifications: Do, use the action to undo or view">
-        <Pinned
-          label="Event deleted"
-          description={date}
-          leadingSlot={<BellIcon />}
-          action={<ToastAction altText="Undo the deletion">Undo</ToastAction>}
-        />
-      </Stage>
+      <ToastPanel label="Event deleted" description={date} leadingSlot={<BellIcon />} action="Undo" />
     </Specimen>
   ),
 }
@@ -364,14 +328,7 @@ export const GuidelineUseTheActionToUndoOrViewDont: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <Stage label="Notifications: Don’t, use the action to undo or view">
-        <Pinned
-          label="Event deleted"
-          description={date}
-          leadingSlot={<BellIcon />}
-          action={<ToastAction altText="Close the notification">OK</ToastAction>}
-        />
-      </Stage>
+      <ToastPanel label="Event deleted" description={date} leadingSlot={<BellIcon />} action="OK" />
     </Specimen>
   ),
 }
