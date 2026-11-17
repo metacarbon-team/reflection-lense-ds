@@ -547,7 +547,8 @@ export function ChartPlot({
           isAnimationActive={false}
           offset={8}
           position={{ y: 0 }}
-          content={({ active, payload }) => {
+          // Typed explicitly: Tooltip is generic, and the parameter type is not always inferred from it.
+          content={({ active, payload }: TooltipContentProps) => {
             const datum = payload?.[0]?.payload as ChartDatum | undefined
             if (!active || !datum || !popoverContent) return null
             return <ChartPopover label={String(datum[categoryKey] ?? '')}>{popoverContent(datum)}</ChartPopover>
