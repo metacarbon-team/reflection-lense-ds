@@ -98,8 +98,8 @@ export function ComposedInput({
   // A controlled field is read from `value`; an uncontrolled one remembers what the user typed.
   const [typed, setTyped] = useState(() => hasText(props.defaultValue))
   const filled = props.value !== undefined ? hasText(props.value) : typed
-  // `form.reset()` on a form around the composer clears the text without a change event.
-  const onReset = useCallback(() => setTyped(false), [])
+  // `form.reset()` restores the default text without a change event: read what the composer holds now.
+  const onReset = useCallback(() => setTyped(hasText(own.current?.value)), [])
   useFormReset(own, onReset)
 
   const send = () => {

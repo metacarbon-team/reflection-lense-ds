@@ -62,7 +62,8 @@ function cell(token: DtcgToken | undefined, doc: Record<string, DtcgToken>): Cel
         .slice(1, -1)
         .replaceAll('.', '/')
         .replace(/\/\$root$/, '')
-      return { ...layer, color: cell(doc[key], doc).token?.$value }
+      // An alias that does not resolve stays as written, and shows as such.
+      return { ...layer, color: cell(doc[key], doc).token?.$value ?? layer.color }
     })
     return { token: { ...token, $value: layers } }
   }
@@ -82,7 +83,8 @@ function cell(token: DtcgToken | undefined, doc: Record<string, DtcgToken>): Cel
     alias: `${key.replace(/^palette\//, '')} · ${Math.round(value.alpha * 10000) / 100}%`,
   }
 }
-const hex = (value: ColorValue) => {
+const hex = (value: ColorValue | string) => {
+  if (typeof value === 'string') return value
   const [r, g, b] = value.components
   return rgbaToHex({ r, g, b, a: value.alpha })
 }

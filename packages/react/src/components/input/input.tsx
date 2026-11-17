@@ -50,8 +50,8 @@ export function Input({
   // A controlled field is read from `value`; an uncontrolled one remembers what the user typed.
   const [typed, setTyped] = useState(() => hasText(props.defaultValue))
   const filled = props.value !== undefined ? hasText(props.value) : typed
-  // `form.reset()` clears the value without a change event.
-  const onReset = useCallback(() => setTyped(false), [])
+  // `form.reset()` restores the default value without a change event: read what the field holds now.
+  const onReset = useCallback(() => setTyped(hasText(own.current?.value)), [])
   useFormReset(own, onReset)
   const clearable =
     props.type === 'search' && filled && !control.disabled && !props.readOnly && !hasContent(trailingSlot)

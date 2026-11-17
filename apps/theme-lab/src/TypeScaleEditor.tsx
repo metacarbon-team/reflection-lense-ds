@@ -7,6 +7,7 @@ import {
   type TypeStep,
   type Viewport,
 } from '@reflection/tokens'
+import type { Dispatch, SetStateAction } from 'react'
 import { Checkbox, Input } from '@reflection/react'
 import { Choice, Panel, Section } from './ui/lab'
 
@@ -81,29 +82,36 @@ export function TypeRolesPreview({
   onChange,
 }: {
   value: TypeScaleParams
-  onChange: (p: TypeScaleParams) => void
+  /** A state setter: role edits apply to the latest scale, so two edits before a render both land. */
+  onChange: Dispatch<SetStateAction<TypeScaleParams>>
 }) {
   const valid = validateTypeScale(value).length === 0
   const styles = valid ? { desktop: textStyles(value, 'desktop'), mobile: textStyles(value, 'mobile') } : null
   const steps = value.steps.map((s) => ({ value: s.name, label: s.name }))
   const tracking = Object.entries(value.tracking).map(([name, em]) => ({ value: name, label: `${name} · ${em}em` }))
-  const setRole = (i: number, patch: Partial<TypeScaleParams['roles'][number]>) =>
-    onChange({ ...value, roles: value.roles.map((r, j) => (j === i ? { ...r, ...patch } : r)) })
+  type Role = TypeScaleParams['roles'][number]
+  const updateRole = (i: number, update: (role: Role) => Partial<Role>) =>
+    onChange((scale) => ({ ...scale, roles: scale.roles.map((r, j) => (j === i ? { ...r, ...update(r) } : r)) }))
   const setStep = (i: number, viewport: Viewport, step: string) =>
-    setRole(i, { step: { ...value.roles[i]!.step, [viewport]: step } })
+    updateRole(i, (role) => ({ step: { ...role.step, [viewport]: step } }))
   const weightOptions = WEIGHTS.map(([name, weight]) => ({ value: weight, label: `${name} · ${weight}` }))
-  // The base weight never repeats as an extra style: picking it drops the extra of the same weight.
-  const setWeight = (i: number, weight: number) => {
-    const extra = Object.entries(value.roles[i]!.weights ?? {}).filter(([, w]) => w !== weight)
-    setRole(i, { weight, weights: extra.length ? Object.fromEntries(extra) : undefined })
-  }
-  const toggleExtra = (i: number, name: string, weight: number, on: boolean) => {
-    const extra = { ...value.roles[i]!.weights }
-    if (on) extra[name] = weight
-    else delete extra[name]
+  const extraWeights = (extra: Record<string, number>) => {
     const sorted = WEIGHTS.filter(([n]) => n in extra)
-    setRole(i, { weights: sorted.length ? Object.fromEntries(sorted) : undefined })
+    return sorted.length ? Object.fromEntries(sorted) : undefined
   }
+  // The base weight never repeats as an extra style: picking it drops the extra of the same weight.
+  const setWeight = (i: number, weight: number) =>
+    updateRole(i, (role) => ({
+      weight,
+      weights: extraWeights(Object.fromEntries(Object.entries(role.weights ?? {}).filter(([, w]) => w !== weight))),
+    }))
+  const toggleExtra = (i: number, name: string, weight: number, on: boolean) =>
+    updateRole(i, (role) => {
+      const extra = { ...role.weights }
+      if (on) extra[name] = weight
+      else delete extra[name]
+      return { weights: extraWeights(extra) }
+    })
   return (
     <Panel
       title="Text roles"
@@ -160,7 +168,7 @@ export function TypeRolesPreview({
                     aria-label={`${role.name} tracking`}
                     value={role.tracking ?? 'normal'}
                     options={tracking}
-                    onChange={(t) => setRole(i, { tracking: t })}
+                    onChange={(t) => updateRole(i, () => ({ tracking: t }))}
                   />
                 </td>
                 <td>
