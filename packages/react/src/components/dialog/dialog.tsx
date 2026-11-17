@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { dialogMotionClass, overlayMotionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
@@ -14,13 +15,15 @@ const DialogModalContext = createContext(true)
 /** The dialog root: owns the open state. Modal by default; `modal={false}` keeps the page usable behind it. */
 export const Dialog = ({ modal = true, ...props }: ComponentProps<typeof DialogPrimitive.Root>) => (
   <DialogModalContext value={modal}>
-    <DialogPrimitive.Root data-slot="dialog" modal={modal} {...props} />
+    <ModeAnchor>
+      <DialogPrimitive.Root data-slot="dialog" modal={modal} {...props} />
+    </ModeAnchor>
   </DialogModalContext>
 )
 
-export const DialogTrigger = (props: ComponentProps<typeof DialogPrimitive.Trigger>) => (
-  <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
-)
+export function DialogTrigger({ ref, ...props }: ComponentProps<typeof DialogPrimitive.Trigger>) {
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 export const DialogClose = (props: ComponentProps<typeof DialogPrimitive.Close>) => (
   <DialogPrimitive.Close data-slot="dialog-close" {...props} />
@@ -52,6 +55,8 @@ export function DialogContent({
   ...props
 }: DialogContentProps) {
   const modal = useContext(DialogModalContext)
+  // The overlay or the positioner takes the color mode of the trigger's subtree.
+  const mode = usePortalMode()
   const content = (
     <DialogPrimitive.Content
       data-slot="dialog-content"
@@ -84,6 +89,7 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       {modal ? (
         <DialogPrimitive.Overlay
+          data-mode={mode}
           data-slot="dialog-overlay"
           className={cn(
             'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4',
@@ -95,6 +101,7 @@ export function DialogContent({
       ) : (
         // No backdrop: the same centering, and the page behind stays clickable.
         <div
+          data-mode={mode}
           data-slot="dialog-positioner"
           className="pointer-events-none fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4"
         >

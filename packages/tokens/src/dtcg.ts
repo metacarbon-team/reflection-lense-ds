@@ -1,6 +1,6 @@
-import { hexToRgba, rgbaToHex } from './color'
+import { hexToRgba } from './color'
 import { dimensionTokens, px, rem } from './dimensions'
-import { generateRolePalette, type ModePalette } from './palette'
+import { generateRolePalette, paletteAlias, type ModePalette } from './palette'
 import { generateModeShadows, generateShadows, type ShadowParams } from './shadow'
 import {
   DEFAULT_TYPE_SCALE,
@@ -10,7 +10,7 @@ import {
   type TypeScaleParams,
   type Viewport,
 } from './typescale'
-import { FOCUS, FOCUS_HALO, type Mode, type ModeTheme, type Theme } from './types'
+import { FOCUS, FOCUS_HALO, type Mode, type ModeTheme, type Theme, type Token } from './types'
 
 export interface DtcgToken {
   $type: 'color' | 'dimension' | 'number' | 'shadow' | 'fontFamily' | 'fontWeight' | 'typography'
@@ -20,11 +20,14 @@ export interface DtcgToken {
 
 /** Namespace for values DTCG has no field for. */
 export const DTCG_EXTENSION = 'com.reflection-lense'
-const FAMILIES = { sans: 'NaN Serf Sans', serif: 'NaN Serf B', mono: 'Geist Mono' }
+const FAMILIES = { sans: 'NaN Serf Sans', serif: 'NaN Serf B', mono: 'JetBrains Mono' }
 
 export interface DtcgGroup {
   [name: string]: DtcgGroup | DtcgToken
 }
+
+/** The opacity class of a color token, which DTCG has no field for: `{ "com.reflection-lense": { "opacity": "translucent" } }`. */
+const opacityOf = (token: Token) => ({ [DTCG_EXTENSION]: { opacity: token.opacity } })
 
 /** Mode-independent groups; the all-modes document stores them once. */
 const SHARED_GROUPS = ['font', 'spacing', 'size', 'radius', 'border'] as const
@@ -77,28 +80,19 @@ function aliasOf(result: DtcgGroup, name: string, modePath: string[]): string {
  * own alpha, since an alias cannot change alpha.
  */
 function putColors(result: DtcgGroup, theme: ModeTheme, palette: ModePalette, root: string[]): void {
-  const steps = new Map<string, string>()
   for (const ramp of palette.ramps)
-    for (const step of ramp.steps) {
-      const path = [...root, ramp.family, String(step.step)]
-      steps.set(path.join('/'), step.value)
-      insert(result, path, { $type: 'color', $value: color(step.value) })
-    }
+    for (const step of ramp.steps)
+      insert(result, [...root, ramp.family, String(step.step)], { $type: 'color', $value: color(step.value) })
   for (const token of Object.values(theme.tokens)) {
-    const binding = palette.bindings[token.name]
-    const path = binding && [...root, binding.family, String(binding.step)]
-    const step = path && steps.get(path.join('/'))
-    const own = hexToRgba(token.value)
-    // A token is written as an alias only when resolving the alias gives its exact value back.
-    if (!path || !step || hexToRgba(step).a !== 1 || rgbaToHex({ ...hexToRgba(step), a: own.a }) !== token.value) {
-      insert(result, token.name.split('/'), { $type: 'color', $value: color(token.value) })
-      continue
-    }
-    const $value =
-      own.a === 1
+    // An alias only when resolving it gives the token's exact value back (`paletteAlias`).
+    const alias = paletteAlias(palette, token)
+    const path = alias && [...root, alias.family, String(alias.step)]
+    const $value = !path
+      ? color(token.value)
+      : alias.alpha === 1
         ? `{${path.join('.')}}`
-        : { colorSpace: 'srgb', components: { $ref: `#/${path.join('/')}/$value/components` }, alpha: own.a }
-    insert(result, token.name.split('/'), { $type: 'color', $value })
+        : { colorSpace: 'srgb', components: { $ref: `#/${path.join('/')}/$value/components` }, alpha: alias.alpha }
+    insert(result, token.name.split('/'), { $type: 'color', $value, $extensions: opacityOf(token) })
   }
 }
 
@@ -115,7 +109,12 @@ export function toDtcg(theme: ModeTheme, options: DtcgOptions = {}): DtcgGroup {
   const alias = (name: string) => aliasOf(result, name, options.modePath ?? [])
 
   const shadows = generateModeShadows(theme, options.shadows)
-  for (const token of Object.values(shadows.colors)) put(token.name, 'color', color(token.value))
+  for (const token of Object.values(shadows.colors))
+    insert(result, token.name.split('/'), {
+      $type: 'color',
+      $value: color(token.value),
+      $extensions: opacityOf(token),
+    })
   for (const level of generateShadows(options.shadows)) {
     const layers = (['contact', 'ambient'] as const).flatMap((name) => {
       const layer = level[name]

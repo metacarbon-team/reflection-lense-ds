@@ -4,7 +4,7 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Typography
 
-Text is set with **text roles**. A role is one utility, `text-<role>`, that sets the family, size, line height, weight and tracking, and switches the size between viewports. Components and product code use roles only; the primitives below exist to build roles and to port them.
+Text is set with **text roles**. A role is one utility, `text-<role>`, that sets the family, size, line height, weight and tracking, and switches the size between viewports. Components and product code use roles only; the primitives below exist to build roles and to port them, and only the families have utilities.
 
 <div className="flex flex-col gap-2 rounded-lg border border-neutral-subtle bg-surface p-6 text-neutral">
   <span className="text-display">Display</span>
@@ -18,61 +18,61 @@ Text is set with **text roles**. A role is one utility, `text-<role>`, that sets
 
 ## Families
 
-| Family  | Font          | CSS variable                                      | Utility      |
-| ------- | ------------- | ------------------------------------------------- | ------------ |
-| `sans`  | NaN Serf Sans | `--font-family-sans: 'NaN Serf Sans', sans-serif` | `font-sans`  |
-| `serif` | NaN Serf B    | `--font-family-serif: 'NaN Serf B', serif`        | `font-serif` |
-| `mono`  | Geist Mono    | `--font-family-mono: 'Geist Mono', monospace`     | `font-mono`  |
+| Family  | Font           | CSS variable                                      | Utility      |
+| ------- | -------------- | ------------------------------------------------- | ------------ |
+| `sans`  | NaN Serf Sans  | `--font-family-sans: 'NaN Serf Sans', sans-serif` | `font-sans`  |
+| `serif` | NaN Serf B     | `--font-family-serif: 'NaN Serf B', serif`        | `font-serif` |
+| `mono`  | JetBrains Mono | `--font-family-mono: 'JetBrains Mono', monospace` | `font-mono`  |
 
 - All three are variable WOFF2 files, self-hosted in `@reflection/theme/fonts.css` with `font-display: swap`. Import it next to `theme.css`.
-- NaN Serf Sans: weights 200–900, no italic. NaN Serf B: 200–900, italic, optical-size axis (`opsz` 8–100) picked by the browser from the font size. Geist Mono: 100–900, italic, Latin subset.
+- NaN Serf Sans: weights 200–900, no italic. NaN Serf B: 200–900, italic, optical-size axis (`opsz` 8–100) picked by the browser from the font size. JetBrains Mono: 100–800, italic, Latin subset.
 - Families are the same in every theme and mode.
 
 ## Type scale
 
 Each step is a size and a line height, both in rem (1rem = 16px). Line heights sit on a 0.25rem (4px) grid; the smallest size is 0.625rem (10px).
 
-| Step   | Size             | Line height    | Variables                                     | Tailwind      |
-| ------ | ---------------- | -------------- | --------------------------------------------- | ------------- |
-| `2xs`  | 0.625rem · 10px  | 1rem · 16px    | `--font-size-2xs`, `--font-line-height-2xs`   | `--text-2xs`  |
-| `xs`   | 0.75rem · 12px   | 1rem · 16px    | `--font-size-xs`, `--font-line-height-xs`     | `--text-xs`   |
-| `sm`   | 0.8125rem · 13px | 1.25rem · 20px | `--font-size-sm`, `--font-line-height-sm`     | `--text-sm`   |
-| `md`   | 0.875rem · 14px  | 1.25rem · 20px | `--font-size-md`, `--font-line-height-md`     | `--text-md`   |
-| `base` | 1rem · 16px      | 1.5rem · 24px  | `--font-size-base`, `--font-line-height-base` | `--text-base` |
-| `lg`   | 1.125rem · 18px  | 1.75rem · 28px | `--font-size-lg`, `--font-line-height-lg`     | `--text-lg`   |
-| `xl`   | 1.25rem · 20px   | 1.75rem · 28px | `--font-size-xl`, `--font-line-height-xl`     | `--text-xl`   |
-| `2xl`  | 1.5rem · 24px    | 2rem · 32px    | `--font-size-2xl`, `--font-line-height-2xl`   | `--text-2xl`  |
-| `3xl`  | 1.875rem · 30px  | 2.25rem · 36px | `--font-size-3xl`, `--font-line-height-3xl`   | `--text-3xl`  |
-| `4xl`  | 2.25rem · 36px   | 2.5rem · 40px  | `--font-size-4xl`, `--font-line-height-4xl`   | `--text-4xl`  |
-| `5xl`  | 3rem · 48px      | 3rem · 48px    | `--font-size-5xl`, `--font-line-height-5xl`   | `--text-5xl`  |
-| `6xl`  | 3.75rem · 60px   | 3.75rem · 60px | `--font-size-6xl`, `--font-line-height-6xl`   | `--text-6xl`  |
+| Step   | Size             | Line height    | Variables                                     |
+| ------ | ---------------- | -------------- | --------------------------------------------- |
+| `2xs`  | 0.625rem · 10px  | 1rem · 16px    | `--font-size-2xs`, `--font-line-height-2xs`   |
+| `xs`   | 0.75rem · 12px   | 1rem · 16px    | `--font-size-xs`, `--font-line-height-xs`     |
+| `sm`   | 0.8125rem · 13px | 1.25rem · 20px | `--font-size-sm`, `--font-line-height-sm`     |
+| `md`   | 0.875rem · 14px  | 1.25rem · 20px | `--font-size-md`, `--font-line-height-md`     |
+| `base` | 1rem · 16px      | 1.5rem · 24px  | `--font-size-base`, `--font-line-height-base` |
+| `lg`   | 1.125rem · 18px  | 1.75rem · 28px | `--font-size-lg`, `--font-line-height-lg`     |
+| `xl`   | 1.25rem · 20px   | 1.75rem · 28px | `--font-size-xl`, `--font-line-height-xl`     |
+| `2xl`  | 1.5rem · 24px    | 2rem · 32px    | `--font-size-2xl`, `--font-line-height-2xl`   |
+| `3xl`  | 1.875rem · 30px  | 2.25rem · 36px | `--font-size-3xl`, `--font-line-height-3xl`   |
+| `4xl`  | 2.25rem · 36px   | 2.5rem · 40px  | `--font-size-4xl`, `--font-line-height-4xl`   |
+| `5xl`  | 3rem · 48px      | 3rem · 48px    | `--font-size-5xl`, `--font-line-height-5xl`   |
+| `6xl`  | 3.75rem · 60px   | 3.75rem · 60px | `--font-size-6xl`, `--font-line-height-6xl`   |
 
-The steps follow Tailwind v4's `--text-*`, with two differences: `2xs` and `sm` (13px) are added, and Tailwind's `sm` (14px) is called `md`.
+The steps follow Tailwind v4's `--text-*` values, with two differences: `2xs` and `sm` (13px) are added, and Tailwind's `sm` (14px) is called `md`. The theme empties Tailwind's `--text-*`, so `text-sm` and the other size utilities do not exist.
 
 ## Weights
 
-| Name       | Value | Variable                 | Utility         |
-| ---------- | ----- | ------------------------ | --------------- |
-| `light`    | 300   | `--font-weight-light`    | `font-light`    |
-| `normal`   | 400   | `--font-weight-normal`   | `font-normal`   |
-| `medium`   | 500   | `--font-weight-medium`   | `font-medium`   |
-| `semibold` | 600   | `--font-weight-semibold` | `font-semibold` |
-| `bold`     | 700   | `--font-weight-bold`     | `font-bold`     |
+| Name       | Value | Variable                 |
+| ---------- | ----- | ------------------------ |
+| `light`    | 300   | `--font-weight-light`    |
+| `normal`   | 400   | `--font-weight-normal`   |
+| `medium`   | 500   | `--font-weight-medium`   |
+| `semibold` | 600   | `--font-weight-semibold` |
+| `bold`     | 700   | `--font-weight-bold`     |
 
-Roles use these values only.
+Roles use these values only. There are no `font-<weight>` utilities: a heavier text is a role's extra weight, `text-body-medium`.
 
 ## Tracking
 
-In em, so tracking scales with the size.
+In em, so tracking scales with the size. No `tracking-*` utilities.
 
-| Step      | Value    | Variable                  | Utility            |
-| --------- | -------- | ------------------------- | ------------------ |
-| `tighter` | −0.05em  | `--font-tracking-tighter` | `tracking-tighter` |
-| `tight`   | −0.025em | `--font-tracking-tight`   | `tracking-tight`   |
-| `normal`  | 0        | `--font-tracking-normal`  | `tracking-normal`  |
-| `wide`    | 0.025em  | `--font-tracking-wide`    | `tracking-wide`    |
-| `wider`   | 0.05em   | `--font-tracking-wider`   | `tracking-wider`   |
-| `widest`  | 0.1em    | `--font-tracking-widest`  | `tracking-widest`  |
+| Step      | Value    | Variable                  |
+| --------- | -------- | ------------------------- |
+| `tighter` | −0.05em  | `--font-tracking-tighter` |
+| `tight`   | −0.025em | `--font-tracking-tight`   |
+| `normal`  | 0        | `--font-tracking-normal`  |
+| `wide`    | 0.025em  | `--font-tracking-wide`    |
+| `wider`   | 0.05em   | `--font-tracking-wider`   |
+| `widest`  | 0.1em    | `--font-tracking-widest`  |
 
 ## Text roles
 
@@ -104,7 +104,7 @@ Usage in the library: buttons use `label` (sm, md) and `label/large` (lg); form 
 
 ### Rules
 
-- Set text with a role utility. Do not use raw `text-<step>`, `leading-*`, `tracking-*` or `font-<weight>` in components, and do not add responsive text classes (`md:text-*`): the role already switches by viewport.
+- Set text with a role utility. The theme has no `text-<step>`, `leading-*`, `tracking-*` or `font-<weight>` utilities. Do not add responsive text classes (`md:text-*`): the role already switches by viewport.
 - Color is separate: combine a role with a text color utility, `text-body text-neutral-subtle`.
 - `cn()` knows the roles: `cn('text-body', 'text-heading')` keeps `text-heading`, and `cn('text-body', 'text-neutral')` keeps both.
 

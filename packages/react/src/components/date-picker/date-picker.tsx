@@ -1,8 +1,9 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
-import { useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useRef, type ComponentProps, type KeyboardEvent, type ReactNode } from 'react'
 import { CalendarIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'
 import { popupMotionClass } from '../../lib/motion'
+import { usePortalMode } from '../../lib/portal-mode'
 import { useControlled } from '../../lib/use-controlled'
 import { Input } from '../input/input'
 import { Popover, PopoverAnchor, PopoverTrigger } from '../popover/popover'
@@ -39,6 +40,11 @@ export type DatePickerProps = Pick<
   'aria-invalid'?: boolean | 'true' | 'false'
   /** Accessible name of the default trigger. Needed when no Field gives it a label. */
   'aria-label'?: string
+}
+
+/** The calendar panel: Popover content in the color mode of the field's subtree, as PopoverContent. */
+function DatePickerContent(props: ComponentProps<typeof PopoverPrimitive.Content>) {
+  return <PopoverPrimitive.Content data-mode={usePortalMode()} {...props} />
 }
 
 /**
@@ -117,7 +123,7 @@ export function DatePicker({
         </PopoverAnchor>
       )}
       <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Content
+        <DatePickerContent
           ref={content}
           data-slot="date-picker-content"
           aria-label={calendarLabel}
@@ -145,7 +151,7 @@ export function DatePicker({
               setOpen(false)
             }}
           />
-        </PopoverPrimitive.Content>
+        </DatePickerContent>
       </PopoverPrimitive.Portal>
     </Popover>
   )

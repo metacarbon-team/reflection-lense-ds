@@ -36,13 +36,13 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
   - With reduced motion all of it is off (`motion-reduce:`).
   - The enter and exit utilities (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-top-2`) come with `theme.css`.
 - Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
-- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
+- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Segmented Control, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
 
 ### Variants and class merging
 
 - `cva` only where a part has variants. Fixed classes are plain strings or arrays.
 - Join classes with `cn` (`lib/cn.ts`) = `twMerge(clsx())` extended with the theme's text roles. The caller's `className` goes last, so a utility they pass replaces the component's utility for the same property.
-- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `codeLineVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `skeletonVariants`, `tabsListVariants`, `tabsTriggerVariants`.
+- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `codeLineVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `segmentedControlVariants`, `segmentedControlItemVariants`, `skeletonVariants`, `tabsTriggerVariants`.
 
 ### Vocabulary of props
 
@@ -79,7 +79,7 @@ Split a component into parts only where a part brings its own behaviour or seman
 ### Parts and hooks
 
 - **`data-slot` on every part**: `data-slot="button"`, `data-slot="button-leading-slot"`, `data-slot="field-caption"`. It is the public hook for CSS (`*:data-[slot=icon]:size-4`) and tests. Name it `<component>` or `<component>-<part>`.
-- **The resolved props on the root as data attributes**: `data-tone`, `data-variant`, `data-size` (Button, IconButton, Badge, Tag, Avatar, Card, Link, Tabs list, Item). A boolean state is present or absent, never `"false"`: `data-active`, `data-disabled`. CSS and tests target these, not class names.
+- **The resolved props on the root as data attributes**: `data-tone`, `data-variant`, `data-size` (Button, IconButton, Badge, Tag, Avatar, Card, Link, Segmented Control, Item). A boolean state is present or absent, never `"false"`: `data-active`, `data-disabled`. CSS and tests target these, not class names.
 - **Named groups**: a part styled from its parent's state uses `group/<component>` (`group/checkbox`, `group/switch`, `group/item`), never a bare `group`, so an ancestor with its own `group` cannot leak in.
 - **Icons size from the parent but yield to their own class**: `[&_svg:not([class*=size-])]:size-4`. An icon with `size-5` keeps it; a caller who overrides the parent's icon size uses the same selector, so `cn` replaces it.
 - **Radix primitives** for behaviour (focus trap, roving focus, keyboard navigation, positioning, dismiss). Styling and API are ours; never expose a primitive's class names or props that bypass the theme.
@@ -97,7 +97,7 @@ Split a component into parts only where a part brings its own behaviour or seman
 | Invalid              | Fields: `data-invalid:border-danger-emphasized` (control frame). Checkbox and Radio: `aria-invalid`.                                                                                                      |
 | Disabled             | The `disabled` role tokens, no shadow, no pointer events. See below.                                                                                                                                      |
 
-The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio, TabsTrigger, CollapsibleTrigger, BreadcrumbItem, CalendarItem and the Table row and cells take it. A disabled control ignores it.
+The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio, TabsTrigger, SegmentedControlItem, CollapsibleTrigger, BreadcrumbItem, CalendarItem and the Table row and cells take it. A disabled control ignores it.
 
 ### Disabled
 
@@ -111,7 +111,7 @@ One rule for every component, in `lib/disabled.ts`:
 
 - Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control reads that control only, `has-[[data-slot=input-group-control]:disabled]:`, never `has-disabled:`: a disabled button in one of its slots would dim the whole wrapper.
 - Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
-- Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
+- Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Segmented Control, Link) change only the text.
 - A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild`, or on a look shared with a plain element, use `not-disabled:not-data-disabled:`.
 
 ## Forms
@@ -125,8 +125,8 @@ One rule for every component, in `lib/disabled.ts`:
 ## Color modes and portals
 
 - `data-mode="light|dark"` on `<html>` or any subtree switches every token below it.
-- Dialog, Dropdown Menu, Select and Popover render in `<body>` through a portal, so they follow the mode on `<html>`, not a subtree's. Toasts render where the `Toaster` is mounted, usually the app root.
-- Tooltip always renders in the opposite mode of its anchor's closest `data-mode` and follows it when it changes.
+- Dialog, Dropdown Menu, Select, Popover and Date Picker render in `<body>` through a portal and set the mode of their trigger's closest `data-mode` on the portalled element, following it when it changes (`lib/portal-mode.tsx`: the root wraps `ModeAnchor`, the trigger takes `useModeAnchorRef`, the portalled element `usePortalModeRef`). Without a trigger they take the mode of `<html>`. Toasts render where the `Toaster` is mounted, usually the app root.
+- Tooltip uses the same anchor and always renders in the opposite mode, following it when it changes.
 - An inverse element is a local mode switch (`data-mode` on the element), not a set of inverse tokens.
 
 ## Docs and stories

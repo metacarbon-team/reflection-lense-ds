@@ -2,9 +2,10 @@ import { cva } from 'class-variance-authority'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { popupMotionClass } from '../../lib/motion'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
-import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
+import { menuItemVariants, menuSeparatorClass, menuSurfaceGroupClass, useKeyboardHighlight } from '../../lib/menu'
 import { CheckboxBox } from '../checkbox/checkbox'
 
 // Dropdown Menu: a list of actions or choices opened from a trigger, usually a Button through `asChild`.
@@ -12,12 +13,14 @@ import { CheckboxBox } from '../checkbox/checkbox'
 // Keyboard: arrows move, Enter or Space selects, Escape closes, typing jumps.
 
 export const DropdownMenu = (props: ComponentProps<typeof DropdownMenuPrimitive.Root>) => (
-  <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  <ModeAnchor>
+    <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  </ModeAnchor>
 )
 
-export const DropdownMenuTrigger = (props: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) => (
-  <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
-)
+export function DropdownMenuTrigger({ ref, ...props }: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  return <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 export const DropdownMenuGroup = (props: ComponentProps<typeof DropdownMenuPrimitive.Group>) => (
   <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
@@ -34,6 +37,7 @@ export const DropdownMenuSub = (props: ComponentProps<typeof DropdownMenuPrimiti
 // `content` is the main list and scrolls when the screen is short; `sub` is a submenu.
 const menuSurfaceVariants = cva(
   [
+    menuSurfaceGroupClass,
     'z-50 flex min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-md outline-none',
     popupMotionClass,
   ],
@@ -52,16 +56,20 @@ export function DropdownMenuContent({
   className,
   sideOffset = 4,
   align = 'start',
+  onKeyDown,
+  onPointerMove,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
+        data-mode={usePortalMode()}
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         align={align}
         className={cn(menuSurfaceVariants({ kind: 'content' }), className)}
         {...props}
+        {...useKeyboardHighlight({ onKeyDown, onPointerMove })}
       />
     </DropdownMenuPrimitive.Portal>
   )
@@ -69,14 +77,18 @@ export function DropdownMenuContent({
 
 export function DropdownMenuSubContent({
   className,
+  onKeyDown,
+  onPointerMove,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.SubContent
+        data-mode={usePortalMode()}
         data-slot="dropdown-menu-sub-content"
         className={cn(menuSurfaceVariants({ kind: 'sub' }), className)}
         {...props}
+        {...useKeyboardHighlight({ onKeyDown, onPointerMove })}
       />
     </DropdownMenuPrimitive.Portal>
   )

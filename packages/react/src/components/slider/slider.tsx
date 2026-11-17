@@ -11,6 +11,7 @@ const thumbClass = [
   'hover:border-neutral-emphasized focus-visible:shadow-focus-ring',
   // Active: the slider is being pressed or dragged. Both thumbs of a range get the dark ring.
   'group-active/slider:border-current group-active/slider:text-neutral',
+  'data-disabled:border-disabled',
 ]
 
 export type SliderProps = Omit<ComponentProps<typeof SliderPrimitive.Root>, 'orientation' | 'aria-label'> & {
@@ -48,11 +49,11 @@ export function Slider({ className, ...props }: SliderProps) {
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className="relative h-1.5 grow rounded-full border border-neutral-subtle bg-neutral"
+        className="relative h-1.5 grow rounded-full border border-neutral-subtle bg-neutral data-disabled:border-disabled data-disabled:bg-disabled"
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
-          className="absolute -inset-y-px rounded-full bg-neutral-emphasized"
+          className="absolute -inset-y-px rounded-full bg-neutral-emphasized data-disabled:bg-current data-disabled:text-disabled"
         />
       </SliderPrimitive.Track>
       {values.map((_, index) => {

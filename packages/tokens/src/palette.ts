@@ -4,7 +4,7 @@
 // raw values. Families follow where a token's hue comes from.
 
 import { hexToRgba, oklchToRgb, rgbaToHex, rgbToOklch, type Oklch } from './color'
-import { BACKDROP, SURFACE, type ModeTheme } from './types'
+import { BACKDROP, SURFACE, type ModeTheme, type Token } from './types'
 
 /** Minimum number of steps per ramp; a family with more distinct colors gets more steps. */
 export const RAMP_STEPS = 15
@@ -281,3 +281,22 @@ export function applyPalette(theme: ModeTheme, palette: ModePalette): ModeTheme 
 
 const FAMILY_ORDER = ['neutral', 'foreground', 'accent', 'success', 'warning', 'danger', 'info']
 const byFamily = (a: Ramp, b: Ramp) => FAMILY_ORDER.indexOf(a.family) - FAMILY_ORDER.indexOf(b.family)
+
+/**
+ * The palette step a token can alias, with the token's own alpha, or none when resolving the alias would
+ * not give its exact value back (no binding, a translucent step, or a different color). DTCG writes an
+ * aliased token as an alias or a `$ref`, CSS as `var()` or `color-mix()`; anything else keeps its value.
+ */
+export function paletteAlias(
+  palette: ModePalette,
+  token: Token,
+): { family: string; step: number; value: string; alpha: number } | undefined {
+  const binding = palette.bindings[token.name]
+  if (!binding) return undefined
+  const step = palette.ramps.find((r) => r.family === binding.family)?.steps.find((s) => s.step === binding.step)
+  if (!step) return undefined
+  const stepColor = hexToRgba(step.value)
+  const alpha = hexToRgba(token.value).a
+  if (stepColor.a !== 1 || rgbaToHex({ ...stepColor, a: alpha }) !== token.value) return undefined
+  return { family: binding.family, step: binding.step, value: step.value, alpha }
+}

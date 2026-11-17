@@ -5,7 +5,7 @@ pnpm workspace:
 - `packages/tokens` (`@reflection/tokens`) — color math, theme generator, validator, type scale. Pure TypeScript, no runtime dependencies.
 - `packages/theme` (`@reflection/theme`) — Style Dictionary build of the committed DTCG export into the Tailwind v4 theme (`theme.css`), the `tailwind-merge` extension and the font files. `dist/` is generated.
 - `packages/react` (`@reflection/react`) — React 19 + CVA component library. Storybook (react-vite) for docs, Vite library mode for the build.
-- `apps/theme-lab` (`@reflection/theme-lab`) — internal tool to tune generator parameters and preview themes. Its chrome is `@reflection/react` on the default theme; Lab-only pieces without a Figma component (Slider, ColorInput, Drawer, Segmented) live in `apps/theme-lab/src/ui/lab.tsx`. It resolves workspace packages to their sources through the `source` export condition (Vite `resolve.conditions`, TS `customConditions`).
+- `apps/theme-lab` (`@reflection/theme-lab`) — internal tool to tune generator parameters and preview themes. Its chrome is `@reflection/react` on the default theme; Lab-only pieces without a Figma component (Slider, ColorInput, Drawer) live in `apps/theme-lab/src/ui/lab.tsx`. It resolves workspace packages to their sources through the `source` export condition (Vite `resolve.conditions`, TS `customConditions`).
 
 ## Documentation
 

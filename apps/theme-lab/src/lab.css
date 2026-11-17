@@ -120,6 +120,18 @@ code {
   justify-items: start;
 }
 
+/* Extra weights of a text role: one checkbox per font/weight step. */
+.lab-type-weights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1) var(--spacing-3);
+}
+.lab-type-weights label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+}
+
 .lab-dimensions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

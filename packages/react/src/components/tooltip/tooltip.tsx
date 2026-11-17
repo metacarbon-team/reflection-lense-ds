@@ -1,17 +1,8 @@
 import { Tooltip as TooltipPrimitive } from 'radix-ui'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  type ComponentProps,
-  type ReactNode,
-  type RefObject,
-} from 'react'
+import { useCallback, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { tooltipMotionClass } from '../../lib/motion'
-import { composeRefs } from '../../lib/compose-refs'
+import { ModeAnchor, modeAt, subscribeModes, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { hasContent } from '../../lib/has-content'
 
 /**
@@ -60,24 +51,6 @@ function TooltipParts({ label, leadingSlot, trailingSlot }: Omit<TooltipOwnProps
   )
 }
 
-/**
- * The tooltip always renders in the opposite color mode of its surroundings, with the same tokens as
- * everything else: it sets `data-mode` on itself to the swapped mode of the closest `data-mode` above
- * the anchor, and follows that mode when it changes.
- */
-function swapMode(node: HTMLElement, anchor: Element | null) {
-  const holder = anchor?.closest<HTMLElement>('[data-mode]') ?? document.documentElement
-  const apply = () => {
-    node.dataset.mode = holder.dataset.mode === 'dark' ? 'light' : 'dark'
-  }
-  apply()
-  const observer = new MutationObserver(apply)
-  observer.observe(holder, { attributes: true, attributeFilter: ['data-mode'] })
-  return () => observer.disconnect()
-}
-
-const TriggerContext = createContext<RefObject<HTMLElement | null> | null>(null)
-
 /** Provides the show delay shared by the tooltips below it. Put it once near the root of the app. */
 export const TooltipProvider = ({
   delayDuration = 300,
@@ -87,21 +60,16 @@ export const TooltipProvider = ({
 )
 
 /** Tooltip: a short hint bubble for an element. Compose it from TooltipTrigger and TooltipContent. */
-export const Tooltip = (props: ComponentProps<typeof TooltipPrimitive.Root>) => {
-  const triggerRef = useRef<HTMLElement | null>(null)
-  return (
-    <TriggerContext value={triggerRef}>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TriggerContext>
-  )
-}
+export const Tooltip = (props: ComponentProps<typeof TooltipPrimitive.Root>) => (
+  <ModeAnchor>
+    <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  </ModeAnchor>
+)
 
 /** The element the tooltip describes. It opens on hover and on keyboard focus. Use `asChild` to use your own element. */
 export function TooltipTrigger({ ref, ...props }: ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  const triggerRef = useContext(TriggerContext) as RefObject<HTMLButtonElement | null> | null
-  // The tooltip reads the trigger to pick its color mode; the caller's own ref is kept too.
-  const composed = useMemo(() => composeRefs(triggerRef ?? undefined, ref), [triggerRef, ref])
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={composed} {...props} />
+  // The tooltip reads the trigger to pick its color mode.
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={useModeAnchorRef(ref)} {...props} />
 }
 
 export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children'> & TooltipOwnProps
@@ -121,17 +89,13 @@ export function TooltipContent({
   ref,
   ...props
 }: TooltipContentProps) {
-  const triggerRef = useContext(TriggerContext)
-  const modeRef = useCallback(
-    (node: HTMLDivElement | null) => (node ? swapMode(node, triggerRef?.current ?? null) : undefined),
-    [triggerRef],
-  )
-  // The bubble sets its color mode through its own ref; the caller's ref is kept too.
-  const composed = useMemo(() => composeRefs(modeRef, ref), [modeRef, ref])
+  // The bubble always takes the opposite color mode of the trigger's subtree, and follows it.
+  const mode = usePortalMode(true)
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
-        ref={composed}
+        ref={ref}
+        data-mode={mode}
         data-slot="tooltip-content"
         side={side}
         sideOffset={sideOffset}
@@ -178,7 +142,16 @@ export function TooltipPanel({
   className,
   ...props
 }: TooltipPanelProps) {
-  const ref = useCallback((node: HTMLDivElement | null) => (node ? swapMode(node, node.parentElement) : undefined), [])
+  // Drawn in the page: the opposite of the mode around it, set on mount and followed.
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return undefined
+    const apply = () => {
+      const next = modeAt(node.parentElement, true)
+      if (node.dataset.mode !== next) node.dataset.mode = next
+    }
+    apply()
+    return subscribeModes(apply)
+  }, [])
   return (
     <div ref={ref} data-slot="tooltip-panel" data-side={side} className={cn(tooltipClass, className)} {...props}>
       <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />

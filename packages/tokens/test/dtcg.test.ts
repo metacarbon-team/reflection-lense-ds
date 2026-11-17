@@ -9,10 +9,13 @@ import {
   DEFAULT_SHADOWS,
   DEFAULT_TYPE_SCALE,
   DTCG_EXTENSION,
-  dimensionCssVars,
   dimensionTokens,
   SPACING_STEPS,
   toPx,
+  toCssVars,
+  cssVarName,
+  generateRolePalette,
+  generateModeShadows,
 } from '../src/index'
 import type { DtcgGroup, DtcgToken } from '../src/dtcg'
 
@@ -173,7 +176,7 @@ describe('DTCG export', () => {
     expect(desktop['font/line-height/lg']!.$value).toEqual({ value: 1.75, unit: 'rem' })
     expect(desktop['font/size/sm']!.$value).toEqual({ value: 0.8125, unit: 'rem' })
     expect(mobile['font/size/lg']).toEqual(desktop['font/size/lg'])
-    expect(desktop['font/family/mono']!.$value).toBe('Geist Mono')
+    expect(desktop['font/family/mono']!.$value).toBe('JetBrains Mono')
     // Composites: a step per viewport, the line-height token in $extensions.
     const heading = desktop['typography/heading/large']!
     expect(heading.$type).toBe('typography')
@@ -201,6 +204,41 @@ describe('DTCG export', () => {
     expect(desktop['typography/display/large']!.$value).toMatchObject({
       letterSpacing: { value: -0.075, unit: 'rem' },
     })
+  })
+
+  it('writes the opacity class of every semantic and shadow color in $extensions', () => {
+    const tokens = flatten(toDtcg(theme.light))
+    for (const token of Object.values(theme.light.tokens))
+      expect(tokens[token.name]!.$extensions![DTCG_EXTENSION], token.name).toEqual({ opacity: token.opacity })
+    expect(tokens['shadow/md/ambient']!.$extensions![DTCG_EXTENSION]).toEqual({ opacity: 'translucent' })
+    expect(tokens['palette/accent/100']!.$extensions).toBeUndefined()
+  })
+})
+
+describe('CSS custom properties', () => {
+  it('writes palette steps, semantic colors through them and shadow layer colors', () => {
+    for (const mode of ['light', 'dark'] as const) {
+      const vars = toCssVars(theme[mode])
+      const palette = generateRolePalette(theme[mode])
+      for (const ramp of palette.ramps)
+        for (const step of ramp.steps) expect(vars[`--palette-${mode}-${ramp.family}-${step.step}`]).toBe(step.value)
+      // Every semantic color resolves to its own value.
+      for (const token of Object.values(theme[mode].tokens)) {
+        const value = vars[cssVarName(token.name)]!
+        const ref = /var\((--palette-[a-z0-9-]+)\)/.exec(value)?.[1]
+        if (!ref) {
+          expect(value, token.name).toBe(token.value)
+          continue
+        }
+        const step = hexToRgba(vars[ref]!)
+        const alpha = value.startsWith('color-mix') ? Number(/ ([\d.]+)%, transparent\)$/.exec(value)![1]) / 100 : 1
+        expect(rgbaToHex({ ...step, a: alpha }), token.name).toBe(token.value)
+      }
+      for (const token of Object.values(generateModeShadows(theme[mode]).colors))
+        expect(vars[cssVarName(token.name)]).toBe(token.value)
+    }
+    expect(toCssVars(theme.light)['--bg-accent-emphasized']).toMatch(/^var\(--palette-light-accent-\d+\)$/)
+    expect(toCssVars(theme.light)['--stroke-neutral']).toMatch(/^color-mix\(in srgb, var\(--palette-light-/)
   })
 })
 
@@ -252,16 +290,5 @@ describe('dimension scales', () => {
         alias: `spacing/${key}`,
       })
     }
-  })
-
-  it('writes CSS custom properties with size steps referring to spacing', () => {
-    const vars = dimensionCssVars()
-    expect(vars['--spacing-4-5']).toBe('1.125rem')
-    expect(vars['--spacing-px']).toBe('1px')
-    expect(vars['--size-4']).toBe('var(--spacing-4)')
-    expect(vars['--size-md']).toBe('28rem')
-    expect(vars['--radius-md']).toBe('0.375rem')
-    expect(vars['--radius-full']).toBe('9999px')
-    expect(vars['--border-width-2']).toBe('2px')
   })
 })

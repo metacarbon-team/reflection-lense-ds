@@ -93,8 +93,6 @@ export const rem = (value: number): Dimension => ({ value, unit: 'rem' })
 export const px = (value: number): Dimension => ({ value, unit: 'px' })
 /** px value of a dimension, for Figma and native. */
 export const toPx = (d: Dimension) => (d.unit === 'rem' ? d.value * REM_BASE : d.value)
-/** CSS length, `0.375rem` or `1px`. */
-export const cssLength = (d: Dimension) => `${d.value}${d.unit}`
 
 const stepKey = (step: (typeof SPACING_STEPS)[number]) => String(step).replace('.', '-')
 

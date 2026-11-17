@@ -128,7 +128,7 @@ export const CollapsedPath: Story = {
   ),
 }
 
-/** With a router, `asChild` gives the item's look to the router link; the link's own text becomes the label. */
+/** With a router, `asChild` gives the item's look to the router link; the text always comes from `label`, the link gives only the address. */
 export const AsChild: Story = {
   render: () => (
     <Breadcrumb>

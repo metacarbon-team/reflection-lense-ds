@@ -17,7 +17,7 @@ const radioVariants = cva(
     controlTransitionClass,
     'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
     'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
-    'enabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized enabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',
+    'enabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized',
     'enabled:aria-invalid:data-[state=checked]:bg-danger-emphasized enabled:aria-invalid:data-[state=checked]:text-danger-on-emphasized',
     'enabled:aria-invalid:data-[state=checked]:hover:bg-danger-emphasized-hover',
   ],
@@ -29,8 +29,8 @@ const radioVariants = cva(
           'enabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
           'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
           'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
-          // The ring is repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
-          'enabled:data-[state=unchecked]:focus-visible:border-transparent enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
+          // The ring is added; the border stays the selection's. Repeated per selection: `data-[state=…]:shadow-*` above is more specific than a bare `focus-visible:`.
+          'enabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
           'enabled:data-[state=checked]:focus-visible:shadow-focus-ring',
         ],
         hover: [
@@ -38,9 +38,9 @@ const radioVariants = cva(
           'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized-hover enabled:data-[state=checked]:text-neutral-on-emphasized enabled:data-[state=checked]:shadow-xs',
         ],
         focus: [
-          'enabled:border-transparent enabled:shadow-focus-ring',
-          'enabled:data-[state=unchecked]:bg-form-neutral',
-          'enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized',
+          'enabled:shadow-focus-ring',
+          'enabled:data-[state=unchecked]:border-neutral-emphasized enabled:data-[state=unchecked]:bg-form-neutral',
+          'enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-neutral-emphasized enabled:data-[state=checked]:text-neutral-on-emphasized',
         ],
       },
     },

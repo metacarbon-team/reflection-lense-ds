@@ -6,22 +6,22 @@ Theme Lab tunes the parameters and exports the result. `@reflection/theme` build
 
 ## API
 
-| Export                                                                                                                      | What it does                                                                                                 |
-| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `generateTheme(seeds, params?)`                                                                                             | Both modes: `{ light, dark }`, each a `ModeTheme`                                                            |
-| `generateMode(mode, seeds, params?)`                                                                                        | One mode: `{ mode, tokens, adjustments }`. `tokens` maps a name to `{ name, value: '#rrggbb[aa]', opacity }` |
-| `validateMode(theme, params?)`                                                                                              | Every broken rule as `{ rule, token, against?, actual, required }`. Empty means the mode passes              |
-| `toDtcg(modeTheme, options?)`                                                                                               | One mode and viewport as a DTCG 2025.10 document                                                             |
-| `toDtcgAllModes(theme, options?)`                                                                                           | Both modes in one document, as committed in `packages/theme/tokens/reflection.tokens.json`                   |
-| `toCssVars(modeTheme)`                                                                                                      | `{ '--bg-accent-emphasized': '#cee04b', … }` for one mode                                                    |
-| `cssVarName(name)`                                                                                                          | `bg/accent/emphasized/hover` → `--bg-accent-emphasized-hover`                                                |
-| `generateRolePalette(modeTheme)`                                                                                            | Palette ramps per family, and the step every token binds to                                                  |
-| `generateShadows(params?)`, `generateModeShadows(modeTheme, params?)`, `shadowCss`                                          | Shadow geometry, and the layer colors per mode                                                               |
-| `dimensionTokens()`, `SPACING_STEPS`, `CONTAINER_SIZES`, `RADII`, `BORDER_WIDTHS`, `REM_BASE`, `toPx`, `dimensionCssVars()` | Dimension scales (static)                                                                                    |
-| `DEFAULT_TYPE_SCALE`, `textStyles`, `validateTypeScale`, `FONT_WEIGHTS`, `VIEWPORTS`                                        | Type scale and text roles (static, editable in Theme Lab)                                                    |
-| `contrast`, `composite`, `hexToRgba`, `rgbaToHex`, `rgbToOklch`, `oklchToRgb`, `lightness`                                  | Color math                                                                                                   |
-| `DEFAULT_SEEDS`, `DEFAULT_PARAMS`, `DEFAULT_SHADOWS`                                                                        | Defaults                                                                                                     |
-| `generateFixedPalette`, `generateCurvePalette`, `familyCurve`, `BRAND_SHAPES`, `params.curve`                               | Prototypes. The shipped output does not use them                                                             |
+| Export                                                                                                | What it does                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generateTheme(seeds, params?)`                                                                       | Both modes: `{ light, dark }`, each a `ModeTheme`                                                                                                       |
+| `generateMode(mode, seeds, params?)`                                                                  | One mode: `{ mode, tokens, adjustments }`. `tokens` maps a name to `{ name, value: '#rrggbb[aa]', opacity }`                                            |
+| `validateMode(theme, params?)`                                                                        | Every broken rule as `{ rule, token, against?, actual, required }`. Empty means the mode passes                                                         |
+| `toDtcg(modeTheme, options?)`                                                                         | One mode and viewport as a DTCG 2025.10 document                                                                                                        |
+| `toDtcgAllModes(theme, options?)`                                                                     | Both modes in one document, as committed in `packages/theme/tokens/reflection.tokens.json`                                                              |
+| `toCssVars(modeTheme, { palette?, shadows? })`                                                        | One mode as `theme.css` writes it: palette steps, semantic colors through them (`var()`, or `color-mix()` for a translucent color), shadow layer colors |
+| `cssVarName(name)`                                                                                    | `bg/accent/emphasized/hover` → `--bg-accent-emphasized-hover`                                                                                           |
+| `generateRolePalette(modeTheme)`, `paletteAlias(palette, token)`                                      | Palette ramps per family, and the step every token binds to; the step a token can alias exactly                                                         |
+| `generateShadows(params?)`, `generateModeShadows(modeTheme, params?)`, `shadowCss`                    | Shadow geometry, and the layer colors per mode                                                                                                          |
+| `dimensionTokens()`, `SPACING_STEPS`, `CONTAINER_SIZES`, `RADII`, `BORDER_WIDTHS`, `REM_BASE`, `toPx` | Dimension scales (static)                                                                                                                               |
+| `DEFAULT_TYPE_SCALE`, `textStyles`, `validateTypeScale`, `FONT_WEIGHTS`, `VIEWPORTS`                  | Type scale and text roles (static, editable in Theme Lab)                                                                                               |
+| `contrast`, `composite`, `hexToRgba`, `rgbaToHex`, `rgbToOklch`, `oklchToRgb`, `lightness`            | Color math                                                                                                                                              |
+| `DEFAULT_SEEDS`, `DEFAULT_PARAMS`, `DEFAULT_SHADOWS`                                                  | Defaults                                                                                                                                                |
+| `generateFixedPalette`, `generateCurvePalette`, `familyCurve`, `BRAND_SHAPES`, `params.curve`         | Prototypes. The shipped output does not use them                                                                                                        |
 
 ## Inputs
 
@@ -185,6 +185,7 @@ The format is DTCG 2025.10. Colors are `{ colorSpace: 'srgb', components, alpha 
 
 - **Opaque color.** An alias of its palette step: `"{palette.light.accent.550}"`.
 - **Translucent color.** Components through a JSON Pointer, `{ "$ref": "#/palette/light/neutral/750/$value/components" }`, plus its own alpha, since an alias cannot change alpha. A token without an exact step match keeps its literal value.
+- **Opacity class.** Every semantic and shadow color carries it in the extension: `"$extensions": { "com.reflection-lense": { "opacity": "translucent" } }`, or `"opaque"`. Palette steps are always opaque and have none.
 - **Shadows.** `shadow/<level>` and `focus/ring` are `shadow` composites in px. Each layer's `color` is an alias of the mode's color token, such as `{light.shadow.xs.contact}` or `{light.focus.accent.$root}`. `@reflection/theme` writes these as `var()` references, so a theme that sets the colors also sets the shadows.
 - **Typography.**
   - Primitives: `font/size/<step>` and `font/line-height/<step>` in rem, `font/tracking/<step>` as a `number` in em, `font/weight/<name>` and `font/family/<name>`.
@@ -226,5 +227,3 @@ These are facts about the current code, not targets:
 - **Ghosts over cards are not measured.** Ghost fills on `card/neutral/emphasized` (menu rows) are not among the ghost bases in either the generator or the validator.
 - **Tint chroma is fixed.** Tinted backgrounds use `tintChroma` (0.03) whatever the role's chroma.
 - **The grammar check is looser than the token set.** It accepts `bg/<status>/subtle` and `bg/<role>/on-emphasized`.
-- **The DTCG `size/<n>` mirror holds values, not aliases of `spacing/<n>`.** Only `dimensionCssVars` writes the alias.
-- **Opacity class is not exported.** It lives only in the token name, with nothing in `$extensions`.

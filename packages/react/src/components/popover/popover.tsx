@@ -1,23 +1,26 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { popupMotionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 
 /** Popover: a small floating panel that opens from a trigger. Compose it from PopoverTrigger and PopoverContent. */
 export const Popover = (props: ComponentProps<typeof PopoverPrimitive.Root>) => (
-  <PopoverPrimitive.Root data-slot="popover" {...props} />
+  <ModeAnchor>
+    <PopoverPrimitive.Root data-slot="popover" {...props} />
+  </ModeAnchor>
 )
 
 /** The control that opens the popover. Use `asChild` to make your own button the trigger. */
-export const PopoverTrigger = (props: ComponentProps<typeof PopoverPrimitive.Trigger>) => (
-  <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
-)
+export function PopoverTrigger({ ref, ...props }: ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 /** Anchors the panel to another element instead of the trigger. */
-export const PopoverAnchor = (props: ComponentProps<typeof PopoverPrimitive.Anchor>) => (
-  <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
-)
+export function PopoverAnchor({ ref, ...props }: ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 /** Closes the popover. Use `asChild` to make your own button the close control. */
 export const PopoverClose = (props: ComponentProps<typeof PopoverPrimitive.Close>) => (
@@ -113,6 +116,7 @@ export function PopoverContent({
   ...props
 }: PopoverContentProps) {
   const id = useId()
+  const mode = usePortalMode()
   const labelId = hasContent(label) ? `${id}-title` : undefined
   const descriptionId = hasContent(description) ? `${id}-description` : undefined
   return (
@@ -120,6 +124,7 @@ export function PopoverContent({
       {/* The panel is the Radix Content itself (`asChild`): its styles, `className`, `data-state`,
           `data-side` and transform origin sit on one element, so a caller can style by side or state. */}
       <PopoverPrimitive.Content
+        data-mode={mode}
         asChild
         side={side}
         align={align}

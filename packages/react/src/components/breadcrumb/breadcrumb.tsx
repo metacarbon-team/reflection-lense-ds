@@ -58,7 +58,10 @@ export type BreadcrumbItemProps = Omit<ComponentProps<'a'>, 'children'> & {
    * page: plain text with `aria-current="page"`, not a link. Use it on the last item only.
    */
   state?: VariantProps<typeof breadcrumbItemVariants>['state']
-  /** Render the only child (a router link) with the item's styles. Its own text becomes the label. Ignored for `active`. */
+  /**
+   * Render the only child (a router link) with the item's styles. The text always comes from `label`; the link gives
+   * only the address: `<BreadcrumbItem asChild label="Projects"><Link href="/projects" /></BreadcrumbItem>`. Ignored for `active`.
+   */
   asChild?: boolean
   /** The link to render when `asChild` is set. */
   children?: ReactElement

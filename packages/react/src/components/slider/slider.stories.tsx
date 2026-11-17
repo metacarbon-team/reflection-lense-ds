@@ -41,7 +41,7 @@ const Side = ({ children }: { children: ReactNode }) => (
 
 /**
  * Every type and state, as in the Figma matrix. Active is a slider being pressed or dragged: the thumbs get
- * a dark ring. Hover and focus show on the thumb only.
+ * a dark ring. Hover and focus show on the thumb only. Disabled greys the track, the fill and the thumb's stroke.
  */
 export const Variants: Story = {
   parameters: { controls: { disable: true } },
@@ -67,16 +67,24 @@ export const Variants: Story = {
           <Cell>
             <Slider aria-label="Range, active" defaultValue={[25, 75]} className={frozen.active} />
           </Cell>
+          <Side>disabled</Side>
+          <Cell>
+            <Slider aria-label="Single, disabled" defaultValue={[50]} disabled />
+          </Cell>
+          <Cell>
+            <Slider aria-label="Range, disabled" defaultValue={[25, 75]} disabled />
+          </Cell>
         </div>
       </div>
       <div className="flex flex-col gap-3">
         <span className="text-label-large text-neutral">Slider Thumb</span>
-        <div className="grid grid-cols-[4rem_repeat(4,7rem)] items-center gap-y-2">
+        <div className="grid grid-cols-[4rem_repeat(5,7rem)] items-center gap-y-2">
           <Side>state</Side>
           <Head>default</Head>
           <Head>hover</Head>
           <Head>focus</Head>
           <Head>active</Head>
+          <Head>disabled</Head>
           <Side>thumb</Side>
           {(['default', 'hover', 'focus', 'active'] as const).map((state) => (
             <Cell key={state}>
@@ -87,6 +95,9 @@ export const Variants: Story = {
               />
             </Cell>
           ))}
+          <Cell>
+            <Slider aria-label="Thumb, disabled" defaultValue={[0]} className="w-4" disabled />
+          </Cell>
         </div>
       </div>
     </div>
@@ -96,6 +107,11 @@ export const Variants: Story = {
 /** Two values make a range: the fill runs between the thumbs and each thumb is named "minimum" or "maximum". */
 export const Range: Story = {
   args: { defaultValue: [25, 75], 'aria-label': 'Price' },
+}
+
+/** `disabled` blocks the pointer and the keyboard and greys every part; a disabled Field disables it too. */
+export const Disabled: Story = {
+  args: { defaultValue: [25, 75], 'aria-label': 'Price', disabled: true },
 }
 
 const Controlled = () => {

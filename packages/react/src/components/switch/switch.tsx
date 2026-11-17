@@ -12,7 +12,7 @@ const switchClass = [
   'enabled:data-[state=unchecked]:hover:border-neutral-emphasized enabled:data-[state=unchecked]:hover:bg-neutral-hover',
   'enabled:data-[state=checked]:border-neutral-subtle enabled:data-[state=checked]:bg-neutral-emphasized',
   'enabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
-  'focus-visible:border-transparent focus-visible:shadow-focus-ring',
+  'focus-visible:shadow-focus-ring',
   'disabled:pointer-events-none disabled:border-disabled disabled:bg-transparent',
 ]
 

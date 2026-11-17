@@ -70,7 +70,7 @@ const checkboxVariants = cva(
     checkboxLookClass,
     controlTransitionClass,
     'group/checkbox peer align-middle outline-none disabled:pointer-events-none data-disabled:pointer-events-none',
-    'not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',
+    'not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:bg-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:text-danger-on-emphasized',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:hover:bg-danger-emphasized-hover',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=indeterminate]:border-transparent not-disabled:not-data-disabled:aria-invalid:data-[state=indeterminate]:bg-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=indeterminate]:text-danger-on-emphasized',
@@ -83,9 +83,10 @@ const checkboxVariants = cva(
           'not-disabled:not-data-disabled:data-[state=unchecked]:hover:bg-form-neutral-hover',
           'not-disabled:not-data-disabled:data-[state=checked]:hover:bg-neutral-emphasized-hover',
           'not-disabled:not-data-disabled:data-[state=indeterminate]:hover:bg-neutral-hover',
-          'not-disabled:not-data-disabled:data-[state=unchecked]:focus-visible:border-transparent not-disabled:not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
+          // The ring is added; the border stays the selection's. Repeated per selection: `data-[state=…]:shadow-xs` at rest is more specific than a bare `focus-visible:`.
+          'not-disabled:not-data-disabled:data-[state=unchecked]:focus-visible:shadow-focus-ring',
           'not-disabled:not-data-disabled:data-[state=checked]:focus-visible:shadow-focus-ring',
-          'not-disabled:not-data-disabled:data-[state=indeterminate]:focus-visible:border-transparent not-disabled:not-data-disabled:data-[state=indeterminate]:focus-visible:shadow-focus-ring',
+          'not-disabled:not-data-disabled:data-[state=indeterminate]:focus-visible:shadow-focus-ring',
         ],
         hover: [
           'not-disabled:not-data-disabled:data-[state=unchecked]:bg-form-neutral-hover',
@@ -93,9 +94,9 @@ const checkboxVariants = cva(
           'not-disabled:not-data-disabled:data-[state=indeterminate]:bg-neutral-hover',
         ],
         focus: [
-          'not-disabled:not-data-disabled:data-[state=unchecked]:border-transparent not-disabled:not-data-disabled:data-[state=unchecked]:shadow-focus-ring',
+          'not-disabled:not-data-disabled:data-[state=unchecked]:shadow-focus-ring',
           'not-disabled:not-data-disabled:data-[state=checked]:shadow-focus-ring',
-          'not-disabled:not-data-disabled:data-[state=indeterminate]:border-transparent not-disabled:not-data-disabled:data-[state=indeterminate]:shadow-focus-ring',
+          'not-disabled:not-data-disabled:data-[state=indeterminate]:shadow-focus-ring',
         ],
       },
     },

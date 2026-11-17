@@ -89,7 +89,7 @@ DTCG format 2025.10. One document holds every mode.
 
 Set `data-mode="light"` or `data-mode="dark"` on `<html>`. Without it, light applies.
 
-A subtree can switch mode locally: put `data-mode` on any element and every variable below it re-resolves. Portalled content (Dialog, Dropdown Menu, Select, Popover) renders in `<body>` and takes the mode of `<html>`, not of the subtree that opened it. Toasts render where the `Toaster` is mounted and take its mode. Tooltip is the exception: it sets the opposite of its trigger's mode on itself.
+A subtree can switch mode locally: put `data-mode` on any element and every variable below it re-resolves. Portalled content (Dialog, Dropdown Menu, Select, Popover, Date Picker) renders in `<body>` but sets the mode of its trigger's closest `data-mode` on itself and follows it when it changes; without a trigger (a dialog opened from state) it takes the mode of `<html>`. Tooltip sets the opposite of its trigger's mode. Toasts render where the `Toaster` is mounted and take its mode.
 
 ## Runtime themes
 
@@ -102,7 +102,7 @@ const theme = generateTheme({ light: { bg, fg, accent }, dark: { bg, fg, accent 
 Object.assign(element.style, toCssVars(theme.light)) // or write a [data-mode] rule per mode
 ```
 
-Shadows and the focus ring follow because they reference the color variables.
+`toCssVars` writes the same variables `theme.css` holds for that mode: the palette steps (`--palette-light-accent-650`), the semantic colors as references to them (a translucent one as `color-mix()` with its alpha), and the shadow layer colors (`--shadow-md-ambient`). Shadows and the focus ring follow because they reference the color variables.
 
 ## Regenerating
 

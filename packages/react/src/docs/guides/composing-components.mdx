@@ -107,13 +107,13 @@ The card surface, row heights, truncation, hover, focus and disabled states all 
 </div>
 ```
 
-| Problem                                                           | Why it breaks                                                                      |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `bg-white`, `bg-gray-100`, `text-[#22a06b]`                       | Not theme colors: wrong in dark mode, ignores custom themes                        |
-| `rounded-[10px]`, `text-sm`, `h-8` on a text row                  | Off-scale values; raw font size instead of a role; fixed height clips wrapped text |
-| `shadow-md` on a list                                             | The list surface is `shadow-xs` in the system; `md` is for floating surfaces       |
-| `opacity-50` for disabled, a shadow on a disabled button          | Disabled uses the `disabled` tokens and never has a shadow                         |
-| No focus style, no `data-slot`, no accessible name for the counts | Unusable with a keyboard, untestable, color-only meaning                           |
+| Problem                                                           | Why it breaks                                                                                               |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `bg-white`, `bg-gray-100`, `text-[#22a06b]`                       | Not theme colors: wrong in dark mode, ignores custom themes                                                 |
+| `rounded-[10px]`, `text-sm`, `h-8` on a text row                  | Off-scale values; a size utility the theme does not have instead of a role; fixed height clips wrapped text |
+| `shadow-md` on a list                                             | The list surface is `shadow-xs` in the system; `md` is for floating surfaces                                |
+| `opacity-50` for disabled, a shadow on a disabled button          | Disabled uses the `disabled` tokens and never has a shadow                                                  |
+| No focus style, no `data-slot`, no accessible name for the counts | Unusable with a keyboard, untestable, color-only meaning                                                    |
 
 ## 5. When to propose a component to the system
 

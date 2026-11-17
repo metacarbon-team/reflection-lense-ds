@@ -1,10 +1,17 @@
 import { Select as SelectPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { popupMotionClass } from '../../lib/motion'
 import { controlFrameClass } from '../../lib/control-frame'
 import { CheckIcon, ChevronDownIcon } from '../../lib/icons'
-import { menuItemVariants, menuSeparatorClass, MenuSurfaceContext } from '../../lib/menu'
+import {
+  menuItemVariants,
+  menuSeparatorClass,
+  menuSurfaceGroupClass,
+  MenuSurfaceContext,
+  useKeyboardHighlight,
+} from '../../lib/menu'
 import { useFieldControl } from '../field/field'
 
 /**
@@ -20,7 +27,9 @@ const selectTriggerClass = [
 ]
 
 export const Select = (props: ComponentProps<typeof SelectPrimitive.Root>) => (
-  <SelectPrimitive.Root data-slot="select" {...props} />
+  <ModeAnchor>
+    <SelectPrimitive.Root data-slot="select" {...props} />
+  </ModeAnchor>
 )
 
 export const SelectGroup = (props: ComponentProps<typeof SelectPrimitive.Group>) => (
@@ -34,10 +43,12 @@ export const SelectValue = (props: ComponentProps<typeof SelectPrimitive.Value>)
 export type SelectTriggerProps = ComponentProps<typeof SelectPrimitive.Trigger>
 
 /** The control that opens the menu; open shows the focus ring. Takes id and state from a Field. */
-export function SelectTrigger({ className, children, ...props }: SelectTriggerProps) {
+export function SelectTrigger({ className, children, ref, ...props }: SelectTriggerProps) {
   const control = useFieldControl(props)
+  const anchorRef = useModeAnchorRef(ref)
   return (
     <SelectPrimitive.Trigger
+      ref={anchorRef}
       data-slot="select-trigger"
       data-invalid={control.invalid || undefined}
       {...props}
@@ -58,20 +69,25 @@ export function SelectContent({
   children,
   position = 'popper',
   sideOffset = 4,
+  onKeyDown,
+  onPointerMove,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Content>) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
+        data-mode={usePortalMode()}
         data-slot="select-content"
         position={position}
         sideOffset={sideOffset}
         className={cn(
+          menuSurfaceGroupClass,
           'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) origin-(--radix-select-content-transform-origin) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
           popupMotionClass,
           className,
         )}
         {...props}
+        {...useKeyboardHighlight({ onKeyDown, onPointerMove })}
       >
         <SelectPrimitive.Viewport className="flex flex-col gap-0.5 p-1">
           <MenuSurfaceContext value="select">{children}</MenuSurfaceContext>

@@ -4,7 +4,7 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # Reflection Lense
 
-React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilities on the theme that Style Dictionary builds from the DTCG export of <a href="/" target="_top">Theme Lab</a>. Complex behaviour (dialog, menus, select, tabs, switch) uses Radix primitives.
+React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilities on the theme that Style Dictionary builds from the DTCG export of <a href="/" target="_top">Theme Lab</a>. Complex behaviour (dialog, menus, select, tabs, segmented control, switch) uses Radix primitives.
 
 ## Setup
 
@@ -15,7 +15,7 @@ React 19 components on the Reflection Lense theme. Styling is Tailwind v4 utilit
 @source '../node_modules/@reflection/react/dist';
 ```
 
-Set `data-mode="light"` or `data-mode="dark"` on `<html>`, or on any subtree for a local mode. Portalled content (dialogs, menus, select options) renders in `<body>`, so set the mode on `<html>`.
+Set `data-mode="light"` or `data-mode="dark"` on `<html>`, or on any subtree for a local mode. Portalled content (dialogs, menus, select options) renders in `<body>` and takes the mode of the subtree its trigger sits in.
 
 ## Using components
 
