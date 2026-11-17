@@ -83,7 +83,7 @@ Split a component into parts only where a part brings its own behaviour or seman
 - **Icons size from the parent but yield to their own class**: `[&_svg:not([class*=size-])]:size-4`. An icon with `size-5` keeps it; a caller who overrides the parent's icon size uses the same selector, so `cn` replaces it.
 - **Radix primitives** for behaviour (focus trap, roving focus, keyboard navigation, positioning, dismiss). Styling and API are ours; never expose a primitive's class names or props that bypass the theme.
 - **A row that is itself a control** (a `menuitemcheckbox` row of Dropdown Menu) draws the control's look, not a second control: a nested Checkbox would take focus and toggle twice. The component owns that look and exports it as a part without behaviour: `CheckboxBox` next to `Checkbox` in `checkbox.tsx`. Never a mode prop that turns the control into a decoration.
-- **`asChild`** is supported on Button, IconButton, Card, Link and NavItem. Under `asChild` a link keeps the link role.
+- **`asChild`** is supported on Button, IconButton, Card, Link, NavItem, Item and BreadcrumbItem. Under `asChild` a link keeps the link role.
 
 ## States
 

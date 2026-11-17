@@ -126,6 +126,29 @@ export const States: Story = {
   ),
 }
 
+/** `asChild` renders the row as your link or button, so it navigates or acts with the element's own keyboard behaviour. */
+export const AsLink: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col">
+      <Item asChild label="Profile" description="Name, photo and contact" trailingSlot={<ChevronRightIcon />}>
+        <a href="#profile" />
+      </Item>
+      <Item asChild label="Billing" description="Plan and invoices" trailingSlot={<ChevronRightIcon />}>
+        <a href="#billing" />
+      </Item>
+      <Item
+        asChild
+        disabled
+        label="Security"
+        description="Available on the Team plan"
+        trailingSlot={<ChevronRightIcon />}
+      >
+        <a href="#security" />
+      </Item>
+    </div>
+  ),
+}
+
 /** Only the title. Everything else is hidden when it is not set. */
 export const TitleOnly: Story = {
   render: () => (
