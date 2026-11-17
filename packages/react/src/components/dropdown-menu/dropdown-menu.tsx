@@ -1,10 +1,10 @@
 import { cva } from 'class-variance-authority'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
-import { CheckboxCheckMark, checkboxBoxClass, CheckboxIndeterminateMark } from '../../lib/checkbox'
 import { cn } from '../../lib/cn'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
 import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
+import { CheckboxBox } from '../checkbox/checkbox'
 
 // Dropdown Menu: a list of actions or choices opened from a trigger, usually a Button through `asChild`.
 // Icons, shortcuts, checkable and radio items, groups and submenus.
@@ -86,19 +86,6 @@ export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof 
   return <DropdownMenuPrimitive.Item data-slot="dropdown-menu-item" className={cn(item(), className)} {...props} />
 }
 
-// The look of Checkbox, drawn from the row's `data-state` because the row is the control: a real
-// Checkbox would put a second focusable control inside the menu item. Disabled has no shadow.
-const menuCheckboxClass = [
-  checkboxBoxClass,
-  'border-neutral-emphasized bg-form-neutral shadow-sm',
-  // Selection colors only while enabled, so the disabled look below always wins, as in Checkbox.
-  'group-not-data-disabled/item:group-data-[state=checked]/item:border-transparent group-not-data-disabled/item:group-data-[state=checked]/item:bg-neutral-emphasized group-not-data-disabled/item:group-data-[state=checked]/item:text-neutral-on-emphasized',
-  'group-not-data-disabled/item:group-data-[state=indeterminate]/item:bg-neutral group-not-data-disabled/item:group-data-[state=indeterminate]/item:text-neutral',
-  'group-data-disabled/item:bg-disabled group-data-disabled/item:text-disabled group-data-disabled/item:shadow-none',
-  'group-data-disabled/item:group-data-[state=unchecked]/item:border-disabled',
-  'group-data-disabled/item:group-data-[state=checked]/item:border-transparent group-data-disabled/item:group-data-[state=indeterminate]/item:border-transparent',
-]
-
 export type DropdownMenuCheckboxItemProps = ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
   /** Close the menu when the item is toggled. Off by default, so several items can be toggled in a row. */
   closeOnSelect?: boolean
@@ -118,19 +105,15 @@ export function DropdownMenuCheckboxItem({
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
-      className={cn(item(), 'group/item', className)}
+      className={cn(item(), className)}
       onSelect={(event) => {
         onSelect?.(event)
         if (!closeOnSelect) event.preventDefault()
       }}
       {...props}
     >
-      <span data-slot="dropdown-menu-checkbox" className={cn(menuCheckboxClass)}>
-        <DropdownMenuPrimitive.ItemIndicator className="flex items-center">
-          <CheckboxCheckMark className="group-data-[state=indeterminate]/item:hidden" />
-          <CheckboxIndeterminateMark className="hidden group-data-[state=indeterminate]/item:block" />
-        </DropdownMenuPrimitive.ItemIndicator>
-      </span>
+      {/* The row is the checkbox (`menuitemcheckbox`): it draws the Checkbox box, not a second control. */}
+      <CheckboxBox data-slot="dropdown-menu-checkbox" checked={props.checked} disabled={props.disabled} />
       {children}
     </DropdownMenuPrimitive.CheckboxItem>
   )

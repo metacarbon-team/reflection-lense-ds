@@ -17,14 +17,10 @@ const formatCount = (count: number | undefined) =>
   count !== undefined && Number.isFinite(count) ? countFormat.format(Math.trunc(Math.abs(count))) : null
 
 export type DiffStatProps = Omit<ComponentProps<'span'>, 'children'> & {
-  /** Number of added lines, a whole number. The component writes it with a leading `+`. A value that is not finite is not shown. */
+  /** Number of added lines, a whole number. The component writes it with a leading `+`. Not shown when it is not set or not finite: leave it out for a change that only removes lines. */
   added?: number
-  /** Number of removed lines, a whole number. The component writes it with a leading `−`; pass it without a sign. A value that is not finite is not shown. */
+  /** Number of removed lines, a whole number. The component writes it with a leading `−`; pass it without a sign. Not shown when it is not set or not finite: leave it out for a change that only adds lines. */
   removed?: number
-  /** Shows the added count. Turn it off for a change that only removes lines. */
-  showAdded?: boolean
-  /** Shows the removed count. Turn it off for a change that only adds lines. */
-  showRemoved?: boolean
 }
 
 /**
@@ -33,9 +29,9 @@ export type DiffStatProps = Omit<ComponentProps<'span'>, 'children'> & {
  * meaning never depends on color alone. Give it a name for screen readers with `role="group"` and an
  * `aria-label`, for example "120 lines added, 34 lines removed".
  */
-export function DiffStat({ className, added, removed, showAdded = true, showRemoved = true, ...props }: DiffStatProps) {
-  const addedText = showAdded ? formatCount(added) : null
-  const removedText = showRemoved ? formatCount(removed) : null
+export function DiffStat({ className, added, removed, ...props }: DiffStatProps) {
+  const addedText = formatCount(added)
+  const removedText = formatCount(removed)
   // With nothing to show, render nothing instead of an empty element.
   if (addedText === null && removedText === null) return null
   return (

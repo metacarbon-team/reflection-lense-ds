@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
+import { IconBox } from '../icon-box/icon-box'
 import { IconButton } from '../icon-button/icon-button'
 
 export const Dialog = (props: ComponentProps<typeof DialogPrimitive.Root>) => (
@@ -80,12 +81,12 @@ export function DialogContent({
 }
 
 export type DialogHeaderProps = ComponentProps<'div'> & {
-  /** An Icon Box above the title that sets the tone, such as a warning. Keep it to one small icon. The header shows the slot when it is set. */
-  iconBox?: ReactNode
+  /** The icon of the Icon Box above the title, one icon that sets the tone, such as a warning. The header draws the Icon Box around it when it is set. */
+  icon?: ReactNode
 }
 
-/** Title and description, with an optional `iconBox` above them. Next to the close button it keeps the header gap (12px) to it. In `stacked` the text and the iconBox are centered. */
-export function DialogHeader({ className, iconBox, children, ...props }: DialogHeaderProps) {
+/** Title and description, with an optional Icon Box (`icon`) above them. Next to the close button it keeps the header gap (12px) to it. In `stacked` the text and the Icon Box are centered. */
+export function DialogHeader({ className, icon, children, ...props }: DialogHeaderProps) {
   return (
     <div
       data-slot="dialog-header"
@@ -96,9 +97,9 @@ export function DialogHeader({ className, iconBox, children, ...props }: DialogH
       )}
       {...props}
     >
-      {hasContent(iconBox) && (
+      {hasContent(icon) && (
         <div data-slot="dialog-icon-box" className="flex">
-          {iconBox}
+          <IconBox icon={icon} />
         </div>
       )}
       <div data-slot="dialog-heading" className="flex w-full flex-col gap-1">

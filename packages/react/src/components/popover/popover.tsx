@@ -24,12 +24,14 @@ export const PopoverClose = (props: ComponentProps<typeof PopoverPrimitive.Close
 )
 
 type PopoverPanelOwnProps = {
-  /** Short name of the panel, two or three words. It says what the panel is for, not what kind of element it is. */
+  /**
+   * Short name of the panel, two or three words. It says what the panel is for, not what kind of element
+   * it is. The title block shows when the label or the description is set; leave both out when the
+   * trigger already names the panel, and name the dialog with `aria-label`.
+   */
   label?: ReactNode
   /** One sentence of help under the title. Do not repeat the title in it. */
   description?: ReactNode
-  /** Shows the title and description block. Turn it off when the trigger already names the panel. */
-  header?: boolean
   /** Shows the content slot. Turn it off for an info-only popover that has just a title and a description. */
   content?: boolean
   /** The content slot: controls and short text, such as Checkbox rows, a field or a Button row. */
@@ -52,7 +54,6 @@ export type PopoverPanelProps = Omit<ComponentProps<'div'>, 'content' | 'childre
 export function PopoverPanel({
   label,
   description,
-  header = true,
   content = true,
   children,
   labelId,
@@ -69,11 +70,13 @@ export function PopoverPanel({
       )}
       {...props}
     >
-      {header && (
+      {(hasContent(label) || hasContent(description)) && (
         <div data-slot="popover-header" className="flex min-w-0 flex-col gap-0.5">
-          <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
-            {label}
-          </p>
+          {hasContent(label) && (
+            <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
+              {label}
+            </p>
+          )}
           {hasContent(description) && (
             <p id={descriptionId} data-slot="popover-description" className="text-body-small text-neutral-subtle">
               {description}
@@ -95,13 +98,11 @@ export type PopoverContentProps = Omit<ComponentProps<typeof PopoverPrimitive.Co
 
 /**
  * The floating panel: not modal, closes on Escape or a click outside, and opens right below its
- * trigger, aligned to its start. With a header the title names the dialog; without one, pass
- * `aria-label`.
+ * trigger, aligned to its start. The label names the dialog; without one, pass `aria-label`.
  */
 export function PopoverContent({
   label,
   description,
-  header = true,
   content = true,
   children,
   className,
@@ -111,8 +112,8 @@ export function PopoverContent({
   ...props
 }: PopoverContentProps) {
   const id = useId()
-  const labelId = header && label ? `${id}-title` : undefined
-  const descriptionId = header && description ? `${id}-description` : undefined
+  const labelId = hasContent(label) ? `${id}-title` : undefined
+  const descriptionId = hasContent(description) ? `${id}-description` : undefined
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
@@ -128,7 +129,6 @@ export function PopoverContent({
         <PopoverPanel
           label={label}
           description={description}
-          header={header}
           content={content}
           labelId={labelId}
           descriptionId={descriptionId}

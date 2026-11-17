@@ -3,7 +3,7 @@ import { useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { CalendarIcon } from '../../lib/icons'
 import { useControlled } from '../../lib/use-controlled'
 import { Input } from '../input/input'
-import { Popover, PopoverTrigger } from '../popover/popover'
+import { Popover, PopoverAnchor, PopoverTrigger } from '../popover/popover'
 import { Calendar, type CalendarProps } from './calendar'
 
 export type DatePickerProps = Pick<
@@ -60,6 +60,8 @@ export function DatePicker({
   ...calendarProps
 }: DatePickerProps) {
   const content = useRef<HTMLDivElement>(null)
+  const field = useRef<HTMLSpanElement>(null)
+  const input = useRef<HTMLInputElement>(null)
   const [date, setDate] = useControlled<Date | null>(value, defaultValue ?? null)
   const [isOpen, setOpen] = useControlled<boolean>(open, false, onOpenChange)
 
@@ -74,26 +76,44 @@ export function DatePicker({
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {popoverTrigger ?? (
-          <Input
-            // Radix gives the trigger `type="button"`; an input must stay a text input.
-            type="text"
-            readOnly
-            // A read-only text input that opens a popup is a combobox: this role allows `aria-expanded`.
-            role="combobox"
-            value={formatted}
-            placeholder={placeholder}
-            leadingSlot={<CalendarIcon />}
-            disabled={disabled}
-            aria-invalid={ariaInvalid}
-            aria-label={ariaLabel}
-            inputClassName="cursor-pointer"
-            aria-haspopup="dialog"
-            onKeyDown={openWithKeys}
-          />
-        )}
-      </PopoverTrigger>
+      {popoverTrigger ? (
+        <PopoverTrigger asChild>{popoverTrigger}</PopoverTrigger>
+      ) : (
+        // The calendar lines up with the field frame, not with the text inside it. A click anywhere on the
+        // frame (the icon, the padding) acts as a click on the input, which is the trigger. The keyboard
+        // reaches the input itself, so the frame needs no key handler of its own.
+        <PopoverAnchor asChild>
+          <span
+            ref={field}
+            data-slot="date-picker-field"
+            className="flex w-full min-w-0"
+            onClick={(event) => {
+              if (event.target !== input.current) input.current?.click()
+            }}
+          >
+            <PopoverTrigger asChild>
+              <Input
+                ref={input}
+                // Radix gives the trigger `type="button"`; an input must stay a text input.
+                type="text"
+                readOnly
+                // A read-only text input that opens a popup is a combobox: this role allows `aria-expanded`.
+                role="combobox"
+                value={formatted}
+                placeholder={placeholder}
+                leadingSlot={<CalendarIcon />}
+                disabled={disabled}
+                aria-invalid={ariaInvalid}
+                aria-label={ariaLabel}
+                className="cursor-pointer"
+                inputClassName="cursor-pointer"
+                aria-haspopup="dialog"
+                onKeyDown={openWithKeys}
+              />
+            </PopoverTrigger>
+          </span>
+        </PopoverAnchor>
+      )}
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
           ref={content}
@@ -103,6 +123,10 @@ export function DatePicker({
           align="start"
           sideOffset={4}
           className="z-50 outline-none"
+          // A press on the frame toggles the calendar through the input; it must not also dismiss it first.
+          onInteractOutside={(event) => {
+            if (field.current?.contains(event.target as Node)) event.preventDefault()
+          }}
           // Focus the day in the tab order instead of the first button of the calendar.
           onOpenAutoFocus={(event) => {
             event.preventDefault()

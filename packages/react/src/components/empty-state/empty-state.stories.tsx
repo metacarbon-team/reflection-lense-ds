@@ -4,7 +4,6 @@ import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 import { Button } from '../button/button'
 import { Card } from '../card/card'
-import { IconBox } from '../icon-box/icon-box'
 import { EmptyState } from './empty-state'
 
 const InboxIcon = () => (
@@ -20,7 +19,7 @@ const InboxIcon = () => (
   </svg>
 )
 
-const media = <IconBox icon={<InboxIcon />} />
+const media = <InboxIcon />
 
 const copy = {
   title: 'No requests yet',
@@ -38,11 +37,11 @@ const secondary = (label: string, size: 'sm' | 'md') => (
 const meta = {
   title: 'Components/Empty State',
   component: EmptyState,
-  args: { variant: 'inline', ...copy, iconBox: true, action: true },
+  args: { variant: 'inline', ...copy, icon: true, action: true },
   argTypes: {
     variant: { control: 'inline-radio', options: ['inline', 'page'] },
     // Switches: on shows an Icon Box / a primary Button, off leaves the slot empty.
-    iconBox: { control: 'boolean' },
+    icon: { control: 'boolean' },
     action: { control: 'boolean' },
   },
   parameters: { docs: { page: DocsPage } },
@@ -51,13 +50,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** One empty state with every property. `iconBox` shows in the `page` variant only. */
+/** One empty state with every property. The Icon Box (`icon`) shows in the `page` variant only. */
 export const Playground: Story = {
-  render: ({ iconBox, action, ...args }) => (
+  render: ({ icon, action, ...args }) => (
     <div className="flex h-80 w-full max-w-xl flex-col justify-center rounded-lg border border-dashed border-neutral-subtle">
       <EmptyState
         {...args}
-        iconBox={iconBox ? media : undefined}
+        icon={icon ? media : undefined}
         action={action ? primary('Create request', args.variant === 'page' ? 'md' : 'sm') : undefined}
       />
     </div>
@@ -69,10 +68,10 @@ const rows = [
   { name: 'title + description', content: copy },
   { name: 'title + description + action', content: { ...copy, action: 'one' } },
   { name: 'title + description + two actions', content: { ...copy, action: 'two' } },
-  { name: 'without iconBox', content: { ...copy, action: 'one' }, noIconBox: true },
+  { name: 'without icon', content: { ...copy, action: 'one' }, noIcon: true },
 ] as const
 
-/** The two variants over the five contents of the Figma matrix. `page` fills its cell; `inline` has no iconBox. */
+/** The two variants over the five contents of the Figma matrix. `page` fills its cell; `inline` has no Icon Box. */
 export const Variants: Story = {
   parameters: { layout: 'padded' },
   render: () => (
@@ -87,11 +86,11 @@ export const Variants: Story = {
             const size = variant === 'page' ? 'md' : 'sm'
             const { action, ...text } = row.content as { title: string; description?: string; action?: string }
             const cell =
-              'noIconBox' in row && variant === 'inline' ? null : (
+              'noIcon' in row && variant === 'inline' ? null : (
                 <EmptyState
                   variant={variant}
                   {...text}
-                  iconBox={'noIconBox' in row ? undefined : media}
+                  icon={'noIcon' in row ? undefined : media}
                   action={
                     action === 'two' ? (
                       <>
@@ -133,7 +132,7 @@ export const InCard: Story = {
 export const FullPage: Story = {
   render: () => (
     <div className="h-96 w-full rounded-lg border border-neutral-subtle">
-      <EmptyState variant="page" iconBox={media} {...copy} action={primary('Create request', 'md')} />
+      <EmptyState variant="page" icon={media} {...copy} action={primary('Create request', 'md')} />
     </div>
   ),
 }
@@ -194,7 +193,7 @@ export const GuidelineInlineInsideACardDont: Story = {
       <Card className="w-full max-w-sm">
         <EmptyState
           variant="page"
-          iconBox={media}
+          icon={media}
           title="No requests match these filters."
           description="Requests sent through the gateway will show up here."
           action={primary('Clear filters', 'md')}

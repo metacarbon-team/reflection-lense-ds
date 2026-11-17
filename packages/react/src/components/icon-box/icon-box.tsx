@@ -11,8 +11,8 @@ export type IconBoxProps = Omit<ComponentProps<'div'>, 'children'> & {
 }
 
 /**
- * Icon Box: an icon in a 40 px bordered square. It is the leading visual of Dialog and the `iconBox`
- * of Empty state. The box is decorative and hidden from assistive technology; when the icon carries
+ * Icon Box: an icon in a 40 px bordered square. Dialog Header and Empty State draw it
+ * around the `icon` they are given. The box is decorative and hidden from assistive technology; when the icon carries
  * a meaning of its own, set `aria-label` and the box becomes an image with that name.
  */
 export function IconBox({ icon, className, ...props }: IconBoxProps) {

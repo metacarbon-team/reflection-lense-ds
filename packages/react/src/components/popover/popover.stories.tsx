@@ -10,13 +10,11 @@ const meta = {
   args: {
     label: 'Dimensions',
     description: 'Set the dimensions for the layer.',
-    header: true,
     content: true,
   },
   argTypes: {
     label: { control: 'text' },
     description: { control: 'text' },
-    header: { control: 'boolean' },
     content: { control: 'boolean' },
   },
 } satisfies Meta<typeof PopoverContent>
@@ -50,7 +48,7 @@ export const Playground: Story = {
             Layer size
           </Button>
         </PopoverTrigger>
-        <PopoverContent {...args} aria-label={args.header ? undefined : 'Layer size'}>
+        <PopoverContent {...args} aria-label={args.label ? undefined : 'Layer size'}>
           <Rows prefix="playground" />
         </PopoverContent>
       </Popover>
@@ -58,20 +56,20 @@ export const Playground: Story = {
   ),
 }
 
-/** The panel for each `header` and `content` combination, drawn in the page in the current theme. */
+/** The panel with and without a label and description, and with and without content, drawn in the page in the current theme. */
 export const Variants: Story = {
   render: (args) => (
     <div className="inline-grid grid-cols-[auto_repeat(2,max-content)] items-start gap-x-6 gap-y-4">
       <span />
       <span className="text-caption text-neutral-subtle">content: true</span>
       <span className="text-caption text-neutral-subtle">content: false</span>
-      <span className="text-caption text-neutral-subtle">header: true</span>
+      <span className="text-caption text-neutral-subtle">label + description</span>
       <PopoverPanel label={args.label} description={args.description}>
         <Rows prefix="variants-a" />
       </PopoverPanel>
       <PopoverPanel label={args.label} description={args.description} content={false} />
-      <span className="text-caption text-neutral-subtle">header: false</span>
-      <PopoverPanel header={false}>
+      <span className="text-caption text-neutral-subtle">no label</span>
+      <PopoverPanel>
         <Rows prefix="variants-b" />
       </PopoverPanel>
       <span />
@@ -127,7 +125,7 @@ export const InfoOnly: Story = {
   ),
 }
 
-/** The trigger already names the panel, so the header is off. Name the dialog with `aria-label`. */
+/** The trigger already names the panel, so it has no label or description. Name the dialog with `aria-label`. */
 export const WithoutHeader: Story = {
   render: (args) => (
     <Plain>
@@ -137,7 +135,7 @@ export const WithoutHeader: Story = {
             Filters
           </Button>
         </PopoverTrigger>
-        <PopoverContent {...args} header={false} aria-label="Filters">
+        <PopoverContent {...args} label={undefined} description={undefined} aria-label="Filters">
           <Rows prefix="no-header" />
         </PopoverContent>
       </Popover>

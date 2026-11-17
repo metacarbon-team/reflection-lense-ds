@@ -3,13 +3,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useId, useState } from 'react'
 import { useArgs } from 'storybook/preview-api'
 import { Field } from '../field/field'
-import { Checkbox } from './checkbox'
+import { Checkbox, CheckboxBox } from './checkbox'
 import { Specimen } from '../../docs/specimen'
 import { GuidelinePairs } from '../../docs/guideline-pairs'
 
 const meta = {
   title: 'Components/Checkbox',
   component: Checkbox,
+  subcomponents: { CheckboxBox },
   args: { 'aria-label': 'Subscribe', checked: false, state: 'default', disabled: false },
   argTypes: {
     checked: { control: 'inline-radio', options: [false, true, 'indeterminate'] },
@@ -118,6 +119,49 @@ export const IndeterminateGroup: Story = {
             </div>
           ))}
         </div>
+      </div>
+    )
+  },
+}
+
+const teams = [
+  { id: 'design', label: 'Design' },
+  { id: 'product', label: 'Product' },
+  { id: 'engineering', label: 'Engineering' },
+  { id: 'archived', label: 'Archived', disabled: true },
+]
+
+/**
+ * `CheckboxBox` is the look without the behaviour, for an element that is itself the checkbox. Here each
+ * option of a multi-select list carries `role="option"` and `aria-selected`, takes focus and toggles on
+ * click, Space or Enter; the box only shows the state. Dropdown Menu draws its checkbox rows the same way.
+ */
+export const BoxInARow: Story = {
+  parameters: { controls: { disable: true } },
+  render: function Render() {
+    const [selected, setSelected] = useState(['design', 'engineering'])
+    const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+    return (
+      <div role="listbox" aria-label="Teams" aria-multiselectable="true" className="flex w-56 flex-col gap-0.5">
+        {teams.map((team) => (
+          <div
+            key={team.id}
+            role="option"
+            aria-selected={selected.includes(team.id)}
+            aria-disabled={team.disabled || undefined}
+            tabIndex={team.disabled ? -1 : 0}
+            onClick={() => !team.disabled && toggle(team.id)}
+            onKeyDown={(event) => {
+              if (team.disabled || (event.key !== ' ' && event.key !== 'Enter')) return
+              event.preventDefault()
+              toggle(team.id)
+            }}
+            className="flex cursor-default items-center gap-2 rounded-md px-3 py-1 text-label text-neutral outline-none select-none hover:bg-ghost-neutral-hover focus-visible:shadow-focus-ring aria-disabled:pointer-events-none aria-disabled:text-disabled"
+          >
+            <CheckboxBox checked={selected.includes(team.id)} disabled={team.disabled} />
+            {team.label}
+          </div>
+        ))}
       </div>
     )
   },

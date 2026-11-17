@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
+import { IconBox } from '../icon-box/icon-box'
 
 /**
  * Variant sets the space around the content, the gap between the parts and the text roles. `page`
@@ -23,17 +24,17 @@ const titleVariants = cva('w-full text-neutral', {
 })
 
 export type EmptyStateProps = Omit<ComponentProps<'div'>, 'title' | 'children'> & {
-  /** Where the empty state is used. `inline` fills a card or a section. `page` fills a whole empty page and adds the `iconBox`. */
+  /** Where the empty state is used. `inline` fills a card or a section. `page` fills a whole empty page and adds the Icon Box. */
   variant?: VariantProps<typeof emptyStateVariants>['variant']
   /** Says what is missing, for example “No requests yet”. The block is not shown when the title is not set. */
   title?: ReactNode
   /** The second line: why it is empty or what to do next. Not shown when it is not set. */
   description?: ReactNode
   /**
-   * The media above the title: an Icon Box, a logo or an illustration. It exists in the `page` variant
-   * only and is ignored in `inline`. Not shown when it is not set.
+   * The icon of the Icon Box above the title, for example an inbox. The empty state draws the Icon Box
+   * around it. The Icon Box exists in the `page` variant only, so `inline` ignores it. Not shown when it is not set.
    */
-  iconBox?: ReactNode
+  icon?: ReactNode
   /**
    * The call to action: one primary Button (`sm` in `inline`, `md` in `page`). Add a secondary outline
    * Button before it for a second choice. Not shown when it is not set.
@@ -50,7 +51,7 @@ export function EmptyState({
   variant = 'inline',
   title,
   description,
-  iconBox,
+  icon,
   action,
   className,
   ...props
@@ -60,9 +61,9 @@ export function EmptyState({
   const hasDescription = hasContent(description)
   return (
     <div data-slot="empty-state" className={cn(emptyStateVariants({ variant }), className)} {...props}>
-      {isPage && hasContent(iconBox) && (
+      {isPage && hasContent(icon) && (
         <div data-slot="empty-state-icon-box" className="flex items-center justify-center">
-          {iconBox}
+          <IconBox icon={icon} />
         </div>
       )}
       {(hasTitle || hasDescription) && (

@@ -16,7 +16,7 @@ const itemVariants = cva(
   {
     variants: {
       size: {
-        md: 'px-3 py-1',
+        md: 'px-3 py-1.5',
         lg: 'px-4 py-3',
       },
       state: {

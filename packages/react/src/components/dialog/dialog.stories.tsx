@@ -7,7 +7,6 @@ import { cn } from '../../lib/cn'
 import { CloseIcon } from '../../lib/icons'
 import { Button } from '../button/button'
 import { Field } from '../field/field'
-import { IconBox } from '../icon-box/icon-box'
 import { IconButton } from '../icon-button/icon-button'
 import { Input } from '../input/input'
 import {
@@ -48,7 +47,7 @@ type PlaygroundArgs = {
   layout: 'inline' | 'stacked'
   title: string
   description: string
-  iconBox: boolean
+  icon: boolean
   content: boolean
   showCloseButton?: boolean
 }
@@ -59,7 +58,7 @@ export const Playground: StoryObj<PlaygroundArgs> = {
     layout: 'inline',
     title: 'Dialog title',
     description: 'Short description of what this dialog does.',
-    iconBox: false,
+    icon: false,
     content: true,
   },
   argTypes: {
@@ -67,11 +66,11 @@ export const Playground: StoryObj<PlaygroundArgs> = {
     title: { description: 'DialogTitle. Names the decision or the task, for example Delete project?' },
     description: { description: 'DialogDescription. One sentence on the result of the action. Empty hides it.' },
     // Switches: on shows the Icon Box / the body, off leaves them out.
-    iconBox: { control: 'boolean', description: 'The `iconBox` of DialogHeader: an Icon Box above the title.' },
+    icon: { control: 'boolean', description: 'The `icon` of DialogHeader: drawn in an Icon Box above the title.' },
     content: { control: 'boolean', description: 'DialogBody with the fields, the list or the question text.' },
     showCloseButton: { control: 'boolean' },
   },
-  render: ({ layout, title, description, iconBox, content, showCloseButton }) => (
+  render: ({ layout, title, description, icon, content, showCloseButton }) => (
     <Dialog>
       <DialogTrigger asChild>
         <Button tone="default" variant="outline">
@@ -79,7 +78,7 @@ export const Playground: StoryObj<PlaygroundArgs> = {
         </Button>
       </DialogTrigger>
       <DialogContent layout={layout} showCloseButton={showCloseButton}>
-        <DialogHeader iconBox={iconBox ? <IconBox icon={<WarningGlyph />} /> : undefined}>
+        <DialogHeader icon={icon ? <WarningGlyph /> : undefined}>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
@@ -161,7 +160,7 @@ const cancel = (
 
 function Sample({
   layout,
-  iconBox,
+  icon,
   title = 'Dialog title',
   description = 'Short description of what this dialog does.',
   actions,
@@ -169,7 +168,7 @@ function Sample({
   body = false,
 }: {
   layout?: 'inline' | 'stacked'
-  iconBox?: boolean
+  icon?: boolean
   title?: string
   description?: string
   actions: ReactNode
@@ -178,7 +177,7 @@ function Sample({
 }) {
   return (
     <Surface layout={layout} className={className}>
-      <DialogHeader iconBox={iconBox ? <IconBox icon={<WarningGlyph />} /> : undefined}>
+      <DialogHeader icon={icon ? <WarningGlyph /> : undefined}>
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
@@ -215,11 +214,11 @@ export const Variants: Story = {
       <span />
       <span className="text-caption text-neutral-subtle">inline</span>
       <span className="text-caption text-neutral-subtle">stacked</span>
-      {[false, true].map((iconBox) => (
-        <div key={String(iconBox)} className="contents">
-          <span className="text-caption text-neutral-subtle">{iconBox ? 'iconBox' : 'default'}</span>
-          <Sample layout="inline" iconBox={iconBox} body actions={inlineActions} />
-          <Sample layout="stacked" iconBox={iconBox} body actions={stackedActions} />
+      {[false, true].map((icon) => (
+        <div key={String(icon)} className="contents">
+          <span className="text-caption text-neutral-subtle">{icon ? 'icon' : 'default'}</span>
+          <Sample layout="inline" icon={icon} body actions={inlineActions} />
+          <Sample layout="stacked" icon={icon} body actions={stackedActions} />
         </div>
       ))}
     </div>
@@ -281,7 +280,7 @@ export const Stacked: Story = {
   ),
 }
 
-/** `iconBox` puts an Icon Box above the title. Use it for one small icon that sets the tone, such as a warning. */
+/** `icon` puts an Icon Box with that icon above the title. Use it for one small icon that sets the tone, such as a warning. */
 export const WithIconBox: Story = {
   render: () => (
     <Dialog>
@@ -291,7 +290,7 @@ export const WithIconBox: Story = {
         </Button>
       </DialogTrigger>
       <DialogContent layout="stacked" className="max-w-sm">
-        <DialogHeader iconBox={<IconBox icon={<WarningGlyph />} />}>
+        <DialogHeader icon={<WarningGlyph />}>
           <DialogTitle>Delete Reflection copy?</DialogTitle>
           <DialogDescription>The theme is removed from this browser.</DialogDescription>
         </DialogHeader>
