@@ -1,3 +1,5 @@
+import { controlTransitionClass } from './motion'
+
 /**
  * Frame shared by Input, Textarea and the Select trigger: form surface, neutral stroke, small shadow. On
  * hover the stroke turns emphasized and the form hover fills it; focus ring on focus, danger stroke when
@@ -9,6 +11,7 @@
  */
 export const controlFrameClass = [
   'rounded-md border border-neutral bg-form-neutral text-body-small text-neutral shadow-sm',
+  controlTransitionClass,
   'hover:border-neutral-emphasized hover:bg-form-neutral-hover',
   'data-invalid:border-danger-emphasized',
   'disabled:pointer-events-none disabled:border-disabled disabled:bg-disabled disabled:text-disabled disabled:shadow-none',

@@ -1,6 +1,7 @@
 import { Select as SelectPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { popupMotionClass } from '../../lib/motion'
 import { controlFrameClass } from '../../lib/control-frame'
 import { CheckIcon, ChevronDownIcon } from '../../lib/icons'
 import { menuItemVariants, menuSeparatorClass, MenuSurfaceContext } from '../../lib/menu'
@@ -66,7 +67,8 @@ export function SelectContent({
         position={position}
         sideOffset={sideOffset}
         className={cn(
-          'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
+          'relative z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) origin-(--radix-select-content-transform-origin) overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized text-neutral shadow-md',
+          popupMotionClass,
           className,
         )}
         {...props}

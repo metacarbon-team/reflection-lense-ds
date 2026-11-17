@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 
 // A slot hugs its content; an icon is 16 × 16.
@@ -45,7 +46,7 @@ export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
   return <tbody data-slot="table-body" className={cn('[&>tr:last-child>td]:border-b-0', className)} {...props} />
 }
 
-const tableRowVariants = cva('hover:bg-ghost-neutral-hover', {
+const tableRowVariants = cva(['hover:bg-ghost-neutral-hover', controlTransitionClass], {
   variants: { state: hoverFill },
   defaultVariants: { state: 'default' },
 })
@@ -61,7 +62,10 @@ export function TableRow({ className, state, ...props }: TableRowProps) {
 }
 
 const tableHeaderVariants = cva(
-  'border-b border-neutral-subtle px-3 py-2 text-left align-middle text-caption text-neutral-subtle hover:bg-ghost-neutral-hover',
+  [
+    'border-b border-neutral-subtle px-3 py-2 text-left align-middle text-caption text-neutral-subtle hover:bg-ghost-neutral-hover',
+    controlTransitionClass,
+  ],
   {
     variants: { state: hoverFill },
     defaultVariants: { state: 'default' },

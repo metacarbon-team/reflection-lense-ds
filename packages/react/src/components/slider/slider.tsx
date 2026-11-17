@@ -1,10 +1,12 @@
 import { Slider as SliderPrimitive } from 'radix-ui'
 import { useId, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { useFieldControl } from '../field/field'
 
 const thumbClass = [
   'block size-4 rounded-full border border-neutral bg-card-neutral-emphasized outline-none',
+  controlTransitionClass,
   // Hover belongs to the thumb, not to the whole slider.
   'hover:border-neutral-emphasized focus-visible:shadow-focus-ring',
   // Active: the slider is being pressed or dragged. Both thumbs of a range get the dark ring.

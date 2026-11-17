@@ -3,6 +3,7 @@ import { Slot } from 'radix-ui'
 import { isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { linkChild } from '../../lib/disabled'
 import { ChevronRightIcon, DotsIcon } from '../../lib/icons'
@@ -32,7 +33,10 @@ export function Breadcrumb({ 'aria-label': ariaLabel = 'Breadcrumb', className, 
  * Hover and focus-visible come from the browser in `default`; `hover` freezes the hover look for docs and tests.
  */
 const breadcrumbItemVariants = cva(
-  'inline-flex items-center rounded-lg px-1 py-0.5 text-body-xsmall whitespace-nowrap outline-none',
+  [
+    'inline-flex items-center rounded-lg px-1 py-0.5 text-body-xsmall whitespace-nowrap outline-none',
+    controlTransitionClass,
+  ],
   {
     variants: {
       state: {

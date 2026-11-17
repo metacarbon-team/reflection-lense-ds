@@ -1,6 +1,7 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { popupMotionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 
 /** Popover: a small floating panel that opens from a trigger. Compose it from PopoverTrigger and PopoverContent. */
@@ -123,7 +124,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className="z-50 outline-none"
+        className={cn('z-50 origin-(--radix-popover-content-transform-origin) outline-none', popupMotionClass)}
         {...props}
       >
         <PopoverPanel

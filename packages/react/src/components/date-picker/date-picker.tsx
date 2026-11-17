@@ -1,6 +1,8 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { CalendarIcon } from '../../lib/icons'
+import { cn } from '../../lib/cn'
+import { popupMotionClass } from '../../lib/motion'
 import { useControlled } from '../../lib/use-controlled'
 import { Input } from '../input/input'
 import { Popover, PopoverAnchor, PopoverTrigger } from '../popover/popover'
@@ -122,7 +124,7 @@ export function DatePicker({
           side="bottom"
           align="start"
           sideOffset={4}
-          className="z-50 outline-none"
+          className={cn('z-50 origin-(--radix-popover-content-transform-origin) outline-none', popupMotionClass)}
           // A press on the frame toggles the calendar through the input; it must not also dismiss it first.
           onInteractOutside={(event) => {
             if (field.current?.contains(event.target as Node)) event.preventDefault()

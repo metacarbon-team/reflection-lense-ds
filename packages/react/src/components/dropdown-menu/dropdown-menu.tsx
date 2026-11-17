@@ -2,6 +2,7 @@ import { cva } from 'class-variance-authority'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { popupMotionClass } from '../../lib/motion'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
 import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
 import { CheckboxBox } from '../checkbox/checkbox'
@@ -32,7 +33,10 @@ export const DropdownMenuSub = (props: ComponentProps<typeof DropdownMenuPrimiti
 
 // `content` is the main list and scrolls when the screen is short; `sub` is a submenu.
 const menuSurfaceVariants = cva(
-  'z-50 flex min-w-48 flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-md outline-none',
+  [
+    'z-50 flex min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-md outline-none',
+    popupMotionClass,
+  ],
   {
     variants: {
       kind: {

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { disabledAttrs } from '../../lib/disabled'
 import { hasContent } from '../../lib/has-content'
 import { ArrowUpIcon } from '../../lib/icons'
@@ -17,6 +18,7 @@ import { IconButton } from '../icon-button/icon-button'
 const composedInputVariants = cva(
   [
     'flex w-full min-w-0 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized text-body-small text-neutral shadow-sm',
+    controlTransitionClass,
     'hover:border-neutral data-filled:border-neutral focus-within:border-neutral-emphasized focus-within:shadow-focus-ring',
     'data-invalid:border-danger-emphasized',
     // Only the text area: a disabled control in a slot does not dim the whole composer.

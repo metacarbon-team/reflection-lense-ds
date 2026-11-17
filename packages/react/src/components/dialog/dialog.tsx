@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { dialogMotionClass, overlayMotionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { IconBox } from '../icon-box/icon-box'
@@ -58,6 +59,7 @@ export function DialogContent({
       data-close-button={showCloseButton || undefined}
       className={cn(
         'group/dialog pointer-events-auto relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none',
+        dialogMotionClass,
         className,
       )}
       {...props}
@@ -83,7 +85,10 @@ export function DialogContent({
       {modal ? (
         <DialogPrimitive.Overlay
           data-slot="dialog-overlay"
-          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4"
+          className={cn(
+            'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4',
+            overlayMotionClass,
+          )}
         >
           {content}
         </DialogPrimitive.Overlay>

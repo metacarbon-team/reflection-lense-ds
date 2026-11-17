@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from 'react'
 import { cn } from '../../lib/cn'
+import { tooltipMotionClass } from '../../lib/motion'
 import { composeRefs } from '../../lib/compose-refs'
 import { hasContent } from '../../lib/has-content'
 
@@ -134,7 +135,7 @@ export function TooltipContent({
         data-slot="tooltip-content"
         side={side}
         sideOffset={sideOffset}
-        className={cn(tooltipClass, className)}
+        className={cn(tooltipClass, tooltipMotionClass, 'origin-(--radix-tooltip-content-transform-origin)', className)}
         {...props}
       >
         <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />

@@ -3,6 +3,7 @@ import { Slot } from 'radix-ui'
 import { isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { disabledLinkProps, linkChild } from '../../lib/disabled'
 import { hasContent } from '../../lib/has-content'
 
@@ -14,6 +15,7 @@ import { hasContent } from '../../lib/has-content'
 export const linkVariants = cva(
   [
     'rounded-sm outline-none',
+    controlTransitionClass,
     'data-disabled:pointer-events-none data-disabled:text-disabled',
     '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],

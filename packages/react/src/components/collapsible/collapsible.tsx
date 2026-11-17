@@ -1,6 +1,7 @@
 import { Collapsible as CollapsiblePrimitive } from 'radix-ui'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { ChevronDownIcon } from '../../lib/icons'
 
@@ -38,6 +39,7 @@ export function CollapsibleTrigger({
         'group/collapsible-trigger inline-flex items-center gap-1 rounded-xs py-0.5 text-body-xsmall-medium outline-none select-none',
         // Hover and open apply only while enabled, so an open disabled trigger still looks disabled.
         'text-neutral-subtle focus-visible:shadow-focus-ring',
+        controlTransitionClass,
         'not-disabled:not-data-disabled:hover:text-neutral not-disabled:not-data-disabled:aria-expanded:text-neutral',
         // `disabled` on the Trigger sets the native attribute; on the Root Radix sets `data-disabled`.
         'disabled:pointer-events-none disabled:text-disabled data-disabled:pointer-events-none data-disabled:text-disabled',

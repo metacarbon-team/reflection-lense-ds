@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { disabledAttrs } from '../../lib/disabled'
 
 /**
@@ -10,6 +11,7 @@ import { disabledAttrs } from '../../lib/disabled'
 const calendarItemVariants = cva(
   [
     'flex size-8 shrink-0 items-center justify-center overflow-clip rounded-md text-body-small text-neutral outline-none select-none',
+    controlTransitionClass,
     'data-disabled:pointer-events-none data-disabled:text-disabled',
   ],
   {

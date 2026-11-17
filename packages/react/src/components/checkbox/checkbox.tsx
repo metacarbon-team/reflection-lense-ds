@@ -2,6 +2,7 @@ import { cva } from 'class-variance-authority'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { useFieldControl } from '../field/field'
 
 /**
@@ -67,6 +68,7 @@ const CheckboxIndeterminateMark = (props: MarkProps) => (
 const checkboxVariants = cva(
   [
     checkboxLookClass,
+    controlTransitionClass,
     'group/checkbox peer align-middle outline-none disabled:pointer-events-none data-disabled:pointer-events-none',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:bg-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:text-danger-on-emphasized',

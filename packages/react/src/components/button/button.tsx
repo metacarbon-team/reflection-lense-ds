@@ -3,6 +3,7 @@ import { Slot } from 'radix-ui'
 import { isValidElement } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
@@ -15,6 +16,7 @@ import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 export const buttonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap',
+    controlTransitionClass,
     // A popup trigger (`aria-expanded`: menu, Select, popover, dialog) keeps the pressed fill while open.
     'rounded-md border border-transparent outline-none select-none',
     'focus-visible:shadow-focus-ring',

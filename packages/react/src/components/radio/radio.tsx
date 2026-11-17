@@ -2,6 +2,7 @@ import { cva } from 'class-variance-authority'
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { useFieldControl } from '../field/field'
 
 /**
@@ -13,6 +14,7 @@ import { useFieldControl } from '../field/field'
 const radioVariants = cva(
   [
     'inline-flex size-5 shrink-0 items-center justify-center rounded-full border outline-none',
+    controlTransitionClass,
     'disabled:pointer-events-none disabled:data-[state=unchecked]:border-disabled disabled:data-[state=unchecked]:bg-disabled',
     'disabled:data-[state=checked]:border-transparent disabled:data-[state=checked]:bg-disabled disabled:data-[state=checked]:text-disabled',
     'enabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized enabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',

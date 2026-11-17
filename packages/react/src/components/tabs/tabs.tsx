@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Tabs as TabsPrimitive } from 'radix-ui'
 import { createContext, useContext, type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 
 type TabsStyle = {
   variant: NonNullable<VariantProps<typeof tabsListVariants>['variant']>
@@ -35,6 +36,7 @@ export const tabsListVariants = cva('inline-flex items-center', {
 export const tabsTriggerVariants = cva(
   [
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
+    controlTransitionClass,
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
     // Radix sets `data-disabled` too, so a disabled tab rendered as a link (`asChild`) looks the same.

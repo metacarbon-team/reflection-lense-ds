@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { disabledAttrs } from '../../lib/disabled'
 
@@ -12,7 +13,10 @@ import { disabledAttrs } from '../../lib/disabled'
  * row that is a `label` for the control in its slot.
  */
 const itemVariants = cva(
-  'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
+  [
+    'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
+    controlTransitionClass,
+  ],
   {
     variants: {
       size: {
