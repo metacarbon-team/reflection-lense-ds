@@ -103,9 +103,10 @@ const longThought =
 const meta = {
   title: 'Components/Chat Bubble',
   component: ChatBubble,
-  args: { content: thought, message: answer, actions, stats, defaultOpen: true },
+  args: { content: thought, reasoningLabel: 'Thought for 0.8s', message: answer, actions, stats, defaultOpen: true },
   argTypes: {
     content: { control: 'text' },
+    reasoningLabel: { control: 'text' },
     message: { control: 'text' },
     actions: { control: false },
     stats: { control: false },

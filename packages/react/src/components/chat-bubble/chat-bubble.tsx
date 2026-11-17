@@ -21,8 +21,10 @@ const RouteIcon = () => (
 )
 
 export type ChatBubbleProps = Omit<ComponentProps<'div'>, 'children' | 'content'> & {
-  /** The thought text inside the open block, below the header. Any content: text, a list or code. */
+  /** The thought text inside the open block, below the header. Any content: text, a list or code. The reasoning block is not shown when it is not set. */
   content?: ReactNode
+  /** The header of the reasoning block, for example "Thought for 0.8s". It is the label of the Collapsible in Figma. */
+  reasoningLabel?: ReactNode
   /** The answer text. Shown in full, never truncated. The answer is hidden when it is not set. */
   message?: ReactNode
   /** The row of actions on the left of the toolbar: ghost icon buttons. The toolbar shows when `actions` or `stats` is set. */
@@ -39,11 +41,12 @@ export type ChatBubbleProps = Omit<ComponentProps<'div'>, 'children' | 'content'
 
 /**
  * Chat Bubble: an AI reply. A collapsible reasoning block with the thought text, the answer text and
- * a toolbar of actions and usage stats. The block folds to its header; the answer and the toolbar
- * show when they are set. Width fills the parent, height hugs the content.
+ * a toolbar of actions and usage stats. The block folds to its header; the reasoning block, the answer and
+ * the toolbar each show only when they are set. Width fills the parent, height hugs the content.
  */
 export function ChatBubble({
   content,
+  reasoningLabel = 'Reasoning',
   message,
   actions,
   stats,
@@ -57,19 +60,26 @@ export function ChatBubble({
   const hasStats = hasContent(stats)
   return (
     <div data-slot="chat-bubble" className={cn('flex w-full min-w-0 flex-col gap-3', className)} {...props}>
-      <Collapsible
-        open={open}
-        defaultOpen={defaultOpen}
-        onOpenChange={onOpenChange}
-        className="flex flex-col gap-2 overflow-clip rounded-lg border border-neutral-subtle bg-neutral-subtle p-3"
-      >
-        <CollapsibleTrigger leadingSlot={<RouteIcon />} className="self-start">
-          Thought for 0.8s
-        </CollapsibleTrigger>
-        <CollapsibleContent data-slot="chat-bubble-content" className="text-body-small text-neutral-subtle">
-          {content}
-        </CollapsibleContent>
-      </Collapsible>
+      {hasContent(content) && (
+        <Collapsible
+          data-slot="chat-bubble-reasoning"
+          open={open}
+          defaultOpen={defaultOpen}
+          onOpenChange={onOpenChange}
+          className="flex flex-col gap-2 overflow-clip rounded-lg border border-neutral-subtle bg-neutral-subtle p-3"
+        >
+          <CollapsibleTrigger
+            data-slot="chat-bubble-reasoning-trigger"
+            leadingSlot={<RouteIcon />}
+            className="self-start"
+          >
+            {reasoningLabel}
+          </CollapsibleTrigger>
+          <CollapsibleContent data-slot="chat-bubble-content" className="text-body-small text-neutral-subtle">
+            {content}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
       {hasContent(message) && (
         <div data-slot="chat-bubble-message" className="w-full text-body-small text-neutral">
           {message}
