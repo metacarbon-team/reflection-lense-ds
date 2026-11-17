@@ -56,7 +56,10 @@ export type SegmentedControlProps<T extends string = string> = Omit<
   ToggleGroupPrimitive.ToggleGroupSingleProps,
   'type' | 'value' | 'defaultValue' | 'onValueChange'
 > & {
-  /** The selected segment. One segment is always selected: choosing it again keeps it. */
+  /**
+   * The selected segment. Pressing it again keeps it selected: once a segment is chosen, one stays chosen.
+   * Without `value` or `defaultValue` no segment is selected until the user picks one.
+   */
   value?: T
   /** The segment selected at first, when `value` is not controlled. */
   defaultValue?: T

@@ -75,7 +75,7 @@ const Controlled = () => {
   )
 }
 
-/** Controlled with `value` and `onValueChange`. One segment is always selected; a disabled one cannot be. */
+/** Controlled with `value` and `onValueChange`. Pressing the selected segment keeps it; a disabled one cannot be selected. */
 export const WithValue: Story = {
   parameters: { controls: { disable: true } },
   render: () => <Controlled />,
