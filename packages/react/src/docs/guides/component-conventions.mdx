@@ -27,6 +27,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
   - Runtime sizes a primitive publishes as CSS variables, written as `max-h-(--radix-select-content-available-height)`.
   - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg:not([class*=size-])]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
   - Layout of docs-only grids inside stories.
+  - SVG paint in charts: `fill-(--bg-neutral-hover)`, `stroke-(--stroke-neutral)`, `[rx:var(--radius-xs)]`. The theme's color utilities target HTML (`bg-`, `text-`, `border-`), and SVG takes `fill` and `stroke`, so the chart parts name the token variable itself. Series colors come from `ChartContainer` as `--color-<key>`.
 - Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
 - **Motion** comes from `lib/motion.ts`, never written per component:
   - Floating panels (Popover, Dropdown Menu, Select list, Date Picker) fade in, grow from 95% and slide 8px from the trigger's side, on the Radix Content with its transform origin; they reverse on close. Tooltip does the same. 150ms.

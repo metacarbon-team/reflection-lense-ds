@@ -1,14 +1,21 @@
 import { Controls, Description, Primary, Stories, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { Item } from '../item'
 import {
   Chart,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartPlot,
   ChartPopover,
   ChartStat,
   ChartSwatch,
+  ChartTooltip,
+  ChartTooltipContent,
   ChartTrend,
+  type ChartConfig,
   type ChartDatum,
   type ChartProps,
   type ChartSeries,
@@ -359,6 +366,44 @@ export const Popover_: Story = {
       </ChartPopover>
     )
   },
+}
+
+const latency = [
+  { label: 'Mon', p50: 120, p95: 310 },
+  { label: 'Tue', p50: 135, p95: 290 },
+  { label: 'Wed', p50: 128, p95: 340 },
+  { label: 'Thu', p50: 142, p95: 365 },
+  { label: 'Fri', p50: 118, p95: 280 },
+]
+const latencyConfig: ChartConfig = {
+  p50: { label: 'p50', tone: 'info' },
+  p95: { label: 'p95', tone: 'warning' },
+}
+
+/**
+ * Any Recharts chart, not only the plot of the Figma Chart: `ChartContainer` takes a config of the series,
+ * gives each one `--color-<key>` from its tone, and styles the axes, grid and focus from the theme.
+ * `ChartTooltipContent` and `ChartLegendContent` draw the popover and the legend from the same config.
+ */
+export const Container: Story = {
+  name: 'Chart Container',
+  render: () => (
+    <ChartContainer config={latencyConfig} className="h-60 w-120">
+      <LineChart
+        data={latency}
+        aria-label="Latency per day, milliseconds"
+        margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+      >
+        <CartesianGrid vertical={false} strokeDasharray="4 4" />
+        <XAxis dataKey="label" tickLine={false} tickMargin={4} />
+        <YAxis width={40} tickLine={false} axisLine={false} tickMargin={8} />
+        <ChartTooltip content={<ChartTooltipContent formatValue={(value) => `${value} ms`} />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Line dataKey="p50" stroke="var(--color-p50)" strokeWidth={2} dot={false} isAnimationActive={false} />
+        <Line dataKey="p95" stroke="var(--color-p95)" strokeWidth={2} dot={false} isAnimationActive={false} />
+      </LineChart>
+    </ChartContainer>
+  ),
 }
 
 function DocsPage() {
