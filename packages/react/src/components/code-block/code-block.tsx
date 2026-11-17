@@ -1,7 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ComponentProps, MouseEvent, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { composeRefs } from '../../lib/compose-refs'
 import { hasContent } from '../../lib/has-content'
 import { CheckIcon, CopyIcon, FileIcon } from '../../lib/icons'
 import { Card } from '../card/card'
@@ -43,7 +44,7 @@ export function CodeBlockHeader({
       {hasContent(leading) && (
         <span
           data-slot="code-block-header-leading-slot"
-          className="flex size-4 shrink-0 items-center justify-center text-neutral [&_svg]:size-4 [&_svg]:shrink-0"
+          className="flex size-4 shrink-0 items-center justify-center text-neutral [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0"
         >
           {leading}
         </span>
@@ -82,9 +83,12 @@ export function CodeBlockCopyButton({
   'aria-label': ariaLabel = 'Copy code',
   copiedLabel = 'Copied',
   onClick,
+  ref,
   ...props
 }: CodeBlockCopyButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
+  // The button finds its block through its own ref, so a caller's ref is merged, not swapped in.
+  const mergedRef = useMemo(() => composeRefs(buttonRef, ref), [ref])
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [copied, setCopied] = useState(false)
 
@@ -110,7 +114,7 @@ export function CodeBlockCopyButton({
   return (
     <>
       <IconButton
-        ref={buttonRef}
+        ref={mergedRef}
         data-slot="code-block-copy-button"
         tone="default"
         variant="ghost"
@@ -121,7 +125,7 @@ export function CodeBlockCopyButton({
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </IconButton>
-      <span role="status" className="sr-only">
+      <span data-slot="code-block-copy-status" role="status" className="sr-only">
         {copied ? copiedLabel : ''}
       </span>
     </>
@@ -160,7 +164,9 @@ export function CodeBlock({ title, leadingSlot, trailingSlot, content, className
           tabIndex={0}
           className="overflow-x-auto rounded-b-xl outline-none focus-visible:shadow-focus-ring"
         >
-          <div className="w-max min-w-full py-2">{content}</div>
+          <div data-slot="code-block-lines" className="w-max min-w-full py-2">
+            {content}
+          </div>
         </div>
       </figure>
     </Card>
@@ -204,8 +210,10 @@ export function CodeLine({ type = 'default', number, code, lineNumber = true, cl
     <div data-slot="code-line" data-type={type} className={cn(codeLineVariants({ type }), className)} {...props}>
       {lineNumber && (
         <span data-slot="code-line-gutter" aria-hidden="true" className="flex shrink-0 gap-1 select-none">
-          <span className="w-10 text-right text-neutral-subtle tabular-nums">{number}</span>
-          <span className={cn('w-2', type === 'added' ? 'text-success' : 'text-danger')}>
+          <span data-slot="code-line-number" className="w-10 text-right text-neutral-subtle tabular-nums">
+            {number}
+          </span>
+          <span data-slot="code-line-sign" className={cn('w-2', type === 'added' ? 'text-success' : 'text-danger')}>
             {type === 'added' ? '+' : type === 'removed' ? '-' : ''}
           </span>
         </span>
@@ -227,7 +235,9 @@ export type CodeLineHunkProps = Omit<ComponentProps<'div'>, 'children'> & {
 export function CodeLineHunk({ code, className, ...props }: CodeLineHunkProps) {
   return (
     <div data-slot="code-line-hunk" className={cn('flex px-2 py-0.5 text-code-small', className)} {...props}>
-      <span className="whitespace-pre text-neutral-subtle">{code}</span>
+      <span data-slot="code-line-hunk-code" className="whitespace-pre text-neutral-subtle">
+        {code}
+      </span>
     </div>
   )
 }

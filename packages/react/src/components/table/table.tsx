@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
 
 // A slot hugs its content; an icon is 16 × 16.
-const slotClass = 'flex shrink-0 items-center justify-center [&_svg]:size-4 [&_svg]:shrink-0'
+const slotClass = 'flex shrink-0 items-center justify-center [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0'
 
 // Hover fills come from the browser; `state="hover"` freezes them for docs and tests.
 const hoverFill = {
@@ -61,7 +61,7 @@ export function TableRow({ className, state, ...props }: TableRowProps) {
 }
 
 const tableHeaderVariants = cva(
-  'border-b border-neutral-subtle px-3 py-2 text-left align-middle text-label-small font-normal text-neutral-subtle hover:bg-ghost-neutral-hover',
+  'border-b border-neutral-subtle px-3 py-2 text-left align-middle text-caption text-neutral-subtle hover:bg-ghost-neutral-hover',
   {
     variants: { state: hoverFill },
     defaultVariants: { state: 'default' },
@@ -91,7 +91,7 @@ export function TableHeader({
 }: TableHeaderProps) {
   return (
     <th data-slot="table-header" scope={scope} className={cn(tableHeaderVariants({ state }), className)} {...props}>
-      <div className="flex items-center gap-2">
+      <div data-slot="table-header-content" className="flex items-center gap-2">
         {hasContent(leadingSlot) && (
           <span data-slot="table-header-leading-slot" className={slotClass}>
             {leadingSlot}
@@ -156,7 +156,7 @@ export function TableCell({
   return (
     <td data-slot="table-cell" className={cn(tableCellVariants({ type, state }), className)} {...props}>
       {type === 'text' ? (
-        <div className="flex items-center gap-2">
+        <div data-slot="table-cell-content" className="flex items-center gap-2">
           {hasContent(leadingSlot) && (
             <span data-slot="table-cell-leading-slot" className={slotClass}>
               {leadingSlot}
@@ -179,7 +179,8 @@ export function TableCell({
           )}
         </div>
       ) : (
-        <div data-slot="table-cell-content" className="flex items-center gap-1 overflow-clip">
+        // No overflow clip: the focus ring of a control in the cell is drawn outside it.
+        <div data-slot="table-cell-content" className="flex items-center gap-1">
           {children}
         </div>
       )}

@@ -20,7 +20,9 @@ export type TimelineStepTriggerProps = Omit<CollapsibleTriggerProps, 'state'>
  * down when the step is closed and up when it is open. Radix sets `aria-expanded` and `aria-controls`.
  * The label is the `children`.
  */
-export const TimelineStepTrigger = (props: TimelineStepTriggerProps) => <CollapsibleTrigger {...props} />
+export const TimelineStepTrigger = (props: TimelineStepTriggerProps) => (
+  <CollapsibleTrigger data-slot="timeline-step-trigger" {...props} />
+)
 
 /**
  * The `content` slot: the details of the step beside the vertical divider, shown when the step is open.
@@ -34,6 +36,9 @@ export const TimelineStepContent = ({ className, children, ...props }: Component
       data-slot="timeline-step-divider"
       className="w-px shrink-0 self-stretch border-l border-neutral-subtle"
     />
-    <div className="flex min-w-0 flex-1 flex-col items-stretch overflow-clip">{children}</div>
+    {/* No overflow clip: a code block in the slot keeps its shadow and focus ring. */}
+    <div data-slot="timeline-step-body" className="flex min-w-0 flex-1 flex-col items-stretch">
+      {children}
+    </div>
   </CollapsibleContent>
 )

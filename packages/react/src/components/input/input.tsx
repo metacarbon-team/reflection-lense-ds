@@ -18,8 +18,8 @@ export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
   inputClassName?: string
 }
 
-// The addons dim with the input: the frame is a `group`, and the input inside it is disabled.
-const addonClass = 'flex shrink-0 items-center text-neutral-subtle group-has-disabled:text-disabled'
+// The addons dim with the input: the frame is `group/input`, and the input inside it is disabled.
+const addonClass = 'flex shrink-0 items-center text-neutral-subtle group-has-[input:disabled]/input:text-disabled'
 
 const hasText = (value: unknown) => value !== undefined && value !== null && String(value) !== ''
 
@@ -68,7 +68,7 @@ export function Input({
       data-invalid={control.invalid || undefined}
       className={cn(
         controlFrameClass,
-        'group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg]:size-4 [&_svg]:shrink-0',
+        'group/input flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
         className,
       )}
     >

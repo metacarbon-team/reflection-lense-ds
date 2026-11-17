@@ -19,7 +19,7 @@ const formatted = 'Nov 18, 2026'
 const meta = {
   title: 'Components/Date Picker',
   component: DatePicker,
-  args: { placeholder: 'Pick a date', locale: 'en-US', weekStartsOn: 1, disabled: false },
+  args: { placeholder: 'Pick a date', locale: 'en-US', weekStartsOn: 1 },
   argTypes: {
     weekStartsOn: { control: 'inline-radio', options: [0, 1, 6] },
     // The date is a Date object, which the controls panel cannot edit: use the story's own calendar.

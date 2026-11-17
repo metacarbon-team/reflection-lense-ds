@@ -78,7 +78,10 @@ export function Toast({
       {...props}
     >
       {hasContent(leadingSlot) && (
-        <span data-slot="toast-leading" className="flex shrink-0 items-center justify-center [&_svg]:size-5">
+        <span
+          data-slot="toast-leading-slot"
+          className="flex shrink-0 items-center justify-center [&_svg:not([class*=size-])]:size-5"
+        >
           {leadingSlot}
         </span>
       )}
@@ -96,7 +99,7 @@ export function Toast({
         )}
       </div>
       {hasContent(action) && action}
-      <ToastPrimitive.Close asChild>
+      <ToastPrimitive.Close asChild data-slot="toast-close">
         <IconButton aria-label={closeLabel} tone="default" variant="ghost" size="sm">
           <CloseIcon />
         </IconButton>

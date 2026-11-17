@@ -15,7 +15,7 @@ export const linkVariants = cva(
   [
     'rounded-sm outline-none',
     'data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
@@ -76,8 +76,8 @@ export type LinkProps = Omit<ComponentProps<'a'>, 'type'> & {
  */
 export function Link({
   className,
-  type,
-  size,
+  type = 'inline',
+  size = 'md',
   state = 'default',
   disabled = false,
   leadingSlot,
@@ -92,6 +92,8 @@ export function Link({
 
   const rootProps = {
     'data-slot': 'link',
+    'data-type': type,
+    'data-size': size,
     className: cn(linkVariants({ type, size, state: resolved }), className),
     ...props,
     // Without `href` an `a` loses its link role, so a disabled link keeps it explicitly.

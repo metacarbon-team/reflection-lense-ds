@@ -16,7 +16,7 @@ const navItemVariants = cva(
   [
     'flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-label text-neutral outline-none select-none',
     'data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {

@@ -28,6 +28,8 @@ export type CalendarLabels = {
   previousYear: string
   /** Accessible name of the button that goes to the next year, in the month view. */
   nextYear: string
+  /** Accessible name of the whole calendar. */
+  calendar: string
 }
 
 const defaultLabels: CalendarLabels = {
@@ -35,6 +37,7 @@ const defaultLabels: CalendarLabels = {
   nextMonth: 'Next month',
   previousYear: 'Previous year',
   nextYear: 'Next year',
+  calendar: 'Calendar',
 }
 
 export type CalendarProps = Omit<ComponentProps<'div'>, 'defaultValue' | 'onChange'> & {
@@ -219,7 +222,7 @@ export function Calendar({
     <div
       ref={rootRef}
       role="group"
-      aria-label="Calendar"
+      aria-label={text.calendar}
       data-slot="calendar"
       data-view={currentView}
       className={cn(
@@ -269,7 +272,7 @@ export function Calendar({
       </div>
 
       {/* Both views share one cell, so the calendar keeps the height of the taller one. The hidden view is inert. */}
-      <div className="grid">
+      <div data-slot="calendar-views" className="grid">
         <div
           role="grid"
           aria-label={dateFormat({ month: 'long', year: 'numeric' }).format(shown)}
@@ -278,11 +281,12 @@ export function Calendar({
           onKeyDown={moveDay}
           className={cn('col-start-1 row-start-1 flex flex-col', !inDays && 'invisible')}
         >
-          <div role="row" className="mb-2 flex">
+          <div role="row" data-slot="calendar-weekdays" className="mb-2 flex">
             {(weeks[0] ?? []).map((date) => (
               <div
                 key={date.getDay()}
                 role="columnheader"
+                data-slot="calendar-weekday"
                 aria-label={dateFormat({ weekday: 'long' }).format(date)}
                 className="flex w-8 items-center justify-center py-0.5 text-body-xsmall text-neutral-subtle"
               >
@@ -293,12 +297,18 @@ export function Calendar({
             ))}
           </div>
           {weeks.map((week, row) => (
-            <div key={row} role="row" className="flex">
+            <div key={row} role="row" data-slot="calendar-week" className="flex">
               {week.map((date) => {
                 const outside = !isSameMonth(date, shown)
                 const isSelected = Boolean(selected && isSameDay(selected, date))
                 return (
-                  <div key={dayKey(date)} role="gridcell" aria-selected={isSelected} className="flex">
+                  <div
+                    key={dayKey(date)}
+                    role="gridcell"
+                    data-slot="calendar-day"
+                    aria-selected={isSelected}
+                    className="flex"
+                  >
                     <CalendarItem
                       label={date.getDate()}
                       aria-label={dateFormat({ dateStyle: 'full' }).format(date)}

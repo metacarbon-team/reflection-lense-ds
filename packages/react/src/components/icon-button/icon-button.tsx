@@ -30,9 +30,9 @@ export const iconButtonVariants = cva(
         ghost: 'bg-transparent',
       },
       size: {
-        sm: 'size-8 [&_svg]:size-4',
-        md: 'size-10 [&_svg]:size-6',
-        lg: 'size-12 [&_svg]:size-8',
+        sm: 'size-8 [&_svg:not([class*=size-])]:size-4',
+        md: 'size-10 [&_svg:not([class*=size-])]:size-6',
+        lg: 'size-12 [&_svg:not([class*=size-])]:size-8',
       },
       state: {
         default: '',
@@ -119,9 +119,9 @@ export type IconButtonProps = Omit<ComponentProps<'button'>, 'aria-label'> & {
 /** The only content of the button is its icon, passed as `children`; the icon size follows `size`. */
 export function IconButton({
   className,
-  tone,
-  variant,
-  size,
+  tone = 'accent',
+  variant = 'solid',
+  size = 'md',
   state = 'default',
   asChild = false,
   type,
@@ -133,6 +133,10 @@ export function IconButton({
   const resolvedState = disabled ? 'default' : state
   const rootProps = {
     'data-slot': 'icon-button',
+    // The resolved values as attributes, so CSS and tests can target them without class names.
+    'data-tone': tone,
+    'data-variant': variant,
+    'data-size': size,
     className: cn(iconButtonVariants({ tone, variant, size, state: resolvedState }), className),
   }
 

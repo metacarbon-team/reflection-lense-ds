@@ -39,7 +39,7 @@ export const tabsTriggerVariants = cva(
     'focus-visible:text-neutral focus-visible:shadow-focus-ring',
     // Radix sets `data-disabled` too, so a disabled tab rendered as a link (`asChild`) looks the same.
     'disabled:pointer-events-none disabled:text-disabled data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
@@ -87,6 +87,7 @@ export function TabsList({ className, variant = 'line', size = 'sm', ...props }:
       <TabsPrimitive.List
         data-slot="tabs-list"
         data-variant={variant}
+        data-size={size}
         className={cn(tabsListVariants({ variant }), className)}
         {...props}
       />

@@ -49,7 +49,7 @@ export function SkeletonItem({ leading = true, className, ...props }: SkeletonIt
       {...props}
     >
       {leading && <Skeleton shape="block" className="size-8" />}
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div data-slot="skeleton-item-lines" className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="pr-16">
           <Skeleton className="w-full" />
         </div>

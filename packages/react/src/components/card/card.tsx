@@ -29,7 +29,9 @@ export const cardVariants = cva('flex min-w-0 flex-col rounded-xl border text-ne
 
 export type CardProps = ComponentProps<'div'> & VariantProps<typeof cardVariants> & { asChild?: boolean }
 
-export function Card({ className, tone, padding, asChild = false, ...props }: CardProps) {
+export function Card({ className, tone = 'default', padding, asChild = false, ...props }: CardProps) {
   const Comp = asChild ? Slot.Root : 'div'
-  return <Comp data-slot="card" className={cn(cardVariants({ tone, padding }), className)} {...props} />
+  return (
+    <Comp data-slot="card" data-tone={tone} className={cn(cardVariants({ tone, padding }), className)} {...props} />
+  )
 }

@@ -15,7 +15,7 @@ const selectTriggerClass = [
   'flex h-8 w-full min-w-0 items-center justify-between gap-1.5 px-3 text-left outline-none',
   'focus-visible:shadow-focus-ring data-[state=open]:shadow-focus-ring',
   'data-placeholder:text-neutral-subtle *:data-[slot=select-value]:truncate',
-  '[&_svg]:size-4 [&_svg]:shrink-0',
+  '[&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
 ]
 
 export const Select = (props: ComponentProps<typeof SelectPrimitive.Root>) => (
@@ -84,7 +84,7 @@ export function SelectItem({ className, children, ...props }: ComponentProps<typ
   return (
     <SelectPrimitive.Item data-slot="select-item" className={cn(menuItemVariants(), className)} {...props}>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator className="ml-auto flex items-center">
+      <SelectPrimitive.ItemIndicator data-slot="select-item-indicator" className="ml-auto flex items-center">
         <CheckIcon />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>

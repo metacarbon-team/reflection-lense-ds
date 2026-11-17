@@ -40,8 +40,16 @@ export function DiffStat({ className, added, removed, ...props }: DiffStatProps)
       className={cn('inline-flex items-center gap-1.5 text-caption tabular-nums', className)}
       {...props}
     >
-      {addedText !== null ? <span className={diffStatVariants({ kind: 'added' })}>+{addedText}</span> : null}
-      {removedText !== null ? <span className={diffStatVariants({ kind: 'removed' })}>−{removedText}</span> : null}
+      {addedText !== null ? (
+        <span data-slot="diff-stat-added" className={diffStatVariants({ kind: 'added' })}>
+          +{addedText}
+        </span>
+      ) : null}
+      {removedText !== null ? (
+        <span data-slot="diff-stat-removed" className={diffStatVariants({ kind: 'removed' })}>
+          −{removedText}
+        </span>
+      ) : null}
     </span>
   )
 }

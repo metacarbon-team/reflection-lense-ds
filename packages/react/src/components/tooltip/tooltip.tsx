@@ -20,7 +20,7 @@ import { hasContent } from '../../lib/has-content'
 const tooltipClass = [
   'relative z-50 flex min-h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
   'bg-card-neutral-emphasized text-caption text-neutral select-none',
-  '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
 ]
 
 /** The arrow: a square of the bubble surface, turned 45° and centered on the edge that faces the trigger. */
@@ -29,7 +29,7 @@ const arrowClass = 'pointer-events-none block size-2 rotate-45 bg-card-neutral-e
 const slotClass = 'flex shrink-0 items-center justify-center overflow-clip'
 
 type TooltipOwnProps = {
-  /** The hint text. A short noun or verb phrase on one line, not a sentence. */
+  /** The hint text. A short noun or verb phrase, not a sentence; a longer label wraps. */
   label: ReactNode
   /** Content before the label, 16 × 16: an icon. The tooltip shows the slot when it is set. */
   leadingSlot?: ReactNode
@@ -103,8 +103,7 @@ export function TooltipTrigger({ ref, ...props }: ComponentProps<typeof TooltipP
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={composed} {...props} />
 }
 
-export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children' | 'ref'> &
-  TooltipOwnProps
+export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children'> & TooltipOwnProps
 
 /**
  * The floating bubble. It opens on top of the trigger by default and moves to the opposite side when
@@ -118,17 +117,20 @@ export function TooltipContent({
   side = 'top',
   sideOffset = 8,
   className,
+  ref,
   ...props
 }: TooltipContentProps) {
   const triggerRef = useContext(TriggerContext)
-  const ref = useCallback(
+  const modeRef = useCallback(
     (node: HTMLDivElement | null) => (node ? swapMode(node, triggerRef?.current ?? null) : undefined),
     [triggerRef],
   )
+  // The bubble sets its color mode through its own ref; the caller's ref is kept too.
+  const composed = useMemo(() => composeRefs(modeRef, ref), [modeRef, ref])
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
-        ref={ref}
+        ref={composed}
         data-slot="tooltip-content"
         side={side}
         sideOffset={sideOffset}

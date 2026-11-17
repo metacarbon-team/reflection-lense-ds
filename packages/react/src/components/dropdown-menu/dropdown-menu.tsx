@@ -127,7 +127,10 @@ export function DropdownMenuRadioItem({
   return (
     <DropdownMenuPrimitive.RadioItem data-slot="dropdown-menu-radio-item" className={cn(item(), className)} {...props}>
       {children}
-      <DropdownMenuPrimitive.ItemIndicator className="ml-auto flex items-center">
+      <DropdownMenuPrimitive.ItemIndicator
+        data-slot="dropdown-menu-radio-indicator"
+        className="ml-auto flex items-center"
+      >
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>
     </DropdownMenuPrimitive.RadioItem>
@@ -146,7 +149,7 @@ export function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto text-neutral-subtle" />
+      <ChevronRightIcon data-slot="dropdown-menu-sub-trigger-icon" className="ml-auto text-neutral-subtle" />
     </DropdownMenuPrimitive.SubTrigger>
   )
 }

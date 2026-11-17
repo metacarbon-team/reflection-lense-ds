@@ -226,7 +226,7 @@ export const GuidelineMatchTheChevronToTheStateDont: Story = {
       <div className="flex w-80 flex-col gap-1">
         {/* An open step whose chevron stays down: a static copy of the header, since the real one flips by itself. */}
         <span className="inline-flex items-center gap-1 py-0.5 text-body-xsmall-medium text-neutral">
-          <span className="flex shrink-0 items-center justify-center [&_svg]:size-4">
+          <span className="flex shrink-0 items-center justify-center [&_svg:not([class*=size-])]:size-4">
             <StepIcon />
           </span>
           Collapsible

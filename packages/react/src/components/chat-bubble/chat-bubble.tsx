@@ -85,7 +85,7 @@ export function ChatBubble({
           {hasStats && (
             <div
               data-slot="chat-bubble-stats"
-              className="ml-auto flex items-center gap-3 text-caption text-neutral-subtle [&_svg]:size-4 [&_svg]:shrink-0"
+              className="ml-auto flex items-center gap-3 text-caption text-neutral-subtle [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0"
             >
               {stats}
             </div>

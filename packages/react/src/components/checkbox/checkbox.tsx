@@ -67,7 +67,7 @@ const CheckboxIndeterminateMark = (props: MarkProps) => (
 const checkboxVariants = cva(
   [
     checkboxLookClass,
-    'group peer align-middle outline-none disabled:pointer-events-none data-disabled:pointer-events-none',
+    'group/checkbox peer align-middle outline-none disabled:pointer-events-none data-disabled:pointer-events-none',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:border-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=unchecked]:focus-visible:border-danger-emphasized',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:bg-danger-emphasized not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:text-danger-on-emphasized',
     'not-disabled:not-data-disabled:aria-invalid:data-[state=checked]:hover:bg-danger-emphasized-hover',
@@ -125,8 +125,8 @@ export function Checkbox({ state = 'default', className, ...props }: CheckboxPro
       className={cn(checkboxVariants({ state: state === 'error' ? 'default' : state }), className)}
     >
       <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="flex size-4 items-center justify-center">
-        <CheckboxCheckMark className="size-4 group-data-[state=indeterminate]:hidden" />
-        <CheckboxIndeterminateMark className="hidden size-4 group-data-[state=indeterminate]:block" />
+        <CheckboxCheckMark className="size-4 group-data-[state=indeterminate]/checkbox:hidden" />
+        <CheckboxIndeterminateMark className="hidden size-4 group-data-[state=indeterminate]/checkbox:block" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

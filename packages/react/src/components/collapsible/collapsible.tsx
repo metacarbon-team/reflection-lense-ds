@@ -35,10 +35,13 @@ export function CollapsibleTrigger({
     <CollapsiblePrimitive.Trigger
       data-slot="collapsible-trigger"
       className={cn(
-        'group inline-flex items-center gap-1 rounded-xs py-0.5 text-body-xsmall-medium outline-none select-none',
-        'text-neutral-subtle hover:text-neutral aria-expanded:text-neutral focus-visible:shadow-focus-ring',
-        'disabled:pointer-events-none disabled:text-disabled',
-        '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+        'group/collapsible-trigger inline-flex items-center gap-1 rounded-xs py-0.5 text-body-xsmall-medium outline-none select-none',
+        // Hover and open apply only while enabled, so an open disabled trigger still looks disabled.
+        'text-neutral-subtle focus-visible:shadow-focus-ring',
+        'not-disabled:not-data-disabled:hover:text-neutral not-disabled:not-data-disabled:aria-expanded:text-neutral',
+        // `disabled` on the Trigger sets the native attribute; on the Root Radix sets `data-disabled`.
+        'disabled:pointer-events-none disabled:text-disabled data-disabled:pointer-events-none data-disabled:text-disabled',
+        '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
         state === 'hover' && 'text-neutral',
         className,
       )}
@@ -50,7 +53,7 @@ export function CollapsibleTrigger({
         </span>
       )}
       {children}
-      <ChevronDownIcon data-slot="collapsible-chevron" className="group-aria-expanded:rotate-180" />
+      <ChevronDownIcon data-slot="collapsible-chevron" className="group-aria-expanded/collapsible-trigger:rotate-180" />
     </CollapsiblePrimitive.Trigger>
   )
 }

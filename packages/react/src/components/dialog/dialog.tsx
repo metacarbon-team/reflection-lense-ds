@@ -1,14 +1,20 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Dialog as DialogPrimitive } from 'radix-ui'
-import type { ComponentProps, ReactNode } from 'react'
+import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
 import { IconBox } from '../icon-box/icon-box'
 import { IconButton } from '../icon-button/icon-button'
 
-export const Dialog = (props: ComponentProps<typeof DialogPrimitive.Root>) => (
-  <DialogPrimitive.Root data-slot="dialog" {...props} />
+// Radix renders no Overlay for a non-modal dialog, so the content must not sit inside one.
+const DialogModalContext = createContext(true)
+
+/** The dialog root: owns the open state. Modal by default; `modal={false}` keeps the page usable behind it. */
+export const Dialog = ({ modal = true, ...props }: ComponentProps<typeof DialogPrimitive.Root>) => (
+  <DialogModalContext value={modal}>
+    <DialogPrimitive.Root data-slot="dialog" modal={modal} {...props} />
+  </DialogModalContext>
 )
 
 export const DialogTrigger = (props: ComponentProps<typeof DialogPrimitive.Trigger>) => (
@@ -44,38 +50,52 @@ export function DialogContent({
   closeLabel = 'Close',
   ...props
 }: DialogContentProps) {
+  const modal = useContext(DialogModalContext)
+  const content = (
+    <DialogPrimitive.Content
+      data-slot="dialog-content"
+      data-layout={layout}
+      data-close-button={showCloseButton || undefined}
+      className={cn(
+        'group/dialog pointer-events-auto relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      {showCloseButton && (
+        <DialogPrimitive.Close asChild data-slot="dialog-close">
+          <IconButton
+            aria-label={closeLabel}
+            tone="default"
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogPrimitive.Close>
+      )}
+    </DialogPrimitive.Content>
+  )
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay
-        data-slot="dialog-overlay"
-        className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4"
-      >
-        <DialogPrimitive.Content
-          data-slot="dialog-content"
-          data-layout={layout}
-          data-close-button={showCloseButton || undefined}
-          className={cn(
-            'group/dialog relative flex w-full max-w-md flex-col rounded-xl border border-neutral bg-card-neutral-subtle text-neutral shadow-xl outline-none',
-            className,
-          )}
-          {...props}
+      {modal ? (
+        <DialogPrimitive.Overlay
+          data-slot="dialog-overlay"
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface-backdrop p-4"
         >
-          {children}
-          {showCloseButton && (
-            <DialogPrimitive.Close asChild>
-              <IconButton
-                aria-label={closeLabel}
-                tone="default"
-                variant="ghost"
-                size="sm"
-                className="absolute top-4 right-4"
-              >
-                <CloseIcon />
-              </IconButton>
-            </DialogPrimitive.Close>
-          )}
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Overlay>
+          {content}
+        </DialogPrimitive.Overlay>
+      ) : (
+        // No backdrop: the same centering, and the page behind stays clickable.
+        <div
+          data-slot="dialog-positioner"
+          className="pointer-events-none fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4"
+        >
+          {content}
+        </div>
+      )}
     </DialogPrimitive.Portal>
   )
 }

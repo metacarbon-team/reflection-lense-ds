@@ -15,7 +15,7 @@ export type BreadcrumbProps = ComponentProps<'nav'> & {
 /**
  * Breadcrumb: the path to the current page as a row of links. A `nav` landmark with an ordered list;
  * put an item, a separator, an item, a separator and so on inside. Name the landmark with `aria-label`
- * when a page has more than one. Follows shadcn/ui Breadcrumb.
+ * when a page has more than one.
  */
 export function Breadcrumb({ 'aria-label': ariaLabel = 'Breadcrumb', className, children, ...props }: BreadcrumbProps) {
   return (
@@ -102,7 +102,7 @@ export function BreadcrumbSeparator({ className, children, ...props }: Component
       data-slot="breadcrumb-separator"
       role="presentation"
       aria-hidden="true"
-      className={cn('flex shrink-0 items-center text-neutral-subtle [&_svg]:size-3', className)}
+      className={cn('flex shrink-0 items-center text-neutral-subtle [&_svg:not([class*=size-])]:size-3', className)}
       {...props}
     >
       {hasContent(children) ? children : <ChevronRightIcon />}
@@ -122,7 +122,7 @@ export function BreadcrumbEllipsis({
   return (
     <li
       data-slot="breadcrumb-ellipsis"
-      className={cn('flex shrink-0 items-center text-neutral-subtle [&_svg]:size-4', className)}
+      className={cn('flex shrink-0 items-center text-neutral-subtle [&_svg:not([class*=size-])]:size-4', className)}
       {...props}
     >
       <DotsIcon role="img" aria-hidden={false} aria-label={label} />

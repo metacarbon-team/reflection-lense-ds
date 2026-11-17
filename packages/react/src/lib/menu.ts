@@ -16,7 +16,7 @@ export const menuItemVariants = cva(
     'relative flex cursor-default items-center gap-2 rounded-md px-3 py-1.5 text-label text-neutral outline-none select-none',
     'data-highlighted:bg-ghost-neutral-hover',
     'data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {

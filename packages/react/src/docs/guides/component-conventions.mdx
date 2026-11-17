@@ -25,7 +25,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
 - Tailwind v4 utilities on the theme only. No arbitrary values (`bg-[#…]`, `p-[13px]`), no hex, no inline colors, no opacity modifiers on color utilities (`bg-x/50`): opacity comes from the token.
 - Exceptions that are allowed:
   - Runtime sizes a primitive publishes as CSS variables, written as `max-h-(--radix-select-content-available-height)`.
-  - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
+  - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg:not([class*=size-])]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
   - Layout of docs-only grids inside stories.
 - Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
 - Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
@@ -35,7 +35,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
 
 - `cva` only where a part has variants. Fixed classes are plain strings or arrays.
 - Join classes with `cn` (`lib/cn.ts`) = `twMerge(clsx())` extended with the theme's text roles. The caller's `className` goes last, so a utility they pass replaces the component's utility for the same property.
-- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `skeletonVariants`, `tabsListVariants`, `tabsTriggerVariants`.
+- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `codeLineVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `skeletonVariants`, `tabsListVariants`, `tabsTriggerVariants`.
 
 ### Vocabulary of props
 
@@ -72,6 +72,9 @@ Split a component into parts only where a part brings its own behaviour or seman
 ### Parts and hooks
 
 - **`data-slot` on every part**: `data-slot="button"`, `data-slot="button-leading-slot"`, `data-slot="field-caption"`. It is the public hook for CSS (`*:data-[slot=icon]:size-4`) and tests. Name it `<component>` or `<component>-<part>`.
+- **The resolved props on the root as data attributes**: `data-tone`, `data-variant`, `data-size` (Button, IconButton, Badge, Tag, Avatar, Card, Link, Tabs list, Item). A boolean state is present or absent, never `"false"`: `data-active`, `data-disabled`. CSS and tests target these, not class names.
+- **Named groups**: a part styled from its parent's state uses `group/<component>` (`group/checkbox`, `group/switch`, `group/item`), never a bare `group`, so an ancestor with its own `group` cannot leak in.
+- **Icons size from the parent but yield to their own class**: `[&_svg:not([class*=size-])]:size-4`. An icon with `size-5` keeps it; a caller who overrides the parent's icon size uses the same selector, so `cn` replaces it.
 - **Radix primitives** for behaviour (focus trap, roving focus, keyboard navigation, positioning, dismiss). Styling and API are ours; never expose a primitive's class names or props that bypass the theme.
 - **A row that is itself a control** (a `menuitemcheckbox` row of Dropdown Menu) draws the control's look, not a second control: a nested Checkbox would take focus and toggle twice. The component owns that look and exports it as a part without behaviour: `CheckboxBox` next to `Checkbox` in `checkbox.tsx`. Never a mode prop that turns the control into a decoration.
 - **`asChild`** is supported on Button, IconButton, Card, Link and NavItem. Under `asChild` a link keeps the link role.
@@ -87,7 +90,7 @@ Split a component into parts only where a part brings its own behaviour or seman
 | Invalid              | Fields: `data-invalid:border-danger-emphasized` (control frame). Checkbox and Radio: `aria-invalid`.                                                                                                      |
 | Disabled             | The `disabled` role tokens, no shadow, no pointer events. See below.                                                                                                                                      |
 
-The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio and TabsTrigger take it. A disabled control ignores it.
+The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio, TabsTrigger, CollapsibleTrigger, BreadcrumbItem, CalendarItem and the Table row and cells take it. A disabled control ignores it.
 
 ### Disabled
 
@@ -99,7 +102,7 @@ One rule for every component, in `lib/disabled.ts`:
 | Anything else (link, element with a role) | `aria-disabled="true"` + `data-disabled=""`                                                                               |
 | Link under `asChild`                      | `role="link"`, `aria-disabled`, `tabIndex={-1}`, click cancelled, plain `href` removed (`disabledLinkProps`, `linkChild`) |
 
-- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control uses `has-disabled:`.
+- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control reads that control only, `has-[input:disabled]:`, never `has-disabled:`: a disabled button in one of its slots would dim the whole wrapper.
 - Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
 - Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
 - A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild`, or on a look shared with a plain element, use `not-disabled:not-data-disabled:`.

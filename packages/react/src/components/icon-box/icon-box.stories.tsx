@@ -86,7 +86,7 @@ export const GuidelineKeepTheIconWellInsideTheBoxDont: Story = {
   parameters: { layout: 'fullscreen', controls: { disable: true } },
   render: () => (
     <Specimen tone="dont">
-      <IconBox icon={<CalendarIcon />} className="[&_svg]:size-10" />
+      <IconBox icon={<CalendarIcon />} className="[&_svg:not([class*=size-])]:size-10" />
     </Specimen>
   ),
 }

@@ -8,7 +8,7 @@ const thumbClass = [
   // Hover belongs to the thumb, not to the whole slider.
   'hover:border-neutral-emphasized focus-visible:shadow-focus-ring',
   // Active: the slider is being pressed or dragged. Both thumbs of a range get the dark ring.
-  'group-active:border-current group-active:text-neutral',
+  'group-active/slider:border-current group-active/slider:text-neutral',
 ]
 
 export type SliderProps = Omit<ComponentProps<typeof SliderPrimitive.Root>, 'orientation' | 'aria-label'> & {
@@ -36,8 +36,13 @@ export function Slider({ className, ...props }: SliderProps) {
     <SliderPrimitive.Root
       data-slot="slider"
       id={control.attributes.id}
-      className={cn('group relative flex h-4 w-44 touch-none items-center select-none', className)}
+      className={cn(
+        'group/slider relative flex h-4 w-44 touch-none items-center select-none data-disabled:pointer-events-none',
+        className,
+      )}
       {...rootProps}
+      // A Field around the slider disables it too; an explicit `disabled` prop wins (useFieldControl).
+      disabled={control.disabled}
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
@@ -60,6 +65,7 @@ export function Slider({ className, ...props }: SliderProps) {
             // A name from the Field label and the thumb's own text, so a range thumb still says which end it is.
             aria-labelledby={labelledBy ? (name ? `${labelledBy} ${id}` : labelledBy) : undefined}
             aria-describedby={control.attributes['aria-describedby']}
+            aria-invalid={control.attributes['aria-invalid']}
             className={cn(thumbClass)}
           />
         )

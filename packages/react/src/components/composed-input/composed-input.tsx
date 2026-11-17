@@ -19,7 +19,8 @@ const composedInputVariants = cva(
     'flex w-full min-w-0 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized text-body-small text-neutral shadow-sm',
     'hover:border-neutral data-filled:border-neutral focus-within:border-neutral-emphasized focus-within:shadow-focus-ring',
     'data-invalid:border-danger-emphasized',
-    'has-disabled:pointer-events-none has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-disabled:shadow-none',
+    // Only the text area: a disabled control in a slot does not dim the whole composer.
+    'has-[textarea:disabled]:pointer-events-none has-[textarea:disabled]:border-disabled has-[textarea:disabled]:bg-disabled has-[textarea:disabled]:text-disabled has-[textarea:disabled]:shadow-none',
   ],
   {
     variants: {
@@ -116,7 +117,7 @@ export function ComposedInput({
     </div>
   )
   const send = (
-    <IconButton type="submit" size="sm" aria-label={sendLabel} className="[&_svg]:size-5">
+    <IconButton type="submit" size="sm" aria-label={sendLabel} className="[&_svg:not([class*=size-])]:size-5">
       <ArrowUpIcon />
     </IconButton>
   )

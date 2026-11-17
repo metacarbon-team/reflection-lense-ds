@@ -19,7 +19,7 @@ export const buttonVariants = cva(
     'rounded-md border border-transparent outline-none select-none',
     'focus-visible:shadow-focus-ring',
     'disabled:pointer-events-none data-disabled:pointer-events-none disabled:text-disabled data-disabled:text-disabled disabled:shadow-none data-disabled:shadow-none',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
@@ -123,9 +123,9 @@ const slotClass = 'flex shrink-0 items-center justify-center'
 
 export function Button({
   className,
-  tone,
-  variant,
-  size,
+  tone = 'accent',
+  variant = 'solid',
+  size = 'md',
   state = 'default',
   asChild = false,
   type,
@@ -139,6 +139,10 @@ export function Button({
   const resolvedState = disabled ? 'default' : state
   const rootProps = {
     'data-slot': 'button',
+    // The resolved values as attributes, so CSS and tests can target them without class names.
+    'data-tone': tone,
+    'data-variant': variant,
+    'data-size': size,
     className: cn(buttonVariants({ tone, variant, size, state: resolvedState }), className),
   }
   const withSlots = (label: ReactNode) => (

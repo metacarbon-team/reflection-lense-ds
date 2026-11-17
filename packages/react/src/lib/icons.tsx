@@ -1,5 +1,6 @@
-// Glyphs the components draw themselves (chevrons, check, close). 16px grid, currentColor stroke.
-// Product icons come from the consumer, through slots.
+// Glyphs the components draw themselves (chevrons, check, close, calendar, copy, send). Most sit on a
+// 16px grid with a currentColor stroke; ArrowUpIcon (the send button) is on a 20px grid, and a few are
+// filled. Product icons come from the consumer, through slots.
 
 import type { ComponentProps } from 'react'
 

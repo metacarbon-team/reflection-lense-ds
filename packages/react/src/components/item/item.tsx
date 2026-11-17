@@ -59,7 +59,7 @@ const itemDescriptionVariants = cva('line-clamp-2 text-neutral-subtle group-data
 // by that width for each slot; anything else, such as a switch or an avatar, keeps its own size.
 const slotClass = [
   'flex min-h-4 shrink-0 items-center justify-center group-data-disabled/item:text-disabled',
-  '[&_svg]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
+  '[&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
 ]
 
 export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
@@ -96,7 +96,7 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
 /** Keeps the description and the error under the title: an empty space the width of each slot on both sides. */
 function Indented({ leading, trailing, children }: { leading: boolean; trailing: boolean; children: ReactNode }) {
   return (
-    <span className="flex items-start gap-2">
+    <span data-slot="item-indented" className="flex items-start gap-2">
       {leading && <span aria-hidden="true" className="w-4 shrink-0" />}
       <span className="min-w-0 flex-1">{children}</span>
       {trailing && <span aria-hidden="true" className="w-4 shrink-0" />}
@@ -132,6 +132,9 @@ export function Item({
   const hasTrailing = hasContent(trailingSlot)
   const rootProps = {
     'data-slot': 'item',
+    'data-size': size,
+    // Present only on the current row, never `"false"`, so `data-active:` matches the right rows.
+    'data-active': state === 'active' && !isDisabled ? '' : undefined,
     className: cn(
       // A disabled row drops the frozen states; its look comes from `data-disabled`.
       itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined }),
@@ -144,7 +147,7 @@ export function Item({
   // The row is made of inline elements only, so it is valid inside a <label>.
   const content = (
     <>
-      <span className="flex items-center gap-2">
+      <span data-slot="item-title-row" className="flex items-center gap-2">
         {hasLeading && (
           <span data-slot="item-leading-slot" className={cn(slotClass)}>
             {leadingSlot}
