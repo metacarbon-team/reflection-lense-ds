@@ -7,6 +7,7 @@ import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { linkChild } from '../../lib/disabled'
 import { ChevronRightIcon, DotsIcon } from '../../lib/icons'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../dropdown-menu/dropdown-menu'
 
 export type BreadcrumbProps = ComponentProps<'nav'> & {
   /** The `breadcrumbItems` slot: `BreadcrumbItem`, `BreadcrumbSeparator` and `BreadcrumbEllipsis`, in path order. */
@@ -114,22 +115,43 @@ export function BreadcrumbSeparator({ className, children, ...props }: Component
   )
 }
 
-/** The "…" mark that stands for the levels left out of a long path, 16 px. */
-export function BreadcrumbEllipsis({
-  label = 'More',
-  className,
-  ...props
-}: Omit<ComponentProps<'li'>, 'children'> & {
-  /** Accessible name of the mark, for assistive tech. */
+export type BreadcrumbEllipsisProps = Omit<ComponentProps<'li'>, 'children'> & {
+  /** Accessible name of the "…" button. */
   label?: string
-}) {
+  /**
+   * The levels left out of the path, top level first, as Dropdown Menu items:
+   * `<DropdownMenuItem asChild><a href="/docs">Docs</a></DropdownMenuItem>`.
+   */
+  children: ReactNode
+}
+
+/**
+ * Breadcrumb Ellipsis: the "…" that stands for the levels left out of a long path. It is a button with the
+ * item's look that opens a Dropdown Menu of those levels, so every level stays one click away. Keep the
+ * first item, the "…" and the last two levels.
+ */
+export function BreadcrumbEllipsis({
+  label = 'Show hidden levels',
+  className,
+  children,
+  ...props
+}: BreadcrumbEllipsisProps) {
   return (
-    <li
-      data-slot="breadcrumb-ellipsis"
-      className={cn('flex shrink-0 items-center text-neutral-subtle [&_svg:not([class*=size-])]:size-4', className)}
-      {...props}
-    >
-      <DotsIcon role="img" aria-hidden={false} aria-label={label} />
+    <li data-slot="breadcrumb-ellipsis" className={cn('flex', className)} {...props}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          data-slot="breadcrumb-ellipsis-trigger"
+          aria-label={label}
+          className={cn(
+            breadcrumbItemVariants({ state: 'default' }),
+            // An open popup keeps its trigger pressed.
+            'py-1 aria-expanded:bg-ghost-neutral-pressed aria-expanded:text-neutral [&_svg:not([class*=size-])]:size-4',
+          )}
+        >
+          <DotsIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>{children}</DropdownMenuContent>
+      </DropdownMenu>
     </li>
   )
 }

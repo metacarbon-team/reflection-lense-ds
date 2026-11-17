@@ -3,12 +3,24 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ComponentProps } from 'react'
 import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
+import { DropdownMenuItem } from '../dropdown-menu/dropdown-menu'
 import { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbSeparator } from './breadcrumb'
+
+/** The levels a collapsed path leaves out, opened from the "…" button. */
+const HiddenLevels = () => (
+  <BreadcrumbEllipsis>
+    {['Docs', 'Guides', 'Setup'].map((level) => (
+      <DropdownMenuItem key={level} asChild>
+        <a href={`#${level.toLowerCase()}`}>{level}</a>
+      </DropdownMenuItem>
+    ))}
+  </BreadcrumbEllipsis>
+)
 
 type PlaygroundArgs = ComponentProps<typeof Breadcrumb> & {
   /** State of the last item. `active` is the current page. */
   state: ComponentProps<typeof BreadcrumbItem>['state']
-  /** Collapses the middle of the path into a "…" mark. */
+  /** Collapses the middle of the path into a "…" button that lists the hidden levels. */
   ellipsis: boolean
 }
 
@@ -27,7 +39,7 @@ const meta = {
     },
     ellipsis: {
       control: 'boolean',
-      description: 'Collapses the middle of the path into a "…" mark.',
+      description: 'Collapses the middle of the path into a "…" button that lists the hidden levels.',
       table: { category: 'Playground' },
     },
   },
@@ -39,7 +51,7 @@ const meta = {
         <BreadcrumbSeparator />
         {ellipsis ? (
           <>
-            <BreadcrumbEllipsis />
+            <HiddenLevels />
             <BreadcrumbSeparator />
           </>
         ) : null}
@@ -54,12 +66,12 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** A path of three levels. The last item is the current page; the controls change its state and the "…" mark. */
+/** A path of three levels. The last item is the current page; the controls change its state and the "…" button. */
 export const Playground: Story = {}
 
 const itemStates = ['default', 'hover', 'active'] as const
 
-/** Every item state, then the path with its separator and with the "…" mark. Hover is frozen with `state`. */
+/** Every item state, then the path with its separator and with the "…" button. Hover is frozen with `state`. */
 export const Variants: Story = {
   render: () => (
     <div className="inline-grid grid-cols-[auto_repeat(3,max-content)] items-center gap-x-8 gap-y-4">
@@ -90,7 +102,7 @@ export const Variants: Story = {
         <Breadcrumb aria-label="Collapsed path">
           <BreadcrumbItem label="Home" href="#" />
           <BreadcrumbSeparator />
-          <BreadcrumbEllipsis />
+          <HiddenLevels />
           <BreadcrumbSeparator />
           <BreadcrumbItem label="Components" href="#" />
           <BreadcrumbSeparator />
@@ -101,13 +113,13 @@ export const Variants: Story = {
   ),
 }
 
-/** A long path: keep the first item, the "…" mark and the last two levels. */
+/** A long path: keep the first item, the "…" button and the last two levels. The button opens a menu of the levels in between. */
 export const CollapsedPath: Story = {
   render: () => (
     <Breadcrumb>
       <BreadcrumbItem label="Home" href="#" />
       <BreadcrumbSeparator />
-      <BreadcrumbEllipsis />
+      <HiddenLevels />
       <BreadcrumbSeparator />
       <BreadcrumbItem label="Components" href="#" />
       <BreadcrumbSeparator />
@@ -135,7 +147,7 @@ export const AsChild: Story = {
 
 /**
  * **Collapse long paths with an ellipsis item.**
- * Keep the first item, the “…” mark and the last two levels. A long trail wraps or overflows and hides where the user is.
+ * Keep the first item, the “…” button and the last two levels; the button lists the levels in between. A long trail wraps or overflows and hides where the user is.
  */
 export const GuidelineCollapseLongPathsDo: Story = {
   name: 'Guideline 1 Do',
@@ -146,7 +158,7 @@ export const GuidelineCollapseLongPathsDo: Story = {
       <Breadcrumb>
         <BreadcrumbItem label="Home" href="#" />
         <BreadcrumbSeparator />
-        <BreadcrumbEllipsis />
+        <HiddenLevels />
         <BreadcrumbSeparator />
         <BreadcrumbItem label="Components" href="#" />
         <BreadcrumbSeparator />
