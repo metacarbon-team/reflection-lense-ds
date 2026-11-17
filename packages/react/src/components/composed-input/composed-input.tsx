@@ -1,17 +1,22 @@
 import { cva } from 'class-variance-authority'
 import {
+  useCallback,
+  useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type ComponentProps,
-  type FormEvent,
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
 import { cn } from '../../lib/cn'
+import { composeRefs } from '../../lib/compose-refs'
+import { focusGroupControl, inputGroupStateClass } from '../../lib/control-frame'
 import { controlTransitionClass } from '../../lib/motion'
 import { disabledAttrs } from '../../lib/disabled'
 import { hasContent } from '../../lib/has-content'
 import { ArrowUpIcon } from '../../lib/icons'
+import { useFormReset } from '../../lib/use-form-reset'
 import { useFieldControl } from '../field/field'
 import { IconButton } from '../icon-button/icon-button'
 
@@ -19,10 +24,10 @@ const composedInputVariants = cva(
   [
     'flex w-full min-w-0 rounded-xl border border-neutral-subtle bg-card-neutral-emphasized text-body-small text-neutral shadow-sm',
     controlTransitionClass,
-    'hover:border-neutral data-filled:border-neutral focus-within:border-neutral-emphasized focus-within:shadow-focus-ring',
-    'data-invalid:border-danger-emphasized',
-    // Only the text area: a disabled control in a slot does not dim the whole composer.
-    'has-[textarea:disabled]:pointer-events-none has-[textarea:disabled]:border-disabled has-[textarea:disabled]:bg-disabled has-[textarea:disabled]:text-disabled has-[textarea:disabled]:shadow-none',
+    'group/input-group hover:border-neutral data-filled:border-neutral',
+    // Focus, invalid and disabled come from the text area only, not from a control in a slot.
+    'has-[[data-slot=input-group-control]:focus-visible]:border-neutral-emphasized',
+    inputGroupStateClass,
   ],
   {
     variants: {
@@ -60,10 +65,11 @@ export type ComposedInputProps = Omit<ComponentProps<'textarea'>, 'onSubmit'> & 
   /** Accessible name of the send button, which shows only an icon. */
   sendLabel?: string
   /**
-   * Runs when the text is sent: the send button, or Enter in the text area (Shift+Enter adds a new line).
-   * Nothing is sent while the text is empty. The browser's own form submit is cancelled.
+   * Runs with the trimmed text when it is sent: the send button, or Enter in the text area (Shift+Enter
+   * adds a new line). Nothing is sent while the text is empty. The composer is not a form, so it can sit
+   * inside one; clearing the text after sending is up to you.
    */
-  onSubmit?: (event: FormEvent<HTMLFormElement>) => void
+  onSubmit?: (text: string) => void
 }
 
 const hasText = (value: unknown) => value !== undefined && value !== null && String(value) !== ''
@@ -72,7 +78,7 @@ const hasText = (value: unknown) => value !== undefined && value !== null && Str
  * Composed Input: a chat composer, a text area with an optional toolbar and a send
  * button. Props go to the `<textarea>`; `className` goes to the frame. Give the text area a name with
  * `aria-label` or a Field label. Hover, focus, filled, invalid and disabled are read from the DOM; a
- * disabled composer also disables the controls in its slots.
+ * disabled composer also disables the controls in its slots. A click on the frame puts the focus in the text area.
  */
 export function ComposedInput({
   layout = 'default',
@@ -83,12 +89,23 @@ export function ComposedInput({
   onSubmit,
   onChange,
   onKeyDown,
+  ref,
   ...props
 }: ComposedInputProps) {
   const control = useFieldControl(props)
+  const own = useRef<HTMLTextAreaElement>(null)
+  const textareaRef = useMemo(() => composeRefs(own, ref), [ref])
   // A controlled field is read from `value`; an uncontrolled one remembers what the user typed.
   const [typed, setTyped] = useState(() => hasText(props.defaultValue))
   const filled = props.value !== undefined ? hasText(props.value) : typed
+  // `form.reset()` on a form around the composer clears the text without a change event.
+  const onReset = useCallback(() => setTyped(false), [])
+  useFormReset(own, onReset)
+
+  const send = () => {
+    const text = own.current?.value.trim() ?? ''
+    if (text) onSubmit?.(text)
+  }
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setTyped(event.target.value !== '')
@@ -99,27 +116,28 @@ export function ComposedInput({
     onKeyDown?.(event)
     if (event.defaultPrevented || event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
     event.preventDefault()
-    event.currentTarget.form?.requestSubmit()
-  }
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!hasText(event.currentTarget.querySelector('textarea')?.value.trim())) return
-    onSubmit?.(event)
+    send()
   }
 
   const leading = hasContent(leadingToolbarSlot) && (
-    <div data-slot="composed-input-leading" className={slotClass}>
+    <div data-slot="composed-input-leading-slot" className={slotClass}>
       {leadingToolbarSlot}
     </div>
   )
   const trailing = hasContent(trailingToolbarSlot) && (
-    <div data-slot="composed-input-trailing" className={slotClass}>
+    <div data-slot="composed-input-trailing-slot" className={slotClass}>
       {trailingToolbarSlot}
     </div>
   )
-  const send = (
-    <IconButton type="submit" size="sm" aria-label={sendLabel} className="[&_svg:not([class*=size-])]:size-5">
+  const sendButton = (
+    <IconButton
+      type="button"
+      data-slot="composed-input-send"
+      size="sm"
+      aria-label={sendLabel}
+      onClick={send}
+      className="[&_svg:not([class*=size-])]:size-5"
+    >
       <ArrowUpIcon />
     </IconButton>
   )
@@ -129,7 +147,8 @@ export function ComposedInput({
       {...props}
       {...control.attributes}
       {...disabledAttrs(control.disabled, true)}
-      data-slot="composed-input-textarea"
+      data-slot="input-group-control"
+      ref={textareaRef}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={textareaVariants({ layout })}
@@ -137,11 +156,10 @@ export function ComposedInput({
   )
 
   return (
-    <form
+    <div
       data-slot="composed-input"
       data-filled={filled || undefined}
-      data-invalid={control.invalid || undefined}
-      onSubmit={handleSubmit}
+      onClick={focusGroupControl}
       className={cn(composedInputVariants({ layout }), className)}
     >
       {/* A disabled fieldset disables the controls in the slots too, so the whole composer goes quiet. */}
@@ -151,21 +169,21 @@ export function ComposedInput({
             {leading}
             {textarea}
             {trailing}
-            {send}
+            {sendButton}
           </>
         ) : (
           <>
             {textarea}
             <div data-slot="composed-input-toolbar" className="flex w-full items-center gap-2">
               {leading}
-              <div className="ml-auto flex items-center gap-2">
+              <div data-slot="composed-input-actions" className="ml-auto flex items-center gap-2">
                 {trailing}
-                {send}
+                {sendButton}
               </div>
             </div>
           </>
         )}
       </fieldset>
-    </form>
+    </div>
   )
 }

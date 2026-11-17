@@ -108,7 +108,7 @@ One rule for every component, in `lib/disabled.ts`:
 | Anything else (link, element with a role) | `aria-disabled="true"` + `data-disabled=""`                                                                               |
 | Link under `asChild`                      | `role="link"`, `aria-disabled`, `tabIndex={-1}`, click cancelled, plain `href` removed (`disabledLinkProps`, `linkChild`) |
 
-- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control reads that control only, `has-[input:disabled]:`, never `has-disabled:`: a disabled button in one of its slots would dim the whole wrapper.
+- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control reads that control only, `has-[[data-slot=input-group-control]:disabled]:`, never `has-disabled:`: a disabled button in one of its slots would dim the whole wrapper.
 - Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
 - Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
 - A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild`, or on a look shared with a plain element, use `not-disabled:not-data-disabled:`.
@@ -118,7 +118,8 @@ One rule for every component, in `lib/disabled.ts`:
 - `Field` gives its control an id, the caption as `aria-describedby`, `invalid` and `disabled`, through `useFieldControl`. Explicit props on the control win.
 - A Field's error is an alert (`role="alert"`), so a screen reader reads it when it appears. Inside `<fieldset disabled>` the label, caption and counter dim with the control (`in-[fieldset:disabled]:`), not only through the `disabled` prop.
 - Controls that read the Field: Input, Textarea, SelectTrigger, Checkbox, Radio/RadioGroup, Switch. A new form control calls `useFieldControl` too.
-- Input, Textarea and the Select trigger share one frame: `controlFrameClass` (`lib/control-frame.ts`). Reuse it for any new text-entry control; each consumer adds its own focus treatment.
+- Every field frame has one look, `controlFrameLookClass` (`lib/control-frame.ts`). A frame that is the control (Textarea, the Select trigger) adds `controlFrameClass`: invalid and disabled read from the element. A frame that wraps a text control and its slots (Input, Composed Input, and the Date Picker field through Input) marks the control `data-slot="input-group-control"` and adds `inputGroupStateClass`: focus, an open popup, invalid and disabled read from that control only. A click on such a frame or on an icon in a slot focuses the control (`focusGroupControl`). Build any new text-entry control the same way.
+- A field that tracks whether it holds text (Input's clear button, Composed Input's filled look) follows `form.reset()` of a form around it (`useFormReset`).
 
 ## Color modes and portals
 

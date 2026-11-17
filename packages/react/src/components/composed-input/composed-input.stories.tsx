@@ -137,7 +137,7 @@ export const Disabled: Story = {
   args: { disabled: true },
 }
 
-/** Sending: the handler gets the form event. Read the text from state and clear it. */
+/** Sending: the handler gets the trimmed text. Clear the field yourself after sending. */
 export const Sending: Story = {
   render: function Render(args) {
     const [value, setValue] = useState('')
@@ -153,8 +153,8 @@ export const Sending: Story = {
           {...args}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          onSubmit={() => {
-            setSent((list) => [...list, value.trim()])
+          onSubmit={(text) => {
+            setSent((list) => [...list, text])
             setValue('')
           }}
         />

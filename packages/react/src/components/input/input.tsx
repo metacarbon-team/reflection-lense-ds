@@ -1,10 +1,16 @@
-import { useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
+import { useCallback, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { composeRefs } from '../../lib/compose-refs'
-import { controlFrameClass } from '../../lib/control-frame'
+import {
+  controlFrameLookClass,
+  focusGroupControl,
+  inputGroupAddonClass,
+  inputGroupStateClass,
+} from '../../lib/control-frame'
 import { disabledAttrs } from '../../lib/disabled'
 import { hasContent } from '../../lib/has-content'
 import { CloseIcon } from '../../lib/icons'
+import { useFormReset } from '../../lib/use-form-reset'
 import { useFieldControl } from '../field/field'
 
 export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
@@ -18,8 +24,8 @@ export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
   inputClassName?: string
 }
 
-// The addons dim with the input: the frame is `group/input`, and the input inside it is disabled.
-const addonClass = 'flex shrink-0 items-center text-neutral-subtle group-has-[input:disabled]/input:text-disabled'
+// The addons dim with the input through the frame's `group/input-group`.
+const addonClass = cn('flex shrink-0 items-center text-neutral-subtle', inputGroupAddonClass)
 
 const hasText = (value: unknown) => value !== undefined && value !== null && String(value) !== ''
 
@@ -44,6 +50,9 @@ export function Input({
   // A controlled field is read from `value`; an uncontrolled one remembers what the user typed.
   const [typed, setTyped] = useState(() => hasText(props.defaultValue))
   const filled = props.value !== undefined ? hasText(props.value) : typed
+  // `form.reset()` clears the value without a change event.
+  const onReset = useCallback(() => setTyped(false), [])
+  useFormReset(own, onReset)
   const clearable =
     props.type === 'search' && filled && !control.disabled && !props.readOnly && !hasContent(trailingSlot)
 
@@ -63,17 +72,19 @@ export function Input({
   }
 
   return (
+    // The frame reads focus, invalid and disabled from the input only, and a click on it focuses the input.
     <span
       data-slot="input"
-      data-invalid={control.invalid || undefined}
+      onClick={focusGroupControl}
       className={cn(
-        controlFrameClass,
-        'group/input flex h-8 w-full min-w-0 items-center gap-1.5 px-3 focus-within:shadow-focus-ring [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
+        controlFrameLookClass,
+        inputGroupStateClass,
+        'group/input-group flex h-8 w-full min-w-0 items-center gap-1.5 px-3 [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
         className,
       )}
     >
       {hasContent(leadingSlot) && (
-        <span data-slot="input-addon" className={addonClass}>
+        <span data-slot="input-leading-slot" className={addonClass}>
           {leadingSlot}
         </span>
       )}
@@ -81,6 +92,7 @@ export function Input({
         {...props}
         {...control.attributes}
         {...disabledAttrs(control.disabled, true)}
+        data-slot="input-group-control"
         ref={inputRef}
         onChange={handleChange}
         className={cn(
@@ -91,7 +103,7 @@ export function Input({
         )}
       />
       {clearable ? (
-        <span data-slot="input-addon" className={addonClass}>
+        <span data-slot="input-trailing-slot" className={addonClass}>
           <button
             type="button"
             data-slot="input-clear"
@@ -104,7 +116,7 @@ export function Input({
         </span>
       ) : (
         hasContent(trailingSlot) && (
-          <span data-slot="input-addon" className={addonClass}>
+          <span data-slot="input-trailing-slot" className={addonClass}>
             {trailingSlot}
           </span>
         )
