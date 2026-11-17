@@ -8,8 +8,8 @@ import {
   type ShadowParams,
   type TypeScaleParams,
 } from '@reflection/tokens'
-import { Input } from '@reflection/react'
-import { Choice, Panel, Segmented } from './ui/lab'
+import { Input, SegmentedControl, SegmentedControlItem } from '@reflection/react'
+import { Choice, Panel } from './ui/lab'
 
 /** A value as shown: the resolved token and the palette step it aliases; none when the mode lacks the token. */
 type Cell = { token?: DtcgToken; alias?: string }
@@ -54,6 +54,19 @@ type ColorValue = { components: [number, number, number]; alpha: number }
  * translucent color whose components point at a step by `$ref`.
  */
 function cell(token: DtcgToken | undefined, doc: Record<string, DtcgToken>): Cell {
+  // Shadow layers alias the mode's color tokens (`{shadow.xs.contact}`, `{focus.accent.$root}`): show their colors.
+  if (token?.$type === 'shadow') {
+    const layers = (token.$value as { color: unknown }[]).map((layer) => {
+      if (typeof layer.color !== 'string') return layer
+      const key = layer.color
+        .slice(1, -1)
+        .replaceAll('.', '/')
+        .replace(/\/\$root$/, '')
+      // An alias that does not resolve stays as written, and shows as such.
+      return { ...layer, color: cell(doc[key], doc).token?.$value ?? layer.color }
+    })
+    return { token: { ...token, $value: layers } }
+  }
   if (!token || token.$type !== 'color') return { token }
   const value = token.$value as string | { components: unknown; alpha: number }
   if (typeof value === 'string') {
@@ -70,7 +83,8 @@ function cell(token: DtcgToken | undefined, doc: Record<string, DtcgToken>): Cel
     alias: `${key.replace(/^palette\//, '')} · ${Math.round(value.alpha * 10000) / 100}%`,
   }
 }
-const hex = (value: ColorValue) => {
+const hex = (value: ColorValue | string) => {
+  if (typeof value === 'string') return value
   const [r, g, b] = value.components
   return rgbaToHex({ r, g, b, a: value.alpha })
 }
@@ -173,26 +187,16 @@ export function TokenBrowser(props: { theme: Theme; shadows: ShadowParams; typeS
             />
           </div>
           <Choice aria-label="Category" value={category} options={categories} onChange={setCategory} />
-          <Segmented
-            label="Color modes"
-            options={[
-              { id: 'all', label: 'Light + Dark' },
-              { id: 'light', label: 'Light' },
-              { id: 'dark', label: 'Dark' },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
-          <Segmented
-            label="Type viewports"
-            options={[
-              { id: 'all', label: 'Desktop + Mobile' },
-              { id: 'desktop', label: 'Desktop' },
-              { id: 'mobile', label: 'Mobile' },
-            ]}
-            value={viewport}
-            onChange={setViewport}
-          />
+          <SegmentedControl aria-label="Color modes" value={mode} onValueChange={setMode}>
+            <SegmentedControlItem value="all" label="Light + Dark" />
+            <SegmentedControlItem value="light" label="Light" />
+            <SegmentedControlItem value="dark" label="Dark" />
+          </SegmentedControl>
+          <SegmentedControl aria-label="Type viewports" value={viewport} onValueChange={setViewport}>
+            <SegmentedControlItem value="all" label="Desktop + Mobile" />
+            <SegmentedControlItem value="desktop" label="Desktop" />
+            <SegmentedControlItem value="mobile" label="Mobile" />
+          </SegmentedControl>
           <span className="text-caption text-neutral-subtle" role="status">
             {filtered.length} of {rows.length} tokens
           </span>

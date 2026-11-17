@@ -1,4 +1,5 @@
 import {
+  FONT_WEIGHTS,
   textStyles,
   validateTypeScale,
   VIEWPORTS,
@@ -6,11 +7,13 @@ import {
   type TypeStep,
   type Viewport,
 } from '@reflection/tokens'
-import { Input } from '@reflection/react'
+import type { Dispatch, SetStateAction } from 'react'
+import { Checkbox, Input } from '@reflection/react'
 import { Choice, Panel, Section } from './ui/lab'
 
 /** rem → px, the value Figma shows. */
 const px = (rem: number) => `${Math.round(rem * 16 * 100) / 100}px`
+const WEIGHTS = Object.entries(FONT_WEIGHTS) as [string, number][]
 const FAMILY = { sans: 'var(--font-family-sans)', serif: 'var(--font-family-serif)', mono: 'var(--font-family-mono)' }
 
 /** Steps of the scale in rem: size and line height, px shown as the Figma value. */
@@ -79,20 +82,40 @@ export function TypeRolesPreview({
   onChange,
 }: {
   value: TypeScaleParams
-  onChange: (p: TypeScaleParams) => void
+  /** A state setter: role edits apply to the latest scale, so two edits before a render both land. */
+  onChange: Dispatch<SetStateAction<TypeScaleParams>>
 }) {
   const valid = validateTypeScale(value).length === 0
   const styles = valid ? { desktop: textStyles(value, 'desktop'), mobile: textStyles(value, 'mobile') } : null
   const steps = value.steps.map((s) => ({ value: s.name, label: s.name }))
   const tracking = Object.entries(value.tracking).map(([name, em]) => ({ value: name, label: `${name} · ${em}em` }))
-  const setRole = (i: number, patch: Partial<TypeScaleParams['roles'][number]>) =>
-    onChange({ ...value, roles: value.roles.map((r, j) => (j === i ? { ...r, ...patch } : r)) })
+  type Role = TypeScaleParams['roles'][number]
+  const updateRole = (i: number, update: (role: Role) => Partial<Role>) =>
+    onChange((scale) => ({ ...scale, roles: scale.roles.map((r, j) => (j === i ? { ...r, ...update(r) } : r)) }))
   const setStep = (i: number, viewport: Viewport, step: string) =>
-    setRole(i, { step: { ...value.roles[i]!.step, [viewport]: step } })
+    updateRole(i, (role) => ({ step: { ...role.step, [viewport]: step } }))
+  const weightOptions = WEIGHTS.map(([name, weight]) => ({ value: weight, label: `${name} · ${weight}` }))
+  const extraWeights = (extra: Record<string, number>) => {
+    const sorted = WEIGHTS.filter(([n]) => n in extra)
+    return sorted.length ? Object.fromEntries(sorted) : undefined
+  }
+  // The base weight never repeats as an extra style: picking it drops the extra of the same weight.
+  const setWeight = (i: number, weight: number) =>
+    updateRole(i, (role) => ({
+      weight,
+      weights: extraWeights(Object.fromEntries(Object.entries(role.weights ?? {}).filter(([, w]) => w !== weight))),
+    }))
+  const toggleExtra = (i: number, name: string, weight: number, on: boolean) =>
+    updateRole(i, (role) => {
+      const extra = { ...role.weights }
+      if (on) extra[name] = weight
+      else delete extra[name]
+      return { weights: extraWeights(extra) }
+    })
   return (
     <Panel
       title="Text roles"
-      description="Each role takes a step per viewport and a tracking step. Samples use the bundled NaN Serf fonts; NaN Serf B picks its optical size from the font size."
+      description="Each role takes a step per viewport, a tracking step, a weight and extra weights, each an extra style `<role>/<weight>`. Samples use the bundled fonts; NaN Serf B picks its optical size from the font size."
     >
       {!valid && (
         <p className="text-body-small text-danger" role="alert">
@@ -106,6 +129,8 @@ export function TypeRolesPreview({
             <th>Desktop</th>
             <th>Mobile</th>
             <th>Tracking</th>
+            <th>Weight</th>
+            <th>Extra weights</th>
             <th>Sample · desktop</th>
           </tr>
         </thead>
@@ -116,9 +141,7 @@ export function TypeRolesPreview({
               <tr key={role.name}>
                 <td>
                   <code>{role.name}</code>
-                  <div className="text-caption text-neutral-subtle">
-                    {role.family} · {[role.weight, ...Object.values(role.weights ?? {})].join(', ')}
-                  </div>
+                  <div className="text-caption text-neutral-subtle">{role.family}</div>
                 </td>
                 {VIEWPORTS.map((viewport) => {
                   const s = styles?.[viewport].find((st) => st.name === role.name)
@@ -145,8 +168,30 @@ export function TypeRolesPreview({
                     aria-label={`${role.name} tracking`}
                     value={role.tracking ?? 'normal'}
                     options={tracking}
-                    onChange={(t) => setRole(i, { tracking: t })}
+                    onChange={(t) => updateRole(i, () => ({ tracking: t }))}
                   />
+                </td>
+                <td>
+                  <Choice
+                    aria-label={`${role.name} weight`}
+                    value={role.weight}
+                    options={weightOptions}
+                    onChange={(w) => setWeight(i, w)}
+                  />
+                </td>
+                <td>
+                  <div className="lab-type-weights">
+                    {WEIGHTS.filter(([, w]) => w !== role.weight).map(([name, weight]) => (
+                      <label key={name} className="text-caption text-neutral">
+                        <Checkbox
+                          aria-label={`${role.name} extra weight ${name}`}
+                          checked={role.weights?.[name] === weight}
+                          onCheckedChange={(on) => toggleExtra(i, name, weight, on === true)}
+                        />
+                        {name}
+                      </label>
+                    ))}
+                  </div>
                 </td>
                 <td
                   style={

@@ -20,11 +20,11 @@ import {
   type ShadowParams,
   type Theme,
 } from '@reflection/tokens'
-import { Switch } from '@reflection/react'
+import { SegmentedControl, SegmentedControlItem, Switch } from '@reflection/react'
 import { useId, useState, type CSSProperties, type ReactNode } from 'react'
 import { MirrorScreen } from './ui-preview/MirrorScreen'
 import type { Generated } from './generated'
-import { Choice, Panel, Segmented, Status } from './ui/lab'
+import { Choice, Panel, Status } from './ui/lab'
 
 /** `var(--…)` for a canonical token name. */
 const v = (name: string) => `var(${cssVarName(name)})`
@@ -304,7 +304,11 @@ export function ShadowsTab({ theme, params }: { theme: Theme; params: ShadowPara
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented label="Mode" options={MODE_OPTIONS} value={mode} onChange={setMode} />
+        <SegmentedControl aria-label="Mode" value={mode} onValueChange={setMode}>
+          {MODE_OPTIONS.map((o) => (
+            <SegmentedControlItem key={o.id} value={o.id} label={o.label} />
+          ))}
+        </SegmentedControl>
         <Choice
           aria-label="Outline"
           value={outline}
@@ -449,7 +453,11 @@ export function PreviewTab({ generated }: { generated: Generated }) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented label="Mode" options={MODE_OPTIONS} value={mode} onChange={setMode} />
+        <SegmentedControl aria-label="Mode" value={mode} onValueChange={setMode}>
+          {MODE_OPTIONS.map((o) => (
+            <SegmentedControlItem key={o.id} value={o.id} label={o.label} />
+          ))}
+        </SegmentedControl>
         <Status tone={issues ? 'danger' : 'success'} count={issues}>
           {issues ? 'rule violations' : 'All rules pass'}
         </Status>

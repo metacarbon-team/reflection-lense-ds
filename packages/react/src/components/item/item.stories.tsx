@@ -1,10 +1,11 @@
-import { Canvas, Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
+import { Controls, Description, Primary, Stories, Subheading, Title } from '@storybook/addon-docs/blocks'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ComponentProps } from 'react'
 import { Checkbox } from '../checkbox'
 import { RadioGroup, Radio } from '../radio'
 import { Switch } from '../switch'
 import { ChevronRightIcon } from '../../lib/icons'
+import { GuidelinePairs } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 import { Item } from './item'
 
@@ -122,6 +123,29 @@ export const States: Story = {
           ))}
         </div>
       ))}
+    </div>
+  ),
+}
+
+/** `asChild` renders the row as your link or button, so it navigates or acts with the element's own keyboard behaviour. */
+export const AsLink: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col">
+      <Item asChild label="Profile" description="Name, photo and contact" trailingSlot={<ChevronRightIcon />}>
+        <a href="#profile" />
+      </Item>
+      <Item asChild label="Billing" description="Plan and invoices" trailingSlot={<ChevronRightIcon />}>
+        <a href="#billing" />
+      </Item>
+      <Item
+        asChild
+        disabled
+        label="Security"
+        description="Available on the Team plan"
+        trailingSlot={<ChevronRightIcon />}
+      >
+        <a href="#security" />
+      </Item>
     </div>
   ),
 }
@@ -290,20 +314,7 @@ function DocsPage() {
       <Controls />
       <Stories includePrimary={false} />
       <Subheading>Guidelines</Subheading>
-      {rules.map(([Do, Dont], index) => (
-        <div key={index} className={`${index === 0 ? '-mt-2!' : 'mt-8!'} [&_p]:mb-0!`}>
-          {/* Figma has a caption only over the Do card, so it takes the whole row; the cards sit side by side below. */}
-          <Description of={Do} />
-          <div className="grid grid-cols-2 gap-x-6">
-            <div>
-              <Canvas of={Do} />
-            </div>
-            <div>
-              <Canvas of={Dont} />
-            </div>
-          </div>
-        </div>
-      ))}
+      <GuidelinePairs rules={rules} />
     </>
   )
 }

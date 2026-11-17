@@ -1,97 +1,47 @@
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 import { Tabs as TabsPrimitive } from 'radix-ui'
-import { createContext, useContext, type ComponentProps } from 'react'
+import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
-
-type TabsStyle = {
-  variant: NonNullable<VariantProps<typeof tabsListVariants>['variant']>
-  size: NonNullable<VariantProps<typeof tabsTriggerVariants>['size']>
-}
-const TabsStyleContext = createContext<TabsStyle>({ variant: 'line', size: 'sm' })
+import { controlTransitionClass } from '../../lib/motion'
 
 /**
  * The tabs root: owns the selected value. Radix Tabs; `defaultValue`, `value`, `onValueChange` work as in
- * Radix. Horizontal only: Figma has no vertical tabs, so `orientation="vertical"` is not styled.
+ * Radix. Horizontal only: Figma has no vertical tabs, so `orientation="vertical"` is not styled. Tabs are
+ * pages of content with panels; to pick one value from a few, such as a view mode, use Segmented Control.
  */
 export const Tabs = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.Root>) => (
   <TabsPrimitive.Root data-slot="tabs" className={cn('flex flex-col gap-2', className)} {...props} />
 )
 
-/**
- * `line`: tabs on the page with an underline under the active one, for navigation.
- * `pill`: a muted track with a raised active tab, for switching views of the same content.
- */
-export const tabsListVariants = cva('inline-flex items-center', {
-  variants: {
-    variant: {
-      line: '',
-      pill: 'rounded-lg border border-neutral-subtle bg-neutral p-1',
-    },
-  },
-  defaultVariants: { variant: 'line' },
-})
-
-/** Trigger styles per list variant; also for tab-like controls built on other semantics (radio groups). */
+/** A tab: 40px, label text, an underline under the active one (Radix `data-state`). */
 export const tabsTriggerVariants = cva(
   [
-    'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap text-neutral-subtle outline-none select-none',
+    'relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 px-3 whitespace-nowrap text-label text-neutral-subtle outline-none select-none',
+    controlTransitionClass,
     'hover:bg-ghost-neutral-hover hover:text-neutral data-[state=active]:text-neutral',
-    'focus-visible:text-neutral focus-visible:shadow-focus-ring',
+    'focus-visible:rounded-xs focus-visible:text-neutral focus-visible:shadow-focus-ring',
+    'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-t-lg after:bg-current',
+    'after:opacity-0 data-[state=active]:after:opacity-100',
     // Radix sets `data-disabled` too, so a disabled tab rendered as a link (`asChild`) looks the same.
     'disabled:pointer-events-none disabled:text-disabled data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
-      variant: {
-        // The active tab is marked in CSS from Radix's `data-state`: an underline, or the raised pill.
-        line: [
-          'h-10 gap-1.5 px-3 text-label focus-visible:rounded-xs',
-          'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-t-lg after:bg-current',
-          'after:opacity-0 data-[state=active]:after:opacity-100',
-        ],
-        pill: [
-          'gap-1 border border-transparent',
-          // A disabled control has no shadow, active or not. Not `enabled:`, which matches only form controls.
-          'data-[state=active]:border-neutral data-[state=active]:bg-neutral-subtle not-disabled:not-data-disabled:data-[state=active]:shadow-sm',
-          'focus-visible:bg-neutral-subtle',
-        ],
-      },
-      size: { sm: '', lg: '' },
       // Freezes hover or focus for docs and tests; in `default` the browser decides.
       state: {
         default: '',
         hover: 'bg-ghost-neutral-hover text-neutral',
-        focus: 'text-neutral shadow-focus-ring',
+        focus: 'rounded-xs text-neutral shadow-focus-ring',
       },
     },
-    compoundVariants: [
-      { variant: 'line', state: 'focus', className: 'rounded-xs' },
-      { variant: 'pill', state: 'focus', className: 'bg-neutral-subtle' },
-      { variant: 'pill', size: 'sm', className: 'h-6 rounded-md px-2 text-caption' },
-      { variant: 'pill', size: 'lg', className: 'h-9 rounded-lg px-3 text-label' },
-    ],
+    defaultVariants: { state: 'default' },
   },
 )
 
-export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> & {
-  /** `line` (default): an underline under the active tab. `pill`: a muted track with a raised active tab. */
-  variant?: TabsStyle['variant']
-  /** Pill tabs only: `sm` 24px, `lg` 36px. */
-  size?: TabsStyle['size']
-}
-
-export function TabsList({ className, variant = 'line', size = 'sm', ...props }: TabsListProps) {
-  return (
-    <TabsStyleContext value={{ variant, size }}>
-      <TabsPrimitive.List
-        data-slot="tabs-list"
-        data-variant={variant}
-        className={cn(tabsListVariants({ variant }), className)}
-        {...props}
-      />
-    </TabsStyleContext>
-  )
+/** The row of tabs. Name it with `aria-label`. */
+export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) {
+  return <TabsPrimitive.List data-slot="tabs-list" className={cn('inline-flex items-center', className)} {...props} />
 }
 
 /** One tab. `value` links it to the `TabsContent` with the same value; `disabled` removes it from the tab order and blocks selection. */
@@ -103,11 +53,10 @@ export function TabsTrigger({
   /** Freezes `hover` or `focus` for docs and tests. The active tab comes from the selected value, not from here. */
   state?: 'default' | 'hover' | 'focus'
 }) {
-  const style = useContext(TabsStyleContext)
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
-      className={cn(tabsTriggerVariants({ ...style, state }), className)}
+      className={cn(tabsTriggerVariants({ state }), className)}
       {...props}
     />
   )

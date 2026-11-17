@@ -12,8 +12,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  tabsListVariants,
-  tabsTriggerVariants,
 } from '@reflection/react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 
@@ -61,32 +59,6 @@ export function Status(props: {
       {props.count ? <Badge tone={props.tone}>{props.count}</Badge> : <Badge tone={props.tone} dot />}
       {props.children}
     </span>
-  )
-}
-
-/** A choice between a few options that switch a view in place: pill tabs with radio semantics. */
-export function Segmented<T extends string>(props: {
-  label: string
-  options: readonly { id: T; label: string }[]
-  value: T
-  onChange: (id: T) => void
-}) {
-  return (
-    <div role="radiogroup" aria-label={props.label} className={tabsListVariants({ variant: 'pill' })}>
-      {props.options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          aria-checked={props.value === o.id}
-          data-state={props.value === o.id ? 'active' : 'inactive'}
-          className={tabsTriggerVariants({ variant: 'pill', size: 'sm' })}
-          onClick={() => props.onChange(o.id)}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
   )
 }
 

@@ -7,7 +7,7 @@ import { GuidelinePairs } from '../../docs/guideline-pairs'
 const meta = {
   title: 'Components/Diff Stat',
   component: DiffStat,
-  args: { added: 42, removed: 8, showAdded: true, showRemoved: true },
+  args: { added: 42, removed: 8 },
   parameters: { docs: { page: DocsPage } },
 } satisfies Meta<typeof DiffStat>
 
@@ -16,19 +16,19 @@ type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {}
 
-/** Every combination of `showAdded` and `showRemoved`; with both off nothing is shown. */
+/** Every combination of the two counts, set or left out; with neither set nothing is shown. */
 export const Variants: Story = {
   render: (args) => (
     <div className="inline-grid grid-cols-[repeat(3,max-content)] items-center gap-x-6 gap-y-3">
       <span />
-      <span className="text-caption text-neutral-subtle">showRemoved</span>
-      <span className="text-caption text-neutral-subtle">no showRemoved</span>
-      <span className="text-caption text-neutral-subtle">showAdded</span>
-      <DiffStat {...args} showAdded showRemoved />
-      <DiffStat {...args} showAdded showRemoved={false} />
-      <span className="text-caption text-neutral-subtle">no showAdded</span>
-      <DiffStat {...args} showAdded={false} showRemoved />
-      <DiffStat {...args} showAdded={false} showRemoved={false} />
+      <span className="text-caption text-neutral-subtle">removed</span>
+      <span className="text-caption text-neutral-subtle">no removed</span>
+      <span className="text-caption text-neutral-subtle">added</span>
+      <DiffStat added={args.added} removed={args.removed} />
+      <DiffStat added={args.added} />
+      <span className="text-caption text-neutral-subtle">no added</span>
+      <DiffStat removed={args.removed} />
+      <DiffStat />
     </div>
   ),
 }
@@ -57,12 +57,12 @@ export const WithFile: Story = {
 
 /** A new file only adds lines. */
 export const OnlyAdded: Story = {
-  args: { added: 86, showRemoved: false },
+  args: { added: 86, removed: undefined },
 }
 
 /** A deleted file only removes lines. */
 export const OnlyRemoved: Story = {
-  args: { removed: 212, showAdded: false },
+  args: { added: undefined, removed: 212 },
 }
 
 /** The full count with a thousands separator: rounded values hide how big the change really is. */

@@ -1,4 +1,4 @@
-/* Font faces of the theme families: NaN Serf Sans and NaN Serf B, Geist Mono.
+/* Font faces of the theme families: NaN Serf Sans and NaN Serf B, JetBrains Mono.
    All variable. NaN Serf B has an optical-size axis
    (opsz 8–100): browsers pick the cut from the font size, so headings and display text get the
    larger optical sizes on their own. */
@@ -27,19 +27,19 @@
   font-display: swap;
 }
 
-/* Geist Mono, Latin subset (SIL Open Font License, see GeistMono-LICENSE.txt). */
+/* JetBrains Mono, Latin subset (SIL Open Font License, see JetBrainsMono-LICENSE.txt). */
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('./GeistMono-Latin-VF.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'JetBrains Mono';
+  src: url('./JetBrainsMono-Latin-VF.woff2') format('woff2');
+  font-weight: 100 800;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('./GeistMono-Latin-Italic-VF.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'JetBrains Mono';
+  src: url('./JetBrainsMono-Latin-Italic-VF.woff2') format('woff2');
+  font-weight: 100 800;
   font-style: italic;
   font-display: swap;
 }

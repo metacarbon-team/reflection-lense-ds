@@ -1,26 +1,18 @@
 import { Tooltip as TooltipPrimitive } from 'radix-ui'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  type ComponentProps,
-  type ReactNode,
-  type RefObject,
-} from 'react'
+import { useCallback, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import { composeRefs } from '../../lib/compose-refs'
+import { tooltipMotionClass } from '../../lib/motion'
+import { ModeAnchor, modeAt, subscribeModes, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
 import { hasContent } from '../../lib/has-content'
 
 /**
- * The bubble: 28px high, the emphasized card surface, one line of caption text. Width hugs the label
- * and the visible slots up to 200px; a longer label is cut with an ellipsis.
+ * The bubble: at least 28px high, the emphasized card surface, caption text. Width hugs the label
+ * and the visible slots up to 200px; a longer label wraps and the bubble grows in height.
  */
 const tooltipClass = [
-  'relative z-50 flex h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
+  'relative z-50 flex min-h-7 w-max max-w-50 items-center gap-2 rounded-md px-3 py-1.5',
   'bg-card-neutral-emphasized text-caption text-neutral select-none',
-  '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
 ]
 
 /** The arrow: a square of the bubble surface, turned 45° and centered on the edge that faces the trigger. */
@@ -29,7 +21,7 @@ const arrowClass = 'pointer-events-none block size-2 rotate-45 bg-card-neutral-e
 const slotClass = 'flex shrink-0 items-center justify-center overflow-clip'
 
 type TooltipOwnProps = {
-  /** The hint text. A short noun or verb phrase on one line, not a sentence. */
+  /** The hint text. A short noun or verb phrase, not a sentence; a longer label wraps. */
   label: ReactNode
   /** Content before the label, 16 × 16: an icon. The tooltip shows the slot when it is set. */
   leadingSlot?: ReactNode
@@ -47,7 +39,7 @@ function TooltipParts({ label, leadingSlot, trailingSlot }: Omit<TooltipOwnProps
           {leadingSlot}
         </span>
       )}
-      <span data-slot="tooltip-label" className="min-w-0 flex-1 truncate">
+      <span data-slot="tooltip-label" className="min-w-0 flex-1 wrap-break-word">
         {label}
       </span>
       {hasContent(trailingSlot) && (
@@ -59,24 +51,6 @@ function TooltipParts({ label, leadingSlot, trailingSlot }: Omit<TooltipOwnProps
   )
 }
 
-/**
- * The tooltip always renders in the opposite color mode of its surroundings, with the same tokens as
- * everything else: it sets `data-mode` on itself to the swapped mode of the closest `data-mode` above
- * the anchor, and follows that mode when it changes.
- */
-function swapMode(node: HTMLElement, anchor: Element | null) {
-  const holder = anchor?.closest<HTMLElement>('[data-mode]') ?? document.documentElement
-  const apply = () => {
-    node.dataset.mode = holder.dataset.mode === 'dark' ? 'light' : 'dark'
-  }
-  apply()
-  const observer = new MutationObserver(apply)
-  observer.observe(holder, { attributes: true, attributeFilter: ['data-mode'] })
-  return () => observer.disconnect()
-}
-
-const TriggerContext = createContext<RefObject<HTMLElement | null> | null>(null)
-
 /** Provides the show delay shared by the tooltips below it. Put it once near the root of the app. */
 export const TooltipProvider = ({
   delayDuration = 300,
@@ -86,25 +60,19 @@ export const TooltipProvider = ({
 )
 
 /** Tooltip: a short hint bubble for an element. Compose it from TooltipTrigger and TooltipContent. */
-export const Tooltip = (props: ComponentProps<typeof TooltipPrimitive.Root>) => {
-  const triggerRef = useRef<HTMLElement | null>(null)
-  return (
-    <TriggerContext value={triggerRef}>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TriggerContext>
-  )
-}
+export const Tooltip = (props: ComponentProps<typeof TooltipPrimitive.Root>) => (
+  <ModeAnchor>
+    <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  </ModeAnchor>
+)
 
 /** The element the tooltip describes. It opens on hover and on keyboard focus. Use `asChild` to use your own element. */
 export function TooltipTrigger({ ref, ...props }: ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  const triggerRef = useContext(TriggerContext) as RefObject<HTMLButtonElement | null> | null
-  // The tooltip reads the trigger to pick its color mode; the caller's own ref is kept too.
-  const composed = useMemo(() => composeRefs(triggerRef ?? undefined, ref), [triggerRef, ref])
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={composed} {...props} />
+  // The tooltip reads the trigger to pick its color mode.
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" ref={useModeAnchorRef(ref)} {...props} />
 }
 
-export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children' | 'ref'> &
-  TooltipOwnProps
+export type TooltipContentProps = Omit<ComponentProps<typeof TooltipPrimitive.Content>, 'children'> & TooltipOwnProps
 
 /**
  * The floating bubble. It opens on top of the trigger by default and moves to the opposite side when
@@ -118,21 +86,20 @@ export function TooltipContent({
   side = 'top',
   sideOffset = 8,
   className,
+  ref,
   ...props
 }: TooltipContentProps) {
-  const triggerRef = useContext(TriggerContext)
-  const ref = useCallback(
-    (node: HTMLDivElement | null) => (node ? swapMode(node, triggerRef?.current ?? null) : undefined),
-    [triggerRef],
-  )
+  // The bubble always takes the opposite color mode of the trigger's subtree, and follows it.
+  const mode = usePortalMode(true)
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
         ref={ref}
+        data-mode={mode}
         data-slot="tooltip-content"
         side={side}
         sideOffset={sideOffset}
-        className={cn(tooltipClass, className)}
+        className={cn(tooltipClass, tooltipMotionClass, 'origin-(--radix-tooltip-content-transform-origin)', className)}
         {...props}
       >
         <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />
@@ -175,7 +142,16 @@ export function TooltipPanel({
   className,
   ...props
 }: TooltipPanelProps) {
-  const ref = useCallback((node: HTMLDivElement | null) => (node ? swapMode(node, node.parentElement) : undefined), [])
+  // Drawn in the page: the opposite of the mode around it, set on mount and followed.
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return undefined
+    const apply = () => {
+      const next = modeAt(node.parentElement, true)
+      if (node.dataset.mode !== next) node.dataset.mode = next
+    }
+    apply()
+    return subscribeModes(apply)
+  }, [])
   return (
     <div ref={ref} data-slot="tooltip-panel" data-side={side} className={cn(tooltipClass, className)} {...props}>
       <TooltipParts label={label} leadingSlot={leadingSlot} trailingSlot={trailingSlot} />

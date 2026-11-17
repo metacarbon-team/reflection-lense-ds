@@ -5,6 +5,7 @@ import { Field } from '../field/field'
 import { Item } from '../item'
 import { ItemList } from '../item-list'
 import { Radio, RadioGroup, type RadioProps } from './radio'
+import { canvasFill } from '../../docs/guideline-pairs'
 import { Specimen } from '../../docs/specimen'
 
 type PlaygroundArgs = RadioProps & { checked: boolean }
@@ -245,14 +246,18 @@ function DocsPage() {
       <div className="-mt-2! grid grid-cols-2 gap-x-6 [&_p]:mb-0!">
         <div className="row-span-3 grid grid-rows-subgrid">
           <Description of={GuidelineDo} />
-          <Canvas of={GuidelineDo} />
+          <div className={canvasFill}>
+            <Canvas of={GuidelineDo} />
+          </div>
         </div>
         <div className="row-span-3 grid grid-rows-subgrid">
           {/* Figma has no Don't caption: the wrapper keeps the empty row so both cards stay level. */}
           <div>
             <Description of={GuidelineDont} />
           </div>
-          <Canvas of={GuidelineDont} />
+          <div className={canvasFill}>
+            <Canvas of={GuidelineDont} />
+          </div>
         </div>
       </div>
     </>

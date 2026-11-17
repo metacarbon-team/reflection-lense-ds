@@ -33,6 +33,7 @@ export {
   familyOf,
   generateFixedPalette,
   generateRolePalette,
+  paletteAlias,
   RAMP_STEPS,
   type ModePalette,
   type PaletteBinding,
@@ -49,7 +50,7 @@ export {
   DEFAULT_CURVE,
   type CurveParams,
 } from './curve'
-export { cssVarName, dimensionCssVars, toCssVars } from './css'
+export { cssVarName, toCssVars, type CssVarsOptions } from './css'
 export {
   BORDER_WIDTHS,
   CONTAINER_SIZES,

@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
-export const skeletonVariants = cva('block shrink-0 bg-neutral-pressed', {
+export const skeletonVariants = cva('block shrink-0 animate-pulse bg-neutral-pressed motion-reduce:animate-none', {
   variants: {
     shape: {
       text: 'h-3.5 w-40 rounded-full',
@@ -22,7 +22,7 @@ export type SkeletonProps = Omit<ComponentProps<'div'>, 'children'> &
 
 /**
  * Skeleton: a placeholder that keeps the shape of the content while it loads. All shapes use one
- * neutral tone and do not animate. It is hidden from assistive technology.
+ * neutral tone and pulse while loading (still with reduced motion). It is hidden from assistive technology.
  */
 export function Skeleton({ className, shape, ...props }: SkeletonProps) {
   return (
@@ -49,7 +49,7 @@ export function SkeletonItem({ leading = true, className, ...props }: SkeletonIt
       {...props}
     >
       {leading && <Skeleton shape="block" className="size-8" />}
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div data-slot="skeleton-item-lines" className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="pr-16">
           <Skeleton className="w-full" />
         </div>

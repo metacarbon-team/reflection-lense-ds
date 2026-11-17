@@ -4,26 +4,29 @@ import { isValidElement } from 'react'
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import { ChevronDownIcon, ChevronRightIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * Nav Item: a 32px row of the sidebar. Hover and focus-visible come from the browser in `default`; the
- * `hover` and `focus` states freeze them for docs and tests. `active` marks the current page.
+ * `hover` and `focus` states freeze them for docs and tests. `active` marks the current page with the
+ * active fill and no focus ring, as Item does.
  * A nested row is indented by one slot.
  */
 const navItemVariants = cva(
   [
     'flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-label text-neutral outline-none select-none',
+    controlTransitionClass,
     'data-disabled:pointer-events-none data-disabled:text-disabled',
-    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    '[&_svg]:pointer-events-none [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
   ],
   {
     variants: {
       state: {
         default: 'hover:bg-ghost-neutral-hover focus-visible:shadow-focus-ring',
         hover: 'bg-ghost-neutral-hover',
-        active: 'bg-ghost-neutral-active focus-visible:shadow-focus-ring',
+        active: 'bg-ghost-neutral-active',
         focus: 'shadow-focus-ring',
       },
     },

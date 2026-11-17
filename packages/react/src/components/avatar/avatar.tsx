@@ -15,9 +15,9 @@ export const avatarVariants = cva(
         inverse: 'bg-neutral-emphasized text-neutral-on-emphasized',
       },
       size: {
-        sm: 'size-6 text-label-small [&_svg]:size-3',
-        md: 'size-8 text-label-small [&_svg]:size-4',
-        lg: 'size-10 text-label [&_svg]:size-5',
+        sm: 'size-6 text-label-small [&_svg:not([class*=size-])]:size-3',
+        md: 'size-8 text-label-small [&_svg:not([class*=size-])]:size-4',
+        lg: 'size-10 text-label [&_svg:not([class*=size-])]:size-5',
       },
     },
     defaultVariants: { tone: 'accent', size: 'sm' },
@@ -43,9 +43,24 @@ export type AvatarProps = Omit<ComponentProps<typeof AvatarPrimitive.Root>, 'chi
  * Avatar: a round picture of a user or an agent. It falls back to two initials or a generic profile
  * icon when there is no photo, or while the photo loads.
  */
-export function Avatar({ className, tone, size, kind = 'initials', initials, src, alt = '', ...props }: AvatarProps) {
+export function Avatar({
+  className,
+  tone = 'accent',
+  size = 'sm',
+  kind = 'initials',
+  initials,
+  src,
+  alt = '',
+  ...props
+}: AvatarProps) {
   return (
-    <AvatarPrimitive.Root data-slot="avatar" className={cn(avatarVariants({ tone, size }), className)} {...props}>
+    <AvatarPrimitive.Root
+      data-slot="avatar"
+      data-tone={tone}
+      data-size={size}
+      className={cn(avatarVariants({ tone, size }), className)}
+      {...props}
+    >
       {kind === 'image' ? (
         <AvatarPrimitive.Image data-slot="avatar-image" src={src} alt={alt} className="size-full object-cover" />
       ) : null}

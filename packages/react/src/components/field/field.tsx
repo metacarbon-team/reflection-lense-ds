@@ -3,13 +3,16 @@ import { createContext, useContext, useId, type AriaAttributes, type ComponentPr
 import { cn } from '../../lib/cn'
 import { hasContent } from '../../lib/has-content'
 
-const fieldLabelVariants = cva('text-label text-neutral', {
+// A Field inside `<fieldset disabled>` dims too: its control is disabled by the fieldset, not by the prop.
+const dimInDisabledFieldset = 'in-[fieldset:disabled]:text-disabled'
+
+const fieldLabelVariants = cva(['text-label text-neutral', dimInDisabledFieldset], {
   variants: { disabled: { true: 'text-disabled', false: '' } },
   defaultVariants: { disabled: false },
 })
 
 // `disabled` comes after `invalid`, so a disabled caption stays gray even when the field is invalid.
-const fieldCaptionVariants = cva('min-w-0 flex-1 text-neutral-subtle', {
+const fieldCaptionVariants = cva(['min-w-0 flex-1 text-neutral-subtle', dimInDisabledFieldset], {
   variants: {
     invalid: { true: 'text-danger', false: '' },
     disabled: { true: 'text-disabled', false: '' },
@@ -17,7 +20,7 @@ const fieldCaptionVariants = cva('min-w-0 flex-1 text-neutral-subtle', {
   defaultVariants: { invalid: false, disabled: false },
 })
 
-const fieldCounterVariants = cva('ml-auto text-neutral-subtle tabular-nums', {
+const fieldCounterVariants = cva(['ml-auto text-neutral-subtle tabular-nums', dimInDisabledFieldset], {
   variants: { disabled: { true: 'text-disabled', false: '' } },
   defaultVariants: { disabled: false },
 })
@@ -70,7 +73,7 @@ export type FieldProps = Omit<ComponentProps<'div'>, 'children'> & {
   label: ReactNode
   /** Help text below the control; replaced by `error` when the field is invalid. */
   caption?: ReactNode
-  /** Shown as the caption, in the danger color, and marks the control invalid. */
+  /** Shown as the caption, in the danger color, and marks the control invalid. Screen readers read it out when it appears. */
   error?: ReactNode
   /** Character or item count at the end of the caption row, e.g. `12/40`. */
   counter?: ReactNode
@@ -99,18 +102,33 @@ export function Field({ label, caption, error, counter, disabled = false, classN
         className={cn('flex min-w-0 flex-col gap-1.5', className)}
         {...props}
       >
-        <label id={state.labelId} htmlFor={state.controlId} className={cn(fieldLabelVariants({ disabled }))}>
+        <label
+          id={state.labelId}
+          data-slot="field-label"
+          htmlFor={state.controlId}
+          className={cn(fieldLabelVariants({ disabled }))}
+        >
           {label}
         </label>
         {children}
         {(hasContent(message) || hasContent(counter)) && (
-          <div className="flex gap-2 text-caption">
+          <div data-slot="field-caption-row" className="flex gap-2 text-caption">
             {hasContent(message) && (
-              <p id={state.captionId} className={cn(fieldCaptionVariants({ invalid, disabled }))}>
+              <p
+                id={state.captionId}
+                data-slot={invalid ? 'field-error' : 'field-caption'}
+                // An error is an alert, so a screen reader reads it as soon as it appears, not only on the control.
+                role={invalid ? 'alert' : undefined}
+                className={cn(fieldCaptionVariants({ invalid, disabled }))}
+              >
                 {message}
               </p>
             )}
-            {hasContent(counter) && <span className={cn(fieldCounterVariants({ disabled }))}>{counter}</span>}
+            {hasContent(counter) && (
+              <span data-slot="field-counter" className={cn(fieldCounterVariants({ disabled }))}>
+                {counter}
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -1,22 +1,26 @@
 import { cva } from 'class-variance-authority'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
-import { CheckboxCheckMark, checkboxBoxClass, CheckboxIndeterminateMark } from '../../lib/checkbox'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
+import { popupMotionClass } from '../../lib/motion'
 import { CheckIcon, ChevronRightIcon } from '../../lib/icons'
-import { menuItemVariants, menuSeparatorClass } from '../../lib/menu'
+import { menuItemVariants, menuSeparatorClass, menuSurfaceGroupClass, useKeyboardHighlight } from '../../lib/menu'
+import { CheckboxBox } from '../checkbox/checkbox'
 
 // Dropdown Menu: a list of actions or choices opened from a trigger, usually a Button through `asChild`.
 // Icons, shortcuts, checkable and radio items, groups and submenus.
 // Keyboard: arrows move, Enter or Space selects, Escape closes, typing jumps.
 
 export const DropdownMenu = (props: ComponentProps<typeof DropdownMenuPrimitive.Root>) => (
-  <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  <ModeAnchor>
+    <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  </ModeAnchor>
 )
 
-export const DropdownMenuTrigger = (props: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) => (
-  <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
-)
+export function DropdownMenuTrigger({ ref, ...props }: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  return <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 export const DropdownMenuGroup = (props: ComponentProps<typeof DropdownMenuPrimitive.Group>) => (
   <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
@@ -32,7 +36,11 @@ export const DropdownMenuSub = (props: ComponentProps<typeof DropdownMenuPrimiti
 
 // `content` is the main list and scrolls when the screen is short; `sub` is a submenu.
 const menuSurfaceVariants = cva(
-  'z-50 flex min-w-48 flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-sm outline-none',
+  [
+    menuSurfaceGroupClass,
+    'z-50 flex min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) flex-col gap-0.5 overflow-hidden rounded-lg border border-neutral bg-card-neutral-emphasized p-1 text-neutral shadow-md outline-none',
+    popupMotionClass,
+  ],
   {
     variants: {
       kind: {
@@ -48,16 +56,20 @@ export function DropdownMenuContent({
   className,
   sideOffset = 4,
   align = 'start',
+  onKeyDown,
+  onPointerMove,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
+        data-mode={usePortalMode()}
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         align={align}
         className={cn(menuSurfaceVariants({ kind: 'content' }), className)}
         {...props}
+        {...useKeyboardHighlight({ onKeyDown, onPointerMove })}
       />
     </DropdownMenuPrimitive.Portal>
   )
@@ -65,14 +77,18 @@ export function DropdownMenuContent({
 
 export function DropdownMenuSubContent({
   className,
+  onKeyDown,
+  onPointerMove,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.SubContent
+        data-mode={usePortalMode()}
         data-slot="dropdown-menu-sub-content"
         className={cn(menuSurfaceVariants({ kind: 'sub' }), className)}
         {...props}
+        {...useKeyboardHighlight({ onKeyDown, onPointerMove })}
       />
     </DropdownMenuPrimitive.Portal>
   )
@@ -85,19 +101,6 @@ const item = () => menuItemVariants({ keepOpenHighlight: true })
 export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof DropdownMenuPrimitive.Item>) {
   return <DropdownMenuPrimitive.Item data-slot="dropdown-menu-item" className={cn(item(), className)} {...props} />
 }
-
-// The look of Checkbox, drawn from the row's `data-state` because the row is the control: a real
-// Checkbox would put a second focusable control inside the menu item. Disabled has no shadow.
-const menuCheckboxClass = [
-  checkboxBoxClass,
-  'border-neutral-emphasized bg-form-neutral shadow-sm',
-  // Selection colors only while enabled, so the disabled look below always wins, as in Checkbox.
-  'group-not-data-disabled/item:group-data-[state=checked]/item:border-transparent group-not-data-disabled/item:group-data-[state=checked]/item:bg-neutral-emphasized group-not-data-disabled/item:group-data-[state=checked]/item:text-neutral-on-emphasized',
-  'group-not-data-disabled/item:group-data-[state=indeterminate]/item:bg-neutral group-not-data-disabled/item:group-data-[state=indeterminate]/item:text-neutral',
-  'group-data-disabled/item:bg-disabled group-data-disabled/item:text-disabled group-data-disabled/item:shadow-none',
-  'group-data-disabled/item:group-data-[state=unchecked]/item:border-disabled',
-  'group-data-disabled/item:group-data-[state=checked]/item:border-transparent group-data-disabled/item:group-data-[state=indeterminate]/item:border-transparent',
-]
 
 export type DropdownMenuCheckboxItemProps = ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
   /** Close the menu when the item is toggled. Off by default, so several items can be toggled in a row. */
@@ -118,19 +121,15 @@ export function DropdownMenuCheckboxItem({
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
-      className={cn(item(), 'group/item', className)}
+      className={cn(item(), className)}
       onSelect={(event) => {
         onSelect?.(event)
         if (!closeOnSelect) event.preventDefault()
       }}
       {...props}
     >
-      <span data-slot="dropdown-menu-checkbox" className={cn(menuCheckboxClass)}>
-        <DropdownMenuPrimitive.ItemIndicator className="flex items-center">
-          <CheckboxCheckMark className="group-data-[state=indeterminate]/item:hidden" />
-          <CheckboxIndeterminateMark className="hidden group-data-[state=indeterminate]/item:block" />
-        </DropdownMenuPrimitive.ItemIndicator>
-      </span>
+      {/* The row is the checkbox (`menuitemcheckbox`): it draws the Checkbox box, not a second control. */}
+      <CheckboxBox data-slot="dropdown-menu-checkbox" checked={props.checked} disabled={props.disabled} />
       {children}
     </DropdownMenuPrimitive.CheckboxItem>
   )
@@ -144,7 +143,10 @@ export function DropdownMenuRadioItem({
   return (
     <DropdownMenuPrimitive.RadioItem data-slot="dropdown-menu-radio-item" className={cn(item(), className)} {...props}>
       {children}
-      <DropdownMenuPrimitive.ItemIndicator className="ml-auto flex items-center">
+      <DropdownMenuPrimitive.ItemIndicator
+        data-slot="dropdown-menu-radio-indicator"
+        className="ml-auto flex items-center"
+      >
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>
     </DropdownMenuPrimitive.RadioItem>
@@ -163,7 +165,7 @@ export function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto text-neutral-subtle" />
+      <ChevronRightIcon data-slot="dropdown-menu-sub-trigger-icon" className="ml-auto text-neutral-subtle" />
     </DropdownMenuPrimitive.SubTrigger>
   )
 }

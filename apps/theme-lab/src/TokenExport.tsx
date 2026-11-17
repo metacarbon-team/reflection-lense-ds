@@ -18,9 +18,10 @@ import {
   DialogHeader,
   DialogTitle,
   Field,
+  SegmentedControl,
+  SegmentedControlItem,
   Textarea,
 } from '@reflection/react'
-import { Segmented } from './ui/lab'
 
 type Format = 'dtcg' | 'figma' | 'settings'
 type Scope = 'selected' | 'all'
@@ -104,52 +105,36 @@ export function ExportDialog(props: {
           <DialogDescription>{NOTES[format]}</DialogDescription>
         </DialogHeader>
         <DialogBody className="gap-4">
-          <Segmented label="Format" options={FORMATS} value={format} onChange={pick(setFormat)} />
+          <SegmentedControl aria-label="Format" value={format} onValueChange={pick(setFormat)}>
+            {FORMATS.map((o) => (
+              <SegmentedControlItem key={o.id} value={o.id} label={o.label} />
+            ))}
+          </SegmentedControl>
           {format === 'dtcg' && (
             <div className="flex flex-wrap items-center gap-3">
-              <Segmented
-                label="Export scope"
-                options={[
-                  { id: 'selected', label: 'One mode' },
-                  { id: 'all', label: 'All modes' },
-                ]}
-                value={scope}
-                onChange={pick(setScope)}
-              />
+              <SegmentedControl aria-label="Export scope" value={scope} onValueChange={pick(setScope)}>
+                <SegmentedControlItem value="selected" label="One mode" />
+                <SegmentedControlItem value="all" label="All modes" />
+              </SegmentedControl>
               {scope === 'selected' && (
                 <>
-                  <Segmented
-                    label="Color mode"
-                    options={[
-                      { id: 'light', label: 'Light' },
-                      { id: 'dark', label: 'Dark' },
-                    ]}
-                    value={mode}
-                    onChange={pick(setMode)}
-                  />
-                  <Segmented
-                    label="Text styles"
-                    options={[
-                      { id: 'desktop', label: 'Desktop' },
-                      { id: 'mobile', label: 'Mobile' },
-                    ]}
-                    value={viewport}
-                    onChange={pick(setViewport)}
-                  />
+                  <SegmentedControl aria-label="Color mode" value={mode} onValueChange={pick(setMode)}>
+                    <SegmentedControlItem value="light" label="Light" />
+                    <SegmentedControlItem value="dark" label="Dark" />
+                  </SegmentedControl>
+                  <SegmentedControl aria-label="Text styles" value={viewport} onValueChange={pick(setViewport)}>
+                    <SegmentedControlItem value="desktop" label="Desktop" />
+                    <SegmentedControlItem value="mobile" label="Mobile" />
+                  </SegmentedControl>
                 </>
               )}
             </div>
           )}
           {format === 'figma' && (
-            <Segmented
-              label="Figma Core theme"
-              options={[
-                { id: 'Reflection', label: 'Reflection' },
-                { id: 'Custom', label: 'Custom' },
-              ]}
-              value={core}
-              onChange={pick(setCore)}
-            />
+            <SegmentedControl aria-label="Figma Core theme" value={core} onValueChange={pick(setCore)}>
+              <SegmentedControlItem value="Reflection" label="Reflection" />
+              <SegmentedControlItem value="Custom" label="Custom" />
+            </SegmentedControl>
           )}
           <Field label={format === 'figma' ? 'Prompt' : filename}>
             <Textarea readOnly rows={18} value={text} className="text-code-small" />

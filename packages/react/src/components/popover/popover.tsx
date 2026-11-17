@@ -1,22 +1,26 @@
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { ModeAnchor, useModeAnchorRef, usePortalMode } from '../../lib/portal-mode'
+import { popupMotionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
 
 /** Popover: a small floating panel that opens from a trigger. Compose it from PopoverTrigger and PopoverContent. */
 export const Popover = (props: ComponentProps<typeof PopoverPrimitive.Root>) => (
-  <PopoverPrimitive.Root data-slot="popover" {...props} />
+  <ModeAnchor>
+    <PopoverPrimitive.Root data-slot="popover" {...props} />
+  </ModeAnchor>
 )
 
 /** The control that opens the popover. Use `asChild` to make your own button the trigger. */
-export const PopoverTrigger = (props: ComponentProps<typeof PopoverPrimitive.Trigger>) => (
-  <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
-)
+export function PopoverTrigger({ ref, ...props }: ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 /** Anchors the panel to another element instead of the trigger. */
-export const PopoverAnchor = (props: ComponentProps<typeof PopoverPrimitive.Anchor>) => (
-  <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
-)
+export function PopoverAnchor({ ref, ...props }: ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" ref={useModeAnchorRef(ref)} {...props} />
+}
 
 /** Closes the popover. Use `asChild` to make your own button the close control. */
 export const PopoverClose = (props: ComponentProps<typeof PopoverPrimitive.Close>) => (
@@ -24,12 +28,14 @@ export const PopoverClose = (props: ComponentProps<typeof PopoverPrimitive.Close
 )
 
 type PopoverPanelOwnProps = {
-  /** Short name of the panel, two or three words. It says what the panel is for, not what kind of element it is. */
+  /**
+   * Short name of the panel, two or three words. It says what the panel is for, not what kind of element
+   * it is. The title block shows when the label or the description is set; leave both out when the
+   * trigger already names the panel, and name the dialog with `aria-label`.
+   */
   label?: ReactNode
   /** One sentence of help under the title. Do not repeat the title in it. */
   description?: ReactNode
-  /** Shows the title and description block. Turn it off when the trigger already names the panel. */
-  header?: boolean
   /** Shows the content slot. Turn it off for an info-only popover that has just a title and a description. */
   content?: boolean
   /** The content slot: controls and short text, such as Checkbox rows, a field or a Button row. */
@@ -52,7 +58,6 @@ export type PopoverPanelProps = Omit<ComponentProps<'div'>, 'content' | 'childre
 export function PopoverPanel({
   label,
   description,
-  header = true,
   content = true,
   children,
   labelId,
@@ -69,11 +74,13 @@ export function PopoverPanel({
       )}
       {...props}
     >
-      {header && (
+      {(hasContent(label) || hasContent(description)) && (
         <div data-slot="popover-header" className="flex min-w-0 flex-col gap-0.5">
-          <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
-            {label}
-          </p>
+          {hasContent(label) && (
+            <p id={labelId} data-slot="popover-title" className="text-label text-neutral">
+              {label}
+            </p>
+          )}
           {hasContent(description) && (
             <p id={descriptionId} data-slot="popover-description" className="text-body-small text-neutral-subtle">
               {description}
@@ -95,13 +102,11 @@ export type PopoverContentProps = Omit<ComponentProps<typeof PopoverPrimitive.Co
 
 /**
  * The floating panel: not modal, closes on Escape or a click outside, and opens right below its
- * trigger, aligned to its start. With a header the title names the dialog; without one, pass
- * `aria-label`.
+ * trigger, aligned to its start. The label names the dialog; without one, pass `aria-label`.
  */
 export function PopoverContent({
   label,
   description,
-  header = true,
   content = true,
   children,
   className,
@@ -111,28 +116,35 @@ export function PopoverContent({
   ...props
 }: PopoverContentProps) {
   const id = useId()
-  const labelId = header && label ? `${id}-title` : undefined
-  const descriptionId = header && description ? `${id}-description` : undefined
+  const mode = usePortalMode()
+  const labelId = hasContent(label) ? `${id}-title` : undefined
+  const descriptionId = hasContent(description) ? `${id}-description` : undefined
   return (
     <PopoverPrimitive.Portal>
+      {/* The panel is the Radix Content itself (`asChild`): its styles, `className`, `data-state`,
+          `data-side` and transform origin sit on one element, so a caller can style by side or state. */}
       <PopoverPrimitive.Content
-        data-slot="popover-content"
+        data-mode={mode}
+        asChild
         side={side}
         align={align}
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className="z-50 outline-none"
         {...props}
       >
         <PopoverPanel
+          data-slot="popover-content"
           label={label}
           description={description}
-          header={header}
           content={content}
           labelId={labelId}
           descriptionId={descriptionId}
-          className={className}
+          className={cn(
+            'z-50 origin-(--radix-popover-content-transform-origin) outline-none',
+            popupMotionClass,
+            className,
+          )}
         >
           {children}
         </PopoverPanel>

@@ -8,18 +8,21 @@ import { IconButton } from '../icon-button/icon-button'
 
 // The tint and the stroke come from Card; the leading icon takes the tone color here. The box is one
 // title line high, so the icon centers on it.
-const inlineAlertLeadingVariants = cva('flex h-5 shrink-0 items-center justify-center [&_svg]:size-4', {
-  variants: {
-    tone: {
-      default: 'text-neutral',
-      success: 'text-success',
-      warning: 'text-warning',
-      danger: 'text-danger',
-      info: 'text-info',
+const inlineAlertLeadingVariants = cva(
+  'flex h-5 shrink-0 items-center justify-center [&_svg:not([class*=size-])]:size-4',
+  {
+    variants: {
+      tone: {
+        default: 'text-neutral',
+        success: 'text-success',
+        warning: 'text-warning',
+        danger: 'text-danger',
+        info: 'text-info',
+      },
     },
+    defaultVariants: { tone: 'default' },
   },
-  defaultVariants: { tone: 'default' },
-})
+)
 
 export type InlineAlertProps = Omit<ComponentProps<'div'>, 'title'> &
   Omit<VariantProps<typeof inlineAlertLeadingVariants>, 'tone'> & {
@@ -69,13 +72,13 @@ export function InlineAlert({
       className={cn('w-full min-w-0 gap-0', className)}
       {...props}
     >
-      <div className="flex min-w-0 items-start gap-2">
+      <div data-slot="inline-alert-body" className="flex min-w-0 items-start gap-2">
         {hasContent(leadingSlot) ? (
-          <span data-slot="inline-alert-leading" className={inlineAlertLeadingVariants({ tone })}>
+          <span data-slot="inline-alert-leading-slot" className={inlineAlertLeadingVariants({ tone })}>
             {leadingSlot}
           </span>
         ) : null}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div data-slot="inline-alert-text" className="flex min-w-0 flex-1 flex-col">
           <span data-slot="inline-alert-title" className="truncate text-body-small-medium text-neutral">
             {title}
           </span>

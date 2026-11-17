@@ -16,9 +16,9 @@ const tagVariants = cva(
   {
     variants: {
       size: {
-        sm: 'h-4 rounded-sm px-1 [&_svg]:size-3',
-        md: 'h-5 rounded-md px-1.5 [&_svg]:size-4',
-        lg: 'h-6 rounded-md px-2 [&_svg]:size-4',
+        sm: 'h-4 rounded-sm px-1 [&_svg:not([class*=size-])]:size-3',
+        md: 'h-5 rounded-md px-1.5 [&_svg:not([class*=size-])]:size-4',
+        lg: 'h-6 rounded-md px-2 [&_svg:not([class*=size-])]:size-4',
       },
     },
     defaultVariants: { size: 'sm' },
@@ -55,18 +55,26 @@ export type TagProps = Omit<ComponentProps<'span'>, 'children'> & {
  * Tag: a small read-only label for categories, statuses and metadata. A raised tag on the form surface;
  * the tone is carried by a colored dot, and `default` has no dot.
  */
-export function Tag({ className, tone, size, leadingSlot, trailingSlot, children, ...props }: TagProps) {
+export function Tag({
+  className,
+  tone = 'default',
+  size = 'sm',
+  leadingSlot,
+  trailingSlot,
+  children,
+  ...props
+}: TagProps) {
   return (
-    <span data-slot="tag" className={cn(tagVariants({ size }), className)} {...props}>
+    <span data-slot="tag" data-tone={tone} data-size={size} className={cn(tagVariants({ size }), className)} {...props}>
       <span data-slot="tag-dot" aria-hidden="true" className={dotVariants({ tone })} />
       {hasContent(leadingSlot) ? (
-        <span data-slot="leading-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
+        <span data-slot="tag-leading-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
           {leadingSlot}
         </span>
       ) : null}
       {children}
       {hasContent(trailingSlot) ? (
-        <span data-slot="trailing-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
+        <span data-slot="tag-trailing-slot" className="inline-flex shrink-0 items-center justify-center overflow-clip">
           {trailingSlot}
         </span>
       ) : null}

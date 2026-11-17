@@ -1,22 +1,27 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { ComponentProps, ReactNode } from 'react'
+import { Slot } from 'radix-ui'
+import { isValidElement, type ComponentProps, type ReactElement, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { controlTransitionClass } from '../../lib/motion'
 import { hasContent } from '../../lib/has-content'
-import { disabledAttrs } from '../../lib/disabled'
+import { disabledAttrs, disabledLinkProps, linkChild } from '../../lib/disabled'
 
 /**
  * Size sets the row padding and the text roles of its parts. Hover, pressed and focus-visible come
  * from the browser in `default`; the `hover`, `pressed` and `focus` states freeze them for docs and
  * tests. `active` marks the current row. A disabled row is marked with `data-disabled`: the row
  * ignores the pointer, and each part takes its colors from `group-data-disabled`. `clickable` is a
- * row that is a `label` for the control in its slot.
+ * row that is a `label` for the control in its slot, or a link or button under `asChild`.
  */
 const itemVariants = cva(
-  'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
+  [
+    'group/item relative flex w-full min-w-0 flex-col justify-center rounded-md outline-none data-disabled:pointer-events-none',
+    controlTransitionClass,
+  ],
   {
     variants: {
       size: {
-        md: 'px-3 py-1',
+        md: 'px-3 py-1.5',
         lg: 'px-4 py-3',
       },
       state: {
@@ -59,7 +64,7 @@ const itemDescriptionVariants = cva('line-clamp-2 text-neutral-subtle group-data
 // by that width for each slot; anything else, such as a switch or an avatar, keeps its own size.
 const slotClass = [
   'flex min-h-4 shrink-0 items-center justify-center group-data-disabled/item:text-disabled',
-  '[&_svg]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
+  '[&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0 [&_[data-slot=checkbox]]:size-4 [&_[data-slot=radio]]:size-4',
 ]
 
 export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
@@ -91,12 +96,20 @@ export type ItemProps = Omit<ComponentProps<'div'>, 'children'> & {
    * anywhere on the row toggles the control and the row text names it.
    */
   htmlFor?: string
+  /**
+   * Render the only child, a link or a button, with the row's look and content: the row then navigates
+   * or acts with the element's own keyboard behaviour. A disabled link keeps its role, leaves the tab
+   * order and cannot be followed.
+   */
+  asChild?: boolean
+  /** The link or button to render when `asChild` is set. Its own content is replaced by the row. */
+  children?: ReactElement
 }
 
 /** Keeps the description and the error under the title: an empty space the width of each slot on both sides. */
 function Indented({ leading, trailing, children }: { leading: boolean; trailing: boolean; children: ReactNode }) {
   return (
-    <span className="flex items-start gap-2">
+    <span data-slot="item-indented" className="flex items-start gap-2">
       {leading && <span aria-hidden="true" className="w-4 shrink-0" />}
       <span className="min-w-0 flex-1">{children}</span>
       {trailing && <span aria-hidden="true" className="w-4 shrink-0" />}
@@ -121,7 +134,9 @@ export function Item({
   state = 'default',
   disabled = false,
   htmlFor,
+  asChild = false,
   className,
+  children,
   ...props
 }: ItemProps) {
   const isDisabled = disabled
@@ -132,9 +147,12 @@ export function Item({
   const hasTrailing = hasContent(trailingSlot)
   const rootProps = {
     'data-slot': 'item',
+    'data-size': size,
+    // Present only on the current row, never `"false"`, so `data-active:` matches the right rows.
+    'data-active': state === 'active' && !isDisabled ? '' : undefined,
     className: cn(
       // A disabled row drops the frozen states; its look comes from `data-disabled`.
-      itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined }),
+      itemVariants({ size, state: isDisabled ? 'default' : state, clickable: htmlFor !== undefined || asChild }),
       className,
     ),
     ...props,
@@ -144,7 +162,7 @@ export function Item({
   // The row is made of inline elements only, so it is valid inside a <label>.
   const content = (
     <>
-      <span className="flex items-center gap-2">
+      <span data-slot="item-title-row" className="flex items-center gap-2">
         {hasLeading && (
           <span data-slot="item-leading-slot" className={cn(slotClass)}>
             {leadingSlot}
@@ -186,6 +204,14 @@ export function Item({
       )}
     </>
   )
+  if (asChild && isValidElement(children)) {
+    const child = children as ReactElement<{ href?: string; children?: ReactNode }>
+    return (
+      <Slot.Root {...rootProps} {...disabledLinkProps(isDisabled)}>
+        {linkChild(child, isDisabled, content)}
+      </Slot.Root>
+    )
+  }
   // The props are typed for a div; a label takes the same attributes.
   return htmlFor === undefined ? (
     <div {...rootProps}>{content}</div>

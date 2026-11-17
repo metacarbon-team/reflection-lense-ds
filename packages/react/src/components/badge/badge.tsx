@@ -49,13 +49,37 @@ export const badgeVariants = cva(
 
 export type BadgeProps = Omit<ComponentProps<'span'>, 'children'> &
   VariantProps<typeof badgeVariants> & {
-    /** The count; ignored for a dot. Write the meaning in `aria-label` when the number alone is not enough. */
+    /** The count; ignored for a dot. */
     children?: ComponentProps<'span'>['children']
   }
 
-export function Badge({ className, tone, variant, size, dot, disabled, children, ...props }: BadgeProps) {
+/**
+ * A plain span cannot carry a name, so a Badge with `aria-label` (or `aria-labelledby`) becomes an image
+ * with that name, such as "3 unread messages". Without a name a count is read as its number, and a dot,
+ * which has no text, is hidden: give a dot a name whenever its color means something.
+ */
+export function Badge({
+  className,
+  tone = 'default',
+  variant = 'solid',
+  size = 'md',
+  dot,
+  disabled,
+  children,
+  ...props
+}: BadgeProps) {
+  const labelled = props['aria-label'] !== undefined || props['aria-labelledby'] !== undefined
   return (
-    <span data-slot="badge" className={cn(badgeVariants({ tone, variant, size, dot, disabled }), className)} {...props}>
+    <span
+      data-slot="badge"
+      data-tone={tone}
+      data-variant={variant}
+      data-size={size}
+      data-disabled={disabled ? '' : undefined}
+      {...(labelled ? { role: 'img' } : dot ? { 'aria-hidden': true } : {})}
+      className={cn(badgeVariants({ tone, variant, size, dot, disabled }), className)}
+      {...props}
+    >
       {dot ? null : children}
     </span>
   )

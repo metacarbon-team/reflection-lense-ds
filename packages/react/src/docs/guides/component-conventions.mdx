@@ -25,17 +25,24 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
 - Tailwind v4 utilities on the theme only. No arbitrary values (`bg-[#…]`, `p-[13px]`), no hex, no inline colors, no opacity modifiers on color utilities (`bg-x/50`): opacity comes from the token.
 - Exceptions that are allowed:
   - Runtime sizes a primitive publishes as CSS variables, written as `max-h-(--radix-select-content-available-height)`.
-  - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
+  - Arbitrary _variants_ for selectors Tailwind has no shorthand for: `[&_svg:not([class*=size-])]:size-4`, `data-[state=open]:…`, `*:data-[slot=…]:…`.
   - Layout of docs-only grids inside stories.
+  - SVG paint in charts: `fill-(--bg-neutral-hover)`, `stroke-(--stroke-neutral)`, `[rx:var(--radius-xs)]`. The theme's color utilities target HTML (`bg-`, `text-`, `border-`), and SVG takes `fill` and `stroke`, so the chart parts name the token variable itself. Series colors come from `ChartContainer` as `--color-<key>`.
 - Text uses a role utility (`text-body`, `text-label-small`, `text-heading-small`…). Never `text-sm`, `leading-*`, `tracking-*` or `font-<weight>` in a component. See [Typography](?path=/docs/foundations-typography--docs).
+- **Motion** comes from `lib/motion.ts`, never written per component:
+  - Floating panels (Popover, Dropdown Menu, Select list, Date Picker) fade in, grow from 95% and slide 8px from the trigger's side, on the Radix Content with its transform origin; they reverse on close. Tooltip does the same. 150ms.
+  - Dialog and its backdrop fade, and the dialog grows from 95%. 200ms.
+  - Controls ease color, fill, stroke and shadow changes (`transition`, 150ms). Skeleton pulses.
+  - With reduced motion all of it is off (`motion-reduce:`).
+  - The enter and exit utilities (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-top-2`) come with `theme.css`.
 - Colors are picked by role and scope, not by look. See [Color](?path=/docs/foundations-color--docs).
-- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
+- One-line controls (Button, Icon Button, Tag, Badge, Tabs, Segmented Control, Input, the Select trigger) have a fixed height per `size`, so elements of the same kind line up. Their text stays on one line (`whitespace-nowrap`) and never wraps. Multi-line content sizes by padding instead: rows that can hold a description, such as Item, and Textarea.
 
 ### Variants and class merging
 
 - `cva` only where a part has variants. Fixed classes are plain strings or arrays.
 - Join classes with `cn` (`lib/cn.ts`) = `twMerge(clsx())` extended with the theme's text roles. The caller's `className` goes last, so a utility they pass replaces the component's utility for the same property.
-- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `skeletonVariants`, `tabsListVariants`, `tabsTriggerVariants`.
+- Export `<name>Variants` when the call alone gives the component's look, so other elements can be styled the same way. Exported today: `avatarVariants`, `badgeVariants`, `buttonVariants`, `cardVariants`, `codeLineVariants`, `diffStatVariants`, `iconButtonVariants`, `linkVariants`, `segmentedControlVariants`, `segmentedControlItemVariants`, `skeletonVariants`, `tabsTriggerVariants`.
 
 ### Vocabulary of props
 
@@ -53,10 +60,31 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
 
 ## Structure
 
+### The API is the Figma anatomy
+
+A component's props are the layers and properties of its Figma component, so a designer and an engineer read the same thing.
+
+| In Figma                                                                  | In code                                                                                                      |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Text layer                                                                | String prop (`label`, `description`, `title`), shown only when set                                           |
+| Boolean that hides a text layer                                           | No prop. Figma cannot skip an empty string, so it needs the boolean; in code the text is shown only when set |
+| Slot (any content)                                                        | `ReactNode` prop (`leadingSlot`, `trailingSlot`, `action`), shown only when set (`hasContent`)               |
+| Nested component the designer only configures (an Icon Box with its icon) | Drawn by the component, which takes the nested component's own prop (`icon`), not the whole instance         |
+| Variant property                                                          | `tone`, `variant`, `size`, `state` (see the vocabulary above)                                                |
+
+A boolean on a slot or a variant stays a prop; only a boolean whose job is to hide text is dropped.
+
+Split a component into parts only where a part brings its own behaviour or semantics: a Radix part with its own role, focus or dismiss (`DialogTrigger`, `DialogContent`, `SelectItem`, `TabsTrigger`), or native structure (`TableRow`, `TableCell`). Each part is a thin wrapper over its primitive with our classes. Text and slots are never split into parts just to lay them out: a title and a description stay props.
+
+### Parts and hooks
+
 - **`data-slot` on every part**: `data-slot="button"`, `data-slot="button-leading-slot"`, `data-slot="field-caption"`. It is the public hook for CSS (`*:data-[slot=icon]:size-4`) and tests. Name it `<component>` or `<component>-<part>`.
-- **Composition over configuration**: complex components are compound (`Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`…), each part a thin wrapper over its Radix primitive with our classes.
+- **The resolved props on the root as data attributes**: `data-tone`, `data-variant`, `data-size` (Button, IconButton, Badge, Tag, Avatar, Card, Link, Segmented Control, Item). A boolean state is present or absent, never `"false"`: `data-active`, `data-disabled`. CSS and tests target these, not class names.
+- **Named groups**: a part styled from its parent's state uses `group/<component>` (`group/checkbox`, `group/switch`, `group/item`), never a bare `group`, so an ancestor with its own `group` cannot leak in.
+- **Icons size from the parent but yield to their own class**: `[&_svg:not([class*=size-])]:size-4`. An icon with `size-5` keeps it; a caller who overrides the parent's icon size uses the same selector, so `cn` replaces it.
 - **Radix primitives** for behaviour (focus trap, roving focus, keyboard navigation, positioning, dismiss). Styling and API are ours; never expose a primitive's class names or props that bypass the theme.
-- **`asChild`** is supported on Button, IconButton, Card, Link and NavItem. Under `asChild` a link keeps the link role.
+- **A row that is itself a control** (a `menuitemcheckbox` row of Dropdown Menu) draws the control's look, not a second control: a nested Checkbox would take focus and toggle twice. The component owns that look and exports it as a part without behaviour: `CheckboxBox` next to `Checkbox` in `checkbox.tsx`. Never a mode prop that turns the control into a decoration.
+- **`asChild`** is supported on Button, IconButton, Card, Link, NavItem, Item and BreadcrumbItem. Under `asChild` a link keeps the link role.
 
 ## States
 
@@ -69,7 +97,7 @@ How every component in `@reflection/react` is built. Follow the same rules in a 
 | Invalid              | Fields: `data-invalid:border-danger-emphasized` (control frame). Checkbox and Radio: `aria-invalid`.                                                                                                      |
 | Disabled             | The `disabled` role tokens, no shadow, no pointer events. See below.                                                                                                                                      |
 
-The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio and TabsTrigger take it. A disabled control ignores it.
+The `state` prop (`hover`, `pressed`, `focus`) applies the same classes as the browser state, for docs and visual tests. Button, IconButton, Link, Item, NavItem, Checkbox, Radio, TabsTrigger, SegmentedControlItem, CollapsibleTrigger, BreadcrumbItem, CalendarItem and the Table row and cells take it. A disabled control ignores it.
 
 ### Disabled
 
@@ -81,22 +109,24 @@ One rule for every component, in `lib/disabled.ts`:
 | Anything else (link, element with a role) | `aria-disabled="true"` + `data-disabled=""`                                                                               |
 | Link under `asChild`                      | `role="link"`, `aria-disabled`, `tabIndex={-1}`, click cancelled, plain `href` removed (`disabledLinkProps`, `linkChild`) |
 
-- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control uses `has-disabled:`.
+- Style with `disabled:` on an element that is always a native control: it also matches a control inside `<fieldset disabled>`. Use `disabled:` **and** `data-disabled:` on an element that can be something else under `asChild`. A wrapper around a control reads that control only, `has-[[data-slot=input-group-control]:disabled]:`, never `has-disabled:`: a disabled button in one of its slots would dim the whole wrapper.
 - Never `data-disabled={false}`: React renders it as `"false"` and `data-disabled:` matches. An enabled element gets no attribute.
-- Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Link) change only the text.
-- A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild` use `not-disabled:not-data-disabled:`.
+- Colors: `text-disabled`, `border-disabled`, `bg-disabled`; text-only controls (Item, NavItem, menu rows, Tabs, Segmented Control, Link) change only the text.
+- A disabled control has no shadow: `disabled:shadow-none`, or make the shadow conditional on `enabled:`. `enabled:` matches form controls only; under `asChild`, or on a look shared with a plain element, use `not-disabled:not-data-disabled:`.
 
 ## Forms
 
 - `Field` gives its control an id, the caption as `aria-describedby`, `invalid` and `disabled`, through `useFieldControl`. Explicit props on the control win.
+- A Field's error is an alert (`role="alert"`), so a screen reader reads it when it appears. Inside `<fieldset disabled>` the label, caption and counter dim with the control (`in-[fieldset:disabled]:`), not only through the `disabled` prop.
 - Controls that read the Field: Input, Textarea, SelectTrigger, Checkbox, Radio/RadioGroup, Switch. A new form control calls `useFieldControl` too.
-- Input, Textarea and the Select trigger share one frame: `controlFrameClass` (`lib/control-frame.ts`). Reuse it for any new text-entry control; each consumer adds its own focus treatment.
+- Every field frame has one look, `controlFrameLookClass` (`lib/control-frame.ts`). A frame that is the control (Textarea, the Select trigger) adds `controlFrameClass`: invalid and disabled read from the element. A frame that wraps a text control and its slots (Input, Composed Input, and the Date Picker field through Input) marks the control `data-slot="input-group-control"` and adds `inputGroupStateClass`: focus, an open popup, invalid and disabled read from that control only. A click on such a frame or on an icon in a slot focuses the control (`focusGroupControl`). Build any new text-entry control the same way.
+- A field that tracks whether it holds text (Input's clear button, Composed Input's filled look) follows `form.reset()` of a form around it (`useFormReset`).
 
 ## Color modes and portals
 
 - `data-mode="light|dark"` on `<html>` or any subtree switches every token below it.
-- Dialog, Dropdown Menu, Select, Popover and Toast render in `<body>` through a portal, so they follow the mode on `<html>`, not a subtree's.
-- Tooltip always renders in the opposite mode of its anchor's closest `data-mode` and follows it when it changes.
+- Dialog, Dropdown Menu, Select, Popover and Date Picker render in `<body>` through a portal and set the mode of their trigger's closest `data-mode` on the portalled element, following it when it changes (`lib/portal-mode.tsx`: the root wraps `ModeAnchor`, the trigger takes `useModeAnchorRef`, the portalled element `usePortalModeRef`). Without a trigger they take the mode of `<html>`. Toasts render where the `Toaster` is mounted, usually the app root.
+- Tooltip uses the same anchor and always renders in the opposite mode, following it when it changes.
 - An inverse element is a local mode switch (`data-mode` on the element), not a set of inverse tokens.
 
 ## Docs and stories
