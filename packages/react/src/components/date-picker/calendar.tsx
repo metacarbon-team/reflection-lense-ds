@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react'
+import { DayPicker, type DayButtonProps, type Matcher } from 'react-day-picker'
 import { cn } from '../../lib/cn'
 import { composeRefs } from '../../lib/compose-refs'
 import { ChevronLeftIcon, ChevronRightIcon } from '../../lib/icons'
@@ -15,7 +16,6 @@ const addMonths = (date: Date, months: number) => {
   const last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
   return new Date(first.getFullYear(), first.getMonth(), Math.min(date.getDate(), last))
 }
-const isSameDay = (a: Date, b: Date) => a.getTime() === b.getTime()
 const isSameMonth = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
 const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 
@@ -76,8 +76,9 @@ export type CalendarProps = Omit<ComponentProps<'div'>, 'defaultValue' | 'onChan
 /**
  * Calendar: a month of days to pick one date from. The caption button switches to a grid of the 12
  * months; the arrows move by a month, or by a year in that view. Both views keep the same height.
- * Days of the neighbor months are muted and cannot be picked. Arrow keys move between days, Home and
- * End go to the week edges, PageUp and PageDown change the month (with Shift, the year).
+ * Days of the neighbor months are muted and cannot be picked. The day grid is react-day-picker:
+ * arrow keys move between days, Home and End go to the week edges, PageUp and PageDown change the
+ * month (with Shift, the year), and the days skip what cannot be picked.
  */
 export function Calendar({
   value,
@@ -115,7 +116,6 @@ export function Calendar({
     onMonthChange,
   )
   const [currentView, setView] = useControlled<'days' | 'months'>(view, defaultView, onViewChange)
-  const [focusedDay, setFocusedDay] = useState<Date | null>(null)
   const [focusedMonth, setFocusedMonth] = useState<number | null>(null)
   // The element to focus once the next render is in the DOM: a day (`data-date`) or a month (`data-month`).
   const pendingFocus = useRef<string | null>(null)
@@ -129,13 +129,14 @@ export function Calendar({
   const shown = startOfMonth(shownDate)
   const min = minDate && startOfDay(minDate)
   const max = maxDate && startOfDay(maxDate)
-  const today = startOfDay(new Date())
 
-  const isDateDisabled = (date: Date) => {
-    if ((min && date < min) || (max && date > max)) return true
-    if (typeof disabledDates === 'function') return disabledDates(date)
-    return disabledDates?.some((blocked) => isSameDay(startOfDay(blocked), date)) ?? false
-  }
+  // What cannot be picked: outside the limits and the blocked dates. The days of the neighbor months
+  // are muted in the day button instead, so the keys can still move through them into the next month.
+  const disabledDays: Matcher[] = [
+    ...(min ? [{ before: min }] : []),
+    ...(max ? [{ after: max }] : []),
+    ...(disabledDates ? [disabledDates] : []),
+  ]
   const isMonthDisabled = (year: number, index: number) => {
     const first = new Date(year, index, 1)
     const last = new Date(year, index + 1, 0)
@@ -143,20 +144,6 @@ export function Calendar({
   }
 
   const dateFormat = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options)
-  const offset = (shown.getDay() - weekStartsOn + 7) % 7
-  const daysInMonth = new Date(shown.getFullYear(), shown.getMonth() + 1, 0).getDate()
-  const gridStart = addDays(shown, -offset)
-  const weeks = Array.from({ length: Math.ceil((offset + daysInMonth) / 7) }, (_, row) =>
-    Array.from({ length: 7 }, (_, column) => addDays(gridStart, row * 7 + column)),
-  )
-
-  // The one day in the tab order: the day the keys moved to, else the chosen day, else the first.
-  const activeDay =
-    focusedDay && isSameMonth(focusedDay, shown)
-      ? focusedDay
-      : selected && isSameMonth(selected, shown)
-        ? selected
-        : shown
   const activeMonth =
     focusedMonth ??
     (selected && selected.getFullYear() === shown.getFullYear() ? selected.getMonth() : shown.getMonth())
@@ -169,28 +156,6 @@ export function Calendar({
   const nextDisabled = inDays
     ? Boolean(max && addMonths(shown, 1) > max)
     : Boolean(max && shown.getFullYear() >= max.getFullYear())
-
-  const moveDay = (event: KeyboardEvent<HTMLDivElement>) => {
-    const weekStart = addDays(activeDay, -((activeDay.getDay() - weekStartsOn + 7) % 7))
-    const moves: Record<string, Date> = {
-      ArrowLeft: addDays(activeDay, -1),
-      ArrowRight: addDays(activeDay, 1),
-      ArrowUp: addDays(activeDay, -7),
-      ArrowDown: addDays(activeDay, 7),
-      Home: weekStart,
-      End: addDays(weekStart, 6),
-      PageUp: addMonths(activeDay, event.shiftKey ? -12 : -1),
-      PageDown: addMonths(activeDay, event.shiftKey ? 12 : 1),
-    }
-    let next = moves[event.key]
-    if (!next) return
-    event.preventDefault()
-    if (min && next < min) next = min
-    if (max && next > max) next = max
-    setFocusedDay(next)
-    if (!isSameMonth(next, shown)) setShown(startOfMonth(next))
-    pendingFocus.current = `data-date="${dayKey(next)}"`
-  }
 
   const moveMonth = (event: KeyboardEvent<HTMLDivElement>) => {
     const moves: Record<string, number> = {
@@ -213,7 +178,6 @@ export function Calendar({
     const next = new Date(shown.getFullYear(), index, 1)
     const target = selected && isSameMonth(selected, next) ? selected : next
     setShown(next)
-    setFocusedDay(target)
     setView('days')
     pendingFocus.current = `data-date="${dayKey(target)}"`
   }
@@ -274,59 +238,58 @@ export function Calendar({
       {/* Both views share one cell, so the calendar keeps the height of the taller one. The hidden view is inert. */}
       <div data-slot="calendar-views" className="grid">
         <div
-          role="grid"
-          aria-label={dateFormat({ month: 'long', year: 'numeric' }).format(shown)}
           data-slot="calendar-days"
           inert={!inDays}
-          onKeyDown={moveDay}
-          className={cn('col-start-1 row-start-1 flex flex-col', !inDays && 'invisible')}
+          className={cn('col-start-1 row-start-1', !inDays && 'invisible')}
         >
-          <div role="row" data-slot="calendar-weekdays" className="mb-2 flex">
-            {(weeks[0] ?? []).map((date) => (
-              <div
-                key={date.getDay()}
-                role="columnheader"
-                data-slot="calendar-weekday"
-                aria-label={dateFormat({ weekday: 'long' }).format(date)}
-                className="flex w-8 items-center justify-center py-0.5 text-body-xsmall text-neutral-subtle"
-              >
-                {Array.from(dateFormat({ weekday: 'short' }).format(date))
+          <DayPicker
+            mode="single"
+            required
+            selected={selected ?? undefined}
+            onSelect={(date) => date && setSelected(startOfDay(date))}
+            month={shown}
+            onMonthChange={(next) => setShown(startOfMonth(next))}
+            startMonth={min}
+            endMonth={max}
+            weekStartsOn={weekStartsOn}
+            showOutsideDays
+            hideNavigation
+            disabled={disabledDays}
+            formatters={{
+              formatCaption: (date) => dateFormat({ month: 'long', year: 'numeric' }).format(date),
+              formatWeekdayName: (date) =>
+                Array.from(dateFormat({ weekday: 'short' }).format(date))
                   .slice(0, 2)
-                  .join('')}
-              </div>
-            ))}
-          </div>
-          {weeks.map((week, row) => (
-            <div key={row} role="row" data-slot="calendar-week" className="flex">
-              {week.map((date) => {
-                const outside = !isSameMonth(date, shown)
-                const isSelected = Boolean(selected && isSameDay(selected, date))
-                return (
-                  <div
-                    key={dayKey(date)}
-                    role="gridcell"
-                    data-slot="calendar-day"
-                    aria-selected={isSelected}
-                    className="flex"
-                  >
-                    <CalendarItem
-                      label={date.getDate()}
-                      aria-label={dateFormat({ dateStyle: 'full' }).format(date)}
-                      aria-current={isSameDay(date, today) ? 'date' : undefined}
-                      data-date={dayKey(date)}
-                      tabIndex={isSameDay(date, activeDay) ? 0 : -1}
-                      selected={isSelected}
-                      disabled={outside || isDateDisabled(date)}
-                      onClick={() => {
-                        setFocusedDay(date)
-                        setSelected(date)
-                      }}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          ))}
+                  .join(''),
+            }}
+            labels={{
+              labelGrid: (date) => dateFormat({ month: 'long', year: 'numeric' }).format(date),
+              labelWeekday: (date) => dateFormat({ weekday: 'long' }).format(date),
+              labelDayButton: (date) => dateFormat({ dateStyle: 'full' }).format(date),
+            }}
+            components={{ DayButton: CalendarDayButton }}
+            classNames={{
+              root: '',
+              months: '',
+              month: '',
+              // The caption names the grid for assistive tech; the header shows the month.
+              month_caption: 'sr-only',
+              caption_label: '',
+              month_grid: 'border-collapse',
+              weekdays: 'mb-2 flex',
+              weekday: 'flex w-8 items-center justify-center py-0.5 text-body-xsmall text-neutral-subtle',
+              weeks: '',
+              week: 'flex',
+              day: 'flex size-8 p-0',
+              day_button: '',
+              today: '',
+              selected: '',
+              disabled: '',
+              outside: '',
+              hidden: 'invisible',
+              focused: '',
+            }}
+          />
         </div>
 
         <div
@@ -359,5 +322,24 @@ export function Calendar({
         </div>
       </div>
     </div>
+  )
+}
+
+/** One day of the grid: a Calendar Item, with the focus react-day-picker moves between days. */
+function CalendarDayButton({ day, modifiers, disabled, ...props }: DayButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (modifiers.focused) ref.current?.focus()
+  }, [modifiers.focused])
+  return (
+    <CalendarItem
+      ref={ref}
+      {...props}
+      label={day.date.getDate()}
+      data-date={dayKey(day.date)}
+      aria-current={modifiers.today ? 'date' : undefined}
+      selected={Boolean(modifiers.selected)}
+      disabled={Boolean(disabled || modifiers.disabled || modifiers.outside)}
+    />
   )
 }
