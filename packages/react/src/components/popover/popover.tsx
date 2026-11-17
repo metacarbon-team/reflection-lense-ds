@@ -117,23 +117,29 @@ export function PopoverContent({
   const descriptionId = hasContent(description) ? `${id}-description` : undefined
   return (
     <PopoverPrimitive.Portal>
+      {/* The panel is the Radix Content itself (`asChild`): its styles, `className`, `data-state`,
+          `data-side` and transform origin sit on one element, so a caller can style by side or state. */}
       <PopoverPrimitive.Content
-        data-slot="popover-content"
+        asChild
         side={side}
         align={align}
         sideOffset={sideOffset}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
-        className={cn('z-50 origin-(--radix-popover-content-transform-origin) outline-none', popupMotionClass)}
         {...props}
       >
         <PopoverPanel
+          data-slot="popover-content"
           label={label}
           description={description}
           content={content}
           labelId={labelId}
           descriptionId={descriptionId}
-          className={className}
+          className={cn(
+            'z-50 origin-(--radix-popover-content-transform-origin) outline-none',
+            popupMotionClass,
+            className,
+          )}
         >
           {children}
         </PopoverPanel>
