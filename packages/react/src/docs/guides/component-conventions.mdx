@@ -116,6 +116,7 @@ One rule for every component, in `lib/disabled.ts`:
 ## Forms
 
 - `Field` gives its control an id, the caption as `aria-describedby`, `invalid` and `disabled`, through `useFieldControl`. Explicit props on the control win.
+- A Field's error is an alert (`role="alert"`), so a screen reader reads it when it appears. Inside `<fieldset disabled>` the label, caption and counter dim with the control (`in-[fieldset:disabled]:`), not only through the `disabled` prop.
 - Controls that read the Field: Input, Textarea, SelectTrigger, Checkbox, Radio/RadioGroup, Switch. A new form control calls `useFieldControl` too.
 - Input, Textarea and the Select trigger share one frame: `controlFrameClass` (`lib/control-frame.ts`). Reuse it for any new text-entry control; each consumer adds its own focus treatment.
 
